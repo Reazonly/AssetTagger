@@ -38,20 +38,13 @@ class AssetController extends Controller
 
     public function store(Request $request)
     {
-        $validatedData = $request->validate([
-            'code_asset' => 'required|string|unique:assets,code_asset',
-            'nama_barang' => 'required|string',
-        ]);
-
+        $request->validate(['code_asset' => 'required|string|unique:assets,code_asset', 'nama_barang' => 'required|string']);
         $userId = $this->getUserIdFromRequest($request);
         $request->merge(['user_id' => $userId]);
-
         $asset = Asset::create($request->all());
-
         if ($userId) {
             $asset->history()->create(['user_id' => $userId]);
         }
-
         return redirect()->route('assets.index')->with('success', 'Aset baru berhasil ditambahkan.');
     }
 
@@ -78,17 +71,11 @@ class AssetController extends Controller
 
     public function update(Request $request, Asset $asset)
     {
-        $validatedData = $request->validate([
-            'code_asset' => 'required|string|unique:assets,code_asset,' . $asset->id,
-            'nama_barang' => 'required|string',
-        ]);
-
+        $request->validate(['code_asset' => 'required|string|unique:assets,code_asset,' . $asset->id, 'nama_barang' => 'required|string']);
         $oldUserId = $asset->user_id;
         $newUserId = $this->getUserIdFromRequest($request);
-        
         $request->merge(['user_id' => $newUserId]);
         $asset->update($request->all());
-
         if ($oldUserId != $newUserId) {
             if ($oldUserId) {
                 $asset->history()->where('user_id', $oldUserId)->whereNull('tanggal_selesai')->update(['tanggal_selesai' => now()]);
@@ -97,8 +84,6 @@ class AssetController extends Controller
                 $asset->history()->create(['user_id' => $newUserId]);
             }
         }
-
-        // PERUBAHAN: Mengarahkan kembali ke halaman index setelah update
         return redirect()->route('assets.index')->with('success', 'Data aset berhasil diperbarui.');
     }
 
@@ -117,11 +102,7 @@ class AssetController extends Controller
     
     public function print(Request $request)
     {
-        if ($request->has('id')) {
-            $assets = Asset::where('id', $request->id)->get();
-        } else {
-            $assets = Asset::all();
-        }
+        $assets = $request->has('id') ? Asset::where('id', $request->id)->get() : Asset::all();
         return view('assets.print', compact('assets'));
     }
 
