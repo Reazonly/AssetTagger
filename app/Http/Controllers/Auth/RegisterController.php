@@ -11,16 +11,13 @@ use Illuminate\Support\Facades\Validator;
 
 class RegisterController extends Controller
 {
-    // Menampilkan halaman form registrasi
     public function showRegistrationForm()
     {
         return view('auth.register');
     }
 
-    // Memproses data dari form registrasi
     public function register(Request $request)
     {
-        // 1. Validasi data input
         $validator = Validator::make($request->all(), [
             'nama_pengguna' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
@@ -33,17 +30,17 @@ class RegisterController extends Controller
                         ->withInput();
         }
 
-        // 2. Buat pengguna baru
-        $user = User::create([
+        // Buat pengguna baru
+        User::create([
             'nama_pengguna' => $request->nama_pengguna,
             'email' => $request->email,
-            'password' => Hash::make($request->password), // Enkripsi password
+            'password' => Hash::make($request->password),
         ]);
 
-        // 3. Login-kan pengguna yang baru dibuat
-        Auth::login($user);
+        // HAPUS FUNGSI LOGIN OTOMATIS
+        // Auth::login($user); 
 
-        // 4. Arahkan ke halaman utama
-        return redirect()->route('assets.index');
+        // Arahkan ke halaman login dengan pesan sukses
+        return redirect()->route('login')->with('success', 'Registrasi berhasil! Silakan masuk dengan akun baru Anda.');
     }
 }

@@ -8,9 +8,11 @@ use App\Imports\AssetsImport;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Carbon\Carbon;
 
 class AssetController extends Controller
 {
+    // ... (method index, create, show, dll tidak berubah) ...
     public function index(Request $request)
     {
         $search = $request->input('search');
@@ -38,13 +40,26 @@ class AssetController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate(['code_asset' => 'required|string|unique:assets,code_asset', 'nama_barang' => 'required|string']);
+        $request->validate([
+            'code_asset' => 'required|string|unique:assets,code_asset',
+            'nama_barang' => 'required|string',
+        ]);
+
+        // Logika untuk memisahkan tanggal dan tahun dari input form
+        if ($request->filled('tanggal_pembelian')) {
+            $request->merge([
+                'thn_pembelian' => Carbon::parse($request->tanggal_pembelian)->format('Y')
+            ]);
+        }
+
         $userId = $this->getUserIdFromRequest($request);
         $request->merge(['user_id' => $userId]);
         $asset = Asset::create($request->all());
+
         if ($userId) {
             $asset->history()->create(['user_id' => $userId]);
         }
+
         return redirect()->route('assets.index')->with('success', 'Aset baru berhasil ditambahkan.');
     }
 
@@ -71,11 +86,32 @@ class AssetController extends Controller
 
     public function update(Request $request, Asset $asset)
     {
-        $request->validate(['code_asset' => 'required|string|unique:assets,code_asset,' . $asset->id, 'nama_barang' => 'required|string']);
+        $request->validate([
+            'code_asset' => 'required|string|unique:assets,code_asset,' . $asset->id,
+            'nama_barang' => 'required|string',
+        ]);
+        
+        // Menyiapkan data yang akan diupdate
+        $updateData = $request->all();
+
+        // Logika baru yang lebih kuat untuk menangani tanggal
+        if ($request->filled('tanggal_pembelian')) {
+            // Jika tanggal diisi, simpan tanggal dan ekstrak tahunnya
+            $updateData['thn_pembelian'] = \Carbon\Carbon::parse($request->tanggal_pembelian)->format('Y');
+        } else {
+            // Jika tanggal dikosongkan, pastikan kedua kolom di database juga kosong
+            $updateData['tanggal_pembelian'] = null;
+            $updateData['thn_pembelian'] = null;
+        }
+        
         $oldUserId = $asset->user_id;
         $newUserId = $this->getUserIdFromRequest($request);
-        $request->merge(['user_id' => $newUserId]);
-        $asset->update($request->all());
+        
+        $updateData['user_id'] = $newUserId;
+        
+        // Lakukan update menggunakan data yang sudah disiapkan
+        $asset->update($updateData);
+
         if ($oldUserId != $newUserId) {
             if ($oldUserId) {
                 $asset->history()->where('user_id', $oldUserId)->whereNull('tanggal_selesai')->update(['tanggal_selesai' => now()]);
@@ -84,9 +120,11 @@ class AssetController extends Controller
                 $asset->history()->create(['user_id' => $newUserId]);
             }
         }
+
         return redirect()->route('assets.index')->with('success', 'Data aset berhasil diperbarui.');
     }
-
+    
+    // ... (method destroy, import, print, getUserIdFromRequest tidak berubah) ...
     public function destroy(Asset $asset)
     {
         $asset->delete();
@@ -102,7 +140,12 @@ class AssetController extends Controller
     
     public function print(Request $request)
     {
-        $assets = $request->has('id') ? Asset::where('id', $request->id)->get() : Asset::all();
+        $assetIds = $request->query('ids');
+        if ($assetIds && is_array($assetIds) && count($assetIds) > 0) {
+            $assets = Asset::whereIn('id', $assetIds)->get();
+        } else {
+            $assets = Asset::all();
+        }
         return view('assets.print', compact('assets'));
     }
 

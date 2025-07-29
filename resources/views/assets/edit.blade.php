@@ -121,6 +121,10 @@
                         <input type="text" name="lcd" id="lcd" value="{{ old('lcd', $asset->lcd) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-emerald-500 focus:ring-emerald-500 py-2 px-3">
                     </div>
                     <div>
+                        <label for="tanggal_pembelian" class="block text-sm font-medium text-gray-600">Tanggal Pembelian</label>
+                        <input type="date" name="tanggal_pembelian" id="tanggal_pembelian" value="{{ old('tanggal_pembelian', $asset->tanggal_pembelian) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-emerald-500 focus:ring-emerald-500 py-2 px-3">
+                    </div>
+                    <div>
                         <label for="thn_pembelian" class="block text-sm font-medium text-gray-600">Tahun Beli</label>
                         <input type="number" name="thn_pembelian" id="thn_pembelian" value="{{ old('thn_pembelian', $asset->thn_pembelian) }}" placeholder="2025" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-emerald-500 focus:ring-emerald-500 py-2 px-3">
                     </div>

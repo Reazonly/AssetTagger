@@ -3,11 +3,11 @@
 @section('content')
     <div class="flex justify-between items-center mb-6">
         <div>
-            <h1 class="text-3xl font-bold">{{ $asset->nama_barang }}</h1>
+            <h1 class="text-3xl font-bold text-gray-800">{{ $asset->nama_barang }}</h1>
             <p class="text-lg text-emerald-600 font-mono">{{ $asset->code_asset }}</p>
         </div>
         <div>
-            <a href="{{ route('assets.index') }}" class="text-sm text-gray-600 mr-4">Kembali</a>
+            <a href="{{ route('assets.index') }}" class="text-sm font-semibold text-gray-600 hover:text-gray-900 mr-4">Kembali</a>
             <a href="{{ route('assets.edit', $asset->id) }}" class="bg-emerald-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-emerald-700">Edit Aset</a>
         </div>
     </div>
@@ -47,7 +47,14 @@
             <div class="bg-white p-6 rounded-lg border shadow-sm">
                 <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Informasi Pembelian & Dokumen</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4 text-sm">
-                    <div><strong class="text-gray-500 block">Tahun Pembelian:</strong> {{ $asset->thn_pembelian ?? 'N/A' }}</div>
+                    <div>
+                        <strong class="text-gray-500 block">Tanggal Beli:</strong> 
+                        {{ $asset->tanggal_pembelian ? \Carbon\Carbon::parse($asset->tanggal_pembelian)->isoFormat('dddd, D MMMM') : 'N/A' }}
+                    </div>
+                    <div>
+                        <strong class="text-gray-500 block">Tahun Beli:</strong> 
+                        {{ $asset->thn_pembelian ?? 'N/A' }}
+                    </div>
                     <div><strong class="text-gray-500 block">Nomor PO:</strong> {{ $asset->po_number ?? 'N/A' }}</div>
                     <div><strong class="text-gray-500 block">Harga:</strong> Rp {{ number_format($asset->harga_total, 0, ',', '.') }}</div>
                     <div><strong class="text-gray-500 block">Sumber Dana:</strong> {{ $asset->sumber_dana ?? 'N/A' }}</div>
@@ -59,18 +66,18 @@
             {{-- KOTAK 4: INFORMASI TAMBAHAN --}}
             <div class="bg-white p-6 rounded-lg border shadow-sm">
                 <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Informasi Tambahan</h3>
-                <div class="space-y-4 text-sm">
+                <div class="text-sm space-y-3">
                     <div>
-                        <strong class="text-gray-500 block mb-1">Item Termasuk:</strong>
-                        <p class="pl-4">{{ $asset->include_items ?? 'N/A' }}</p>
+                        <strong class="text-gray-500">Item Termasuk:</strong>
+                        <p class="text-gray-700">{{ $asset->include_items ?? 'N/A' }}</p>
                     </div>
                     <div>
-                        <strong class="text-gray-500 block mb-1">Peruntukan:</strong>
-                        <p class="pl-4">{{ $asset->peruntukan ?? 'N/A' }}</p>
+                        <strong class="text-gray-500">Peruntukan:</strong>
+                        <p class="text-gray-700">{{ $asset->peruntukan ?? 'N/A' }}</p>
                     </div>
                     <div>
-                        <strong class="text-gray-500 block mb-1">Keterangan:</strong>
-                        <p class="pl-4">{{ $asset->keterangan ?? 'N/A' }}</p>
+                        <strong class="text-gray-500">Keterangan:</strong>
+                        <p class="text-gray-700">{{ $asset->keterangan ?? 'N/A' }}</p>
                     </div>
                 </div>
             </div>
