@@ -8,6 +8,8 @@
             <p class="text-sm text-gray-500 mt-1">Kelola dan cari semua aset perusahaan.</p>
         </div>
         
+                {{-- tes --}}
+
         {{-- Grup Tombol & Pencarian --}}
         <div class="flex items-center gap-2 w-full sm:w-auto">
              {{-- Form Pencarian --}}
