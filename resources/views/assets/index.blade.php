@@ -4,7 +4,7 @@
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         {{-- Judul Halaman --}}
         <div>
-            <h1 class="text-3xl font-bold text-gray-800">Daftar Aset tes</h1>
+            <h1 class="text-3xl font-bold text-gray-800">Daftar Aset</h1>
             <p class="text-sm text-gray-500 mt-1">Kelola dan cari semua aset perusahaan rafli.</p>
         </div>
         
