@@ -53,9 +53,9 @@
                x-transition:leave="transition ease-in duration-300"
                x-transition:leave-start="translate-x-0"
                x-transition:leave-end="-translate-x-full"
-               class="w-64 bg-jg-blue text-white flex-shrink-0 flex flex-col z-40 md:relative absolute h-full">
+               class="w-64 bg-sky-600 text-white flex-shrink-0 flex flex-col z-40 md:relative absolute h-full">
             {{-- Logo --}}
-            <div class="flex items-center justify-center h-20 border-b border-white/20">
+            <div class="flex items-center justify-center h-20 bg-white border-b border-gray-200">
                 <img src="{{ asset('images/jhonlin_logo.png') }}" alt="Jhonlin Group Logo" class="h-10">
             </div>
 
