@@ -54,8 +54,7 @@
             <div class="bg-white p-6 rounded-lg border shadow-sm">
                 <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Informasi Pembelian & Dokumen</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4 text-sm">
-                    <div><strong class="text-gray-500 block">Tanggal Beli:</strong> {{ $asset->tanggal_pembelian ? \Carbon\Carbon::parse($asset->tanggal_pembelian)->isoFormat('D MMMM YYYY') : 'N/A' }}</div>
-                    <div><strong class="text-gray-500 block">Tahun Beli:</strong> {{ $asset->thn_pembelian ?? 'N/A' }}</div>
+                    <div><strong class="text-gray-500 block">Tanggal Beli:</strong> {{ $asset->tanggal_pembelian ? $asset->tanggal_pembelian->isoFormat('D MMMM YYYY') : 'N/A' }}</div>
                     <div><strong class="text-gray-500 block">Harga:</strong> Rp {{ number_format($asset->harga_total, 0, ',', '.') }}</div>
                     <div><strong class="text-gray-500 block">Nomor PO:</strong> {{ $asset->po_number ?? 'N/A' }}</div>
                     <div><strong class="text-gray-500 block">Nomor BAST:</strong> {{ $asset->nomor ?? 'N/A' }}</div>
@@ -87,20 +86,20 @@
                 <ul class="space-y-4 text-sm">
                     @forelse ($asset->history as $h)
                         <li class="border-b pb-3">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="font-semibold text-gray-800">{{ $h->user->nama_pengguna ?? 'Pengguna Dihapus' }}</p>
-                                    <p class="text-xs text-gray-500">{{ $h->user->jabatan ?? 'Jabatan tidak diketahui' }}</p>
-                                </div>
+                            <div class="flex justify-between items-center">
+                                <p class="font-semibold text-gray-800">{{ $h->user->nama_pengguna ?? 'Pengguna Dihapus' }}</p>
                                 @if(is_null($h->tanggal_selesai) && $asset->user_id == $h->user_id)
                                     <span class="flex-shrink-0 text-xs bg-green-100 text-green-800 font-semibold px-2 py-1 rounded-full">Saat Ini</span>
                                 @endif
                             </div>
-                            <div class="text-xs text-gray-400 mt-2">
-                                <span>Mulai: {{ \Carbon\Carbon::parse($h->tanggal_mulai)->format('d M Y') }}</span>
-                                @if($h->tanggal_selesai)
-                                    <span> - Selesai: {{ \Carbon\Carbon::parse($h->tanggal_selesai)->format('d M Y') }}</span>
-                                @endif
+                            <div class="mt-1">
+                                <p class="text-xs text-gray-500">{{ $h->user->jabatan ?? 'Jabatan tidak diketahui' }}</p>
+                                <p class="text-xs text-gray-400 mt-1">
+                                    <span>Mulai: {{ \Carbon\Carbon::parse($h->tanggal_mulai)->format('d M Y') }}</span>
+                                    @if($h->tanggal_selesai)
+                                        <span> - Selesai: {{ \Carbon\Carbon::parse($h->tanggal_selesai)->format('d M Y') }}</span>
+                                    @endif
+                                </p>
                             </div>
                         </li>
                     @empty

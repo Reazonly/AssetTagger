@@ -129,12 +129,11 @@
                     <label for="spesifikasi_manual" class="block text-sm font-medium text-gray-600">Detail Spesifikasi / Deskripsi</label>
                     <textarea name="spesifikasi_manual" id="spesifikasi_manual" rows="6" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">{{ old('spesifikasi_manual', $asset->spesifikasi_manual) }}</textarea>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8 mt-8 pt-6 border-t">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8 mt-8 pt-6 border-t">
                     <div>
                         <label for="tanggal_pembelian" class="block text-sm font-medium text-gray-600">Tanggal Pembelian</label>
                         <input type="date" name="tanggal_pembelian" id="tanggal_pembelian" value="{{ old('tanggal_pembelian', $asset->tanggal_pembelian ? $asset->tanggal_pembelian->format('Y-m-d') : '') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
                     </div>
-                    <div><label for="thn_pembelian" class="block text-sm font-medium text-gray-600">Tahun Beli</label><input type="number" name="thn_pembelian" value="{{ old('thn_pembelian', $asset->thn_pembelian) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
                     <div><label for="harga_total" class="block text-sm font-medium text-gray-600">Harga (Rp)</label><input type="number" name="harga_total" value="{{ old('harga_total', $asset->harga_total) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
                     <div><label for="code_aktiva" class="block text-sm font-medium text-gray-600">Kode Aktiva</label><input type="text" name="code_aktiva" value="{{ old('code_aktiva', $asset->code_aktiva) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
                     <div><label for="po_number" class="block text-sm font-medium text-gray-600">Nomor PO</label><input type="text" name="po_number" value="{{ old('po_number', $asset->po_number) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
