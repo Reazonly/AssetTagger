@@ -17,12 +17,21 @@
             <nav class="container mx-auto px-6 py-4">
                 <div class="flex items-center justify-between">
                     <a href="{{ route('assets.index') }}" class="text-2xl font-bold text-gray-800 hover:text-emerald-600 transition-colors">
-                        Data Asset Jhonlin Group
+                        AssetTagger
                     </a>
-                    {{-- Tombol Tambah Aset dihapus dari sini --}}
-                    <div>
-                        {{-- Ruang ini bisa digunakan untuk logo atau menu lain --}}
+                    
+                    {{-- Menampilkan tombol logout hanya jika pengguna sudah login --}}
+                    @auth
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm text-gray-600">Halo, {{ Auth::user()->nama_pengguna }}</span>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="bg-red-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm">
+                                Logout
+                            </button>
+                        </form>
                     </div>
+                    @endauth
                 </div>
             </nav>
         </header>
@@ -53,5 +62,6 @@
         </footer>
     </div>
     @yield('scripts')
+    @stack('scripts')
 </body>
 </html>

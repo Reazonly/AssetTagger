@@ -8,8 +8,6 @@
             <p class="text-sm text-gray-500 mt-1">Kelola dan cari semua aset perusahaan rafli.</p>
         </div>
         
-                {{-- tes --}}
-
         {{-- Grup Tombol & Pencarian --}}
         <div class="flex items-center gap-2 w-full sm:w-auto">
              {{-- Form Pencarian --}}
@@ -21,6 +19,10 @@
                     </button>
                 </div>
             </form>
+            {{-- Tombol Cetak Pilihan --}}
+            <button id="printSelectedBtn" disabled class="bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg transition-colors flex-shrink-0 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                Cetak Pilihan
+            </button>
             {{-- Tombol Import --}}
             <button onclick="document.getElementById('importModal').classList.remove('hidden')" class="bg-gray-700 text-white font-semibold px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors flex-shrink-0">
                 Import
@@ -36,6 +38,9 @@
         <table class="w-full min-w-full">
             <thead class="bg-gray-100">
                 <tr>
+                    <th class="p-3 border-b border-r border-gray-200">
+                        <input type="checkbox" id="selectAllCheckbox" class="h-4 w-4 rounded">
+                    </th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase border-b border-r border-gray-200">Kode Aset</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase border-b border-r border-gray-200">Nama Barang</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase border-b border-r border-gray-200">Pengguna</th>
@@ -46,6 +51,9 @@
             <tbody class="bg-white">
                 @forelse ($assets as $asset)
                     <tr class="border-b border-gray-200 hover:bg-gray-50">
+                        <td class="p-3 border-r border-gray-200 text-center">
+                            <input type="checkbox" name="asset_ids[]" value="{{ $asset->id }}" class="asset-checkbox h-4 w-4 rounded">
+                        </td>
                         <td class="px-6 py-4 text-sm font-medium text-gray-800 border-r border-gray-200">{{ $asset->code_asset }}</td>
                         <td class="px-6 py-4 text-sm text-gray-600 border-r border-gray-200">{{ $asset->nama_barang }}</td>
                         <td class="px-6 py-4 text-sm text-gray-600 border-r border-gray-200">{{ $asset->user->nama_pengguna ?? 'N/A' }}</td>
@@ -53,7 +61,6 @@
                         <td class="px-6 py-4 text-left text-sm whitespace-nowrap">
                             <a href="{{ route('assets.show', $asset->id) }}" class="font-semibold text-emerald-600 hover:text-emerald-800">Lihat</a>
                             <a href="{{ route('assets.edit', $asset->id) }}" class="font-semibold text-emerald-600 hover:text-emerald-800 ml-4">Edit</a>
-                            {{-- Tombol Hapus --}}
                             <form action="{{ route('assets.destroy', $asset->id) }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus aset ini?');">
                                 @csrf
                                 @method('DELETE')
@@ -62,7 +69,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="5" class="text-center py-10 text-gray-500">Aset tidak ditemukan. Coba kata kunci lain.</td></tr>
+                    <tr><td colspan="6" class="text-center py-10 text-gray-500">Aset tidak ditemukan.</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -88,3 +95,58 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const assetCheckboxes = document.querySelectorAll('.asset-checkbox');
+    const printSelectedBtn = document.getElementById('printSelectedBtn');
+
+    function togglePrintButton() {
+        const anyChecked = Array.from(assetCheckboxes).some(cb => cb.checked);
+        printSelectedBtn.disabled = !anyChecked;
+        if (!anyChecked) {
+            printSelectedBtn.classList.add('disabled:bg-gray-300', 'disabled:cursor-not-allowed');
+            printSelectedBtn.classList.remove('hover:bg-blue-600');
+        } else {
+            printSelectedBtn.classList.remove('disabled:bg-gray-300', 'disabled:cursor-not-allowed');
+            printSelectedBtn.classList.add('hover:bg-blue-600');
+        }
+    }
+
+    selectAllCheckbox.addEventListener('change', function () {
+        assetCheckboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+        togglePrintButton();
+    });
+
+    assetCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function () {
+            if (!this.checked) {
+                selectAllCheckbox.checked = false;
+            } else {
+                const allChecked = Array.from(assetCheckboxes).every(cb => cb.checked);
+                selectAllCheckbox.checked = allChecked;
+            }
+            togglePrintButton();
+        });
+    });
+
+    printSelectedBtn.addEventListener('click', function () {
+        const selectedIds = Array.from(assetCheckboxes)
+                                .filter(cb => cb.checked)
+                                .map(cb => cb.value);
+
+        if (selectedIds.length > 0) {
+            let printUrl = "{{ route('assets.print') }}?ids[]=" + selectedIds.join('&ids[]=');
+            window.open(printUrl, '_blank');
+        }
+    });
+
+    // Inisialisasi status tombol saat halaman dimuat
+    togglePrintButton();
+});
+</script>
+@endpush

@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Pagination\Paginator;
+use Carbon\Carbon; // <-- 1. Import library Carbon
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,15 +22,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Memaksa URL hanya saat aplikasi berjalan di mode 'local' (development)
-        // dan memastikan APP_URL di .env sudah diisi dengan benar.
+        // Logika untuk URL ngrok (jika diperlukan)
         if ($this->app->environment('local') && config('app.url') !== 'http://localhost') {
-            
-            // Ambil URL dari file .env MENGGUNAKAN KUNCI 'app.url'
-            $ngrokUrl = config('app.url');
-            
-            // Paksa semua URL yang dibuat oleh Laravel untuk menggunakan URL ini
-            URL::forceRootUrl($ngrokUrl);
+            URL::forceRootUrl(config('app.url'));
         }
+        
+        // Menggunakan style paginasi dari Tailwind CSS
+        Paginator::useTailwind();
+
+        // 2. Mengatur bahasa default untuk semua format tanggal ke Bahasa Indonesia
+        Carbon::setLocale('id');
     }
 }
