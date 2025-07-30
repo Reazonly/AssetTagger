@@ -5,7 +5,7 @@
         {{-- Judul Halaman --}}
         <div>
             <h1 class="text-3xl font-bold text-gray-800">Daftar Aset</h1>
-            <p class="text-sm text-gray-500 mt-1">Kelola dan cari semua aset perusahaan rafli.</p>
+            <p class="text-sm text-gray-500 mt-1">Kelola dan cari semua aset perusahaan.</p>
         </div>
         
         {{-- Grup Tombol & Pencarian --}}
