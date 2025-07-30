@@ -179,12 +179,18 @@ class AssetController extends Controller
     }
     
     /**
-     * Menghapus aset dari database.
+     * Menghapus aset dari database beserta semua riwayatnya.
      */
     public function destroy(Asset $asset)
     {
+        // Hapus semua catatan riwayat yang terkait dengan aset ini terlebih dahulu
+        // untuk memastikan tidak ada data yang tertinggal (orphaned data).
+        $asset->history()->delete();
+
+        // Setelah riwayat bersih, hapus aset itu sendiri.
         $asset->delete();
-        return redirect()->route('assets.index')->with('success', 'Aset berhasil dihapus.');
+
+        return redirect()->route('assets.index')->with('success', 'Aset dan semua riwayatnya berhasil dihapus.');
     }
 
     /**
