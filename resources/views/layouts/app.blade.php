@@ -98,13 +98,17 @@
         <div class="flex-1 flex flex-col overflow-hidden">
             <header class="bg-white shadow-sm border-b">
                 <div class="flex items-center justify-between px-6 py-4">
-                    {{-- Toggle Sidebar Button --}}
-                    <button @click="isSidebarOpen = !isSidebarOpen" class="text-gray-500 hover:text-jg-green focus:outline-none p-2 rounded-md"> {{-- Added padding and rounded corners --}}
-                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                    </button>
+                    <div class="flex items-center">
+                        {{-- Toggle Sidebar Button --}}
+                        <button @click="isSidebarOpen = !isSidebarOpen" class="text-gray-500 hover:text-jg-green focus:outline-none p-2 rounded-md"> {{-- Added padding and rounded corners --}}
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        </button>
+                        
+                        {{-- Header Title --}}
+                        <h1 class="text-xl font-semibold text-gray-700 ml-4">Manajemen Aset</h1>
+                    </div>
 
-                    {{-- Logout button in header (optional, if you want it duplicated or only here) --}}
-                    {{-- Removed the duplicated logout form from here as it's already in the sidebar @auth block --}}
+                    {{-- Other header elements can go here, aligned to the right --}}
                 </div>
             </header>
 
