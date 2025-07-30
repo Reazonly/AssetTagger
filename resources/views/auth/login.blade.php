@@ -16,7 +16,7 @@
     <div class="min-h-screen flex items-center justify-center">
         <div class="w-full max-w-md bg-white rounded-xl shadow-2xl p-8 m-4">
             <div class="flex justify-center mb-6">
-                <img src="https://jhonlingroup.co.id/wp-content/uploads/2022/11/logo-jg-scaled-e1668585133333.webp" alt="Logo Jhonlin Group" class="h-16">
+                <img src="{{ asset('images/jhonlin_logo.png') }}" alt="Logo Jhonlin Group" class="h-16">
             </div>
             <h2 class="text-2xl font-bold text-center text-gray-800 mb-1">Selamat Datang</h2>
             <p class="text-center text-gray-500 mb-8">Silakan masuk untuk melanjutkan</p>
