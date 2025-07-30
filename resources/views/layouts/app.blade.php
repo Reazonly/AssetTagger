@@ -93,7 +93,7 @@
 
         <div class="flex-1 flex flex-col overflow-hidden">
             <header class="bg-white shadow-sm border-b">
-                <div class="flex items-center justify-between px-6 py-4">
+                <div class="flex items-center justify-between px-6 h-20">
                     <div class="flex items-center">
                         {{-- Toggle Sidebar Button --}}
                         <button @click="isSidebarOpen = !isSidebarOpen" class="text-gray-500 hover:text-jg-green focus:outline-none p-2 rounded-md">
