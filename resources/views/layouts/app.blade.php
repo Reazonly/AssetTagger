@@ -1,70 +1,98 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
-    <meta charset="utf-g">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Manajemen Aset')</title>
+    <title>@yield('title', 'Manajemen Aset') - AssetTagger</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    {{-- Alpine.js untuk interaktivitas sidebar --}}
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { font-family: 'Poppins', sans-serif; }
+        [x-cloak] { display: none !important; }
+        /* Konfigurasi warna kustom untuk Tailwind CSS */
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'jg-green': '#0A9A5D',
+                        'jg-green-light': '#44BB7E',
+                        'jg-blue': '#263C92',
+                        'jg-teal': '#459996',
+                    }
+                }
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-900">
-    <div id="app" class="min-h-screen flex flex-col">
-        {{-- Header dengan Aksen Hijau --}}
-        <header class="bg-white shadow-md sticky top-0 z-10">
-            <nav class="container mx-auto px-6 py-4">
-                <div class="flex items-center justify-between">
-                    
-                    <a href="{{ route('assets.index') }}" class="text-2xl font-bold text-gray-800 hover:text-emerald-600 transition-colors">
-                        AssetTagger
-                    </a>
-                
+    <div x-data="{ isSidebarOpen: true }" class="flex h-screen bg-gray-100">
+        
+        <!-- Sidebar -->
+        <aside x-show="isSidebarOpen" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition ease-in duration-300" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full" class="w-64 bg-jg-blue text-white flex-shrink-0 flex flex-col">
+            {{-- Logo --}}
+            <div class="flex items-center justify-center h-20 border-b border-white/20">
+                <img src="{{ asset('images/jhonlin_logo.png') }}" alt="Logo Jhonlin Group" class="h-10">
+            </div>
+            
+            {{-- Menu Navigasi --}}
+            <nav class="mt-6 flex-grow">
+                <a href="{{ route('dashboard') }}" class="flex items-center px-6 py-3 transition-colors {{ request()->routeIs('dashboard') ? 'bg-white/10' : 'hover:bg-white/10' }}">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    <span class="mx-4 font-medium">Dashboard</span>
+                </a>
+                <a href="{{ route('assets.index') }}" class="flex items-center px-6 py-3 transition-colors {{ request()->routeIs('assets.*') ? 'bg-white/10' : 'hover:bg-white/10' }}">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                    <span class="mx-4 font-medium">Manajemen Aset</span>
+                </a>
+            </nav>
 
+            {{-- User Info & Logout --}}
+            @auth
+            <div class="px-6 py-4 border-t border-white/20">
+                <p class="text-sm font-semibold">{{ Auth::user()->nama_pengguna }}</p>
+                <p class="text-xs text-gray-400 truncate">{{ Auth::user()->email }}</p>
+            </div>
+            @endauth
+        </aside>
+
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header -->
+            <header class="bg-white shadow-sm border-b">
+                <div class="flex items-center justify-between px-6 py-4">
+                    {{-- Tombol Buka/Tutup Sidebar --}}
+                    <button @click="isSidebarOpen = !isSidebarOpen" class="text-gray-500 hover:text-jg-green focus:outline-none">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
                     
-                    {{-- Menampilkan tombol logout hanya jika pengguna sudah login --}}
                     @auth
-                    <div class="flex items-center gap-4">
-                        <span class="text-sm text-gray-600">Halo, {{ Auth::user()->nama_pengguna }}</span>
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit" class="bg-red-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm">
-                                Logout
-                            </button>
-                        </form>
-                    </div>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="flex items-center text-sm font-medium text-red-500 hover:text-red-700">
+                            <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                            Logout
+                        </button>
+                    </form>
                     @endauth
                 </div>
-            </nav>
-        </header>
+            </header>
 
-        <main class="flex-grow container mx-auto p-4 sm:p-6">
-            @if (session('success'))
-                <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-5 rounded-md shadow" role="alert">
-                    <p class="font-bold">Sukses</p>
-                    <p>{{ session('success') }}</p>
+            <!-- Main Content -->
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">
+                <div class="container mx-auto px-6 py-8">
+                    @if (session('success'))
+                        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-5 rounded-md shadow" role="alert">
+                            <p class="font-bold">Sukses</p>
+                            <p>{{ session('success') }}</p>
+                        </div>
+                    @endif
+                    
+                    @yield('content')
                 </div>
-            @endif
-            @if (session('error'))
-                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-5 rounded-md shadow" role="alert">
-                    <p class="font-bold">Error</p>
-                    <p>{{ session('error') }}</p>
-                </div>
-            @endif
-            
-            <div class="bg-white p-6 rounded-lg shadow-md">
-                @yield('content')
-            </div>
-        </main>
-
-        <footer class="bg-white mt-auto">
-            <div class="container mx-auto px-6 py-4 text-center text-gray-500">
-                &copy; {{ date('Y') }} Aplikasi Manajemen Aset.
-            </div>
-        </footer>
+            </main>
+        </div>
     </div>
-    @yield('scripts')
     @stack('scripts')
 </body>
 </html>
