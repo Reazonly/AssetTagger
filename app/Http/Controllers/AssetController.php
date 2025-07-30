@@ -80,10 +80,23 @@ class AssetController extends Controller
 
     /**
      * Menampilkan detail spesifik dari sebuah aset, termasuk QR Code.
+     * Termasuk logika untuk memperbaiki data riwayat yang hilang.
      */
     public function show(Asset $asset)
     {
         $asset->load(['user', 'history.user']);
+
+        // Pemeriksaan defensif: Jika aset memiliki pengguna tetapi tidak ada riwayat,
+        // kemungkinan ini adalah data lama. Buat catatan riwayat awal.
+        if ($asset->user && $asset->history->isEmpty()) {
+            $asset->history()->create([
+                'user_id' => $asset->user_id,
+                'tanggal_mulai' => $asset->updated_at ?? now(), // Gunakan tanggal update aset jika ada
+            ]);
+            // Muat ulang relasi riwayat untuk menampilkannya di view
+            $asset->load('history.user');
+        }
+        
         // URL untuk halaman publik yang akan di-scan
         $urlToScan = route('assets.public.show', $asset, true);
         $qrCode = QrCode::size(250)->generate($urlToScan);
@@ -92,10 +105,21 @@ class AssetController extends Controller
 
     /**
      * Menampilkan halaman publik untuk detail aset (hasil dari scan QR).
+     * Termasuk logika untuk memperbaiki data riwayat yang hilang.
      */
     public function publicShow(Asset $asset)
     {
         $asset->load(['user', 'history.user']);
+
+        // Pemeriksaan defensif yang konsisten dengan method show()
+        if ($asset->user && $asset->history->isEmpty()) {
+            $asset->history()->create([
+                'user_id' => $asset->user_id,
+                'tanggal_mulai' => $asset->updated_at ?? now(),
+            ]);
+            $asset->load('history.user');
+        }
+
         return view('assets.public-show', compact('asset'));
     }
 
