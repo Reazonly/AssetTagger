@@ -16,10 +16,11 @@
         <header class="bg-white shadow-md sticky top-0 z-10">
             <nav class="container mx-auto px-6 py-4">
                 <div class="flex items-center justify-between">
+                    <img src="{{ asset('images/jhonlin_logo.png') }}" alt="Logo Jhonlin Group" class="h-16">
                     <a href="{{ route('assets.index') }}" class="text-2xl font-bold text-gray-800 hover:text-emerald-600 transition-colors">
                         AssetTagger
                     </a>
-                <img src="{{ asset('images/jhonlin_logo.png') }}" alt="Logo Jhonlin Group" class="h-16">
+                
 
                     
                     {{-- Menampilkan tombol logout hanya jika pengguna sudah login --}}
