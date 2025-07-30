@@ -12,7 +12,9 @@ use Carbon\Carbon;
 
 class AssetController extends Controller
 {
-    // ... (method index, create, show, dll tidak berubah) ...
+    /**
+     * Menampilkan daftar semua aset dengan fungsionalitas pencarian dan paginasi.
+     */
     public function index(Request $request)
     {
         $search = $request->input('search');
@@ -32,12 +34,18 @@ class AssetController extends Controller
         return view('assets.index', compact('assets', 'search'));
     }
 
+    /**
+     * Menampilkan form untuk membuat aset baru.
+     */
     public function create()
     {
         $users = User::all();
         return view('assets.create', compact('users'));
     }
 
+    /**
+     * Menyimpan aset baru ke dalam database dan membuat catatan riwayat awal.
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -45,38 +53,55 @@ class AssetController extends Controller
             'nama_barang' => 'required|string',
         ]);
 
+        $assetData = $request->all();
+
         // Logika untuk memisahkan tanggal dan tahun dari input form
         if ($request->filled('tanggal_pembelian')) {
-            $request->merge([
-                'thn_pembelian' => Carbon::parse($request->tanggal_pembelian)->format('Y')
-            ]);
+            $assetData['thn_pembelian'] = Carbon::parse($request->tanggal_pembelian)->format('Y');
         }
 
+        // Dapatkan atau buat pengguna dan tetapkan user_id
         $userId = $this->getUserIdFromRequest($request);
-        $request->merge(['user_id' => $userId]);
-        $asset = Asset::create($request->all());
+        $assetData['user_id'] = $userId;
+        
+        // Buat aset
+        $asset = Asset::create($assetData);
 
+        // Jika ada pengguna yang ditugaskan, buat catatan riwayat dengan tanggal mulai
         if ($userId) {
-            $asset->history()->create(['user_id' => $userId]);
+            $asset->history()->create([
+                'user_id' => $userId,
+                'tanggal_mulai' => now() // Catat waktu saat aset ditugaskan
+            ]);
         }
 
         return redirect()->route('assets.index')->with('success', 'Aset baru berhasil ditambahkan.');
     }
 
+    /**
+     * Menampilkan detail spesifik dari sebuah aset, termasuk QR Code.
+     */
     public function show(Asset $asset)
     {
         $asset->load(['user', 'history.user']);
+        // URL untuk halaman publik yang akan di-scan
         $urlToScan = route('assets.public.show', $asset, true);
         $qrCode = QrCode::size(250)->generate($urlToScan);
         return view('assets.show', compact('asset', 'qrCode'));
     }
 
+    /**
+     * Menampilkan halaman publik untuk detail aset (hasil dari scan QR).
+     */
     public function publicShow(Asset $asset)
     {
         $asset->load(['user', 'history.user']);
         return view('assets.public-show', compact('asset'));
     }
 
+    /**
+     * Menampilkan form untuk mengedit data aset.
+     */
     public function edit(Asset $asset)
     {
         $asset->load('history.user');
@@ -84,6 +109,9 @@ class AssetController extends Controller
         return view('assets.edit', compact('asset', 'users'));
     }
 
+    /**
+     * Memperbarui data aset di database dan mengelola riwayat pengguna.
+     */
     public function update(Request $request, Asset $asset)
     {
         $request->validate([
@@ -91,15 +119,12 @@ class AssetController extends Controller
             'nama_barang' => 'required|string',
         ]);
         
-        // Menyiapkan data yang akan diupdate
         $updateData = $request->all();
 
-        // Logika baru yang lebih kuat untuk menangani tanggal
+        // Logika baru untuk menangani tanggal pembelian
         if ($request->filled('tanggal_pembelian')) {
-            // Jika tanggal diisi, simpan tanggal dan ekstrak tahunnya
-            $updateData['thn_pembelian'] = \Carbon\Carbon::parse($request->tanggal_pembelian)->format('Y');
+            $updateData['thn_pembelian'] = Carbon::parse($request->tanggal_pembelian)->format('Y');
         } else {
-            // Jika tanggal dikosongkan, pastikan kedua kolom di database juga kosong
             $updateData['tanggal_pembelian'] = null;
             $updateData['thn_pembelian'] = null;
         }
@@ -109,28 +134,38 @@ class AssetController extends Controller
         
         $updateData['user_id'] = $newUserId;
         
-        // Lakukan update menggunakan data yang sudah disiapkan
         $asset->update($updateData);
 
+        // Periksa apakah pengguna telah berubah untuk memperbarui riwayat
         if ($oldUserId != $newUserId) {
+            // Jika ada pengguna lama, akhiri riwayatnya
             if ($oldUserId) {
                 $asset->history()->where('user_id', $oldUserId)->whereNull('tanggal_selesai')->update(['tanggal_selesai' => now()]);
             }
+            // Jika ada pengguna baru, buat riwayat baru untuknya
             if ($newUserId) {
-                $asset->history()->create(['user_id' => $newUserId]);
+                $asset->history()->create([
+                    'user_id' => $newUserId,
+                    'tanggal_mulai' => now() // Catat waktu saat aset ditugaskan ke pengguna baru
+                ]);
             }
         }
 
         return redirect()->route('assets.index')->with('success', 'Data aset berhasil diperbarui.');
     }
     
-    // ... (method destroy, import, print, getUserIdFromRequest tidak berubah) ...
+    /**
+     * Menghapus aset dari database.
+     */
     public function destroy(Asset $asset)
     {
         $asset->delete();
         return redirect()->route('assets.index')->with('success', 'Aset berhasil dihapus.');
     }
 
+    /**
+     * Mengimpor data aset dari file Excel/CSV.
+     */
     public function import(Request $request)
     {
         $request->validate(['file' => 'required|mimes:xlsx,csv']);
@@ -138,17 +173,25 @@ class AssetController extends Controller
         return redirect()->route('assets.index')->with('success', 'Data aset berhasil diimpor.');
     }
     
+    /**
+     * Menyiapkan halaman untuk mencetak label QR code.
+     */
     public function print(Request $request)
     {
         $assetIds = $request->query('ids');
         if ($assetIds && is_array($assetIds) && count($assetIds) > 0) {
             $assets = Asset::whereIn('id', $assetIds)->get();
         } else {
-            $assets = Asset::all();
+            // Jika tidak ada ID yang dipilih, bisa kembali ke halaman index dengan pesan
+            return redirect()->route('assets.index')->with('error', 'Tidak ada aset yang dipilih untuk dicetak.');
         }
         return view('assets.print', compact('assets'));
     }
 
+    /**
+     * Helper function untuk mendapatkan ID pengguna dari request.
+     * Membuat pengguna baru jika 'new_user_name' diisi.
+     */
     private function getUserIdFromRequest(Request $request): ?int
     {
         if ($request->filled('new_user_name')) {
