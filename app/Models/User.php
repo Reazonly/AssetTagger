@@ -8,8 +8,6 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 class User extends Authenticatable
 {
     use HasFactory;
-    
-    // Izinkan semua atribut untuk diisi secara massal, kecuali ID.
     protected $guarded = ['id'];
 
     public function assets()

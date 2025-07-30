@@ -2,26 +2,28 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Asset;
-use App\Models\User;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Menampilkan halaman dashboard dengan ringkasan data aset.
      */
     public function index()
     {
-        // Anda bisa menambahkan logika di sini nanti, contohnya:
+        // Menghitung total semua aset
         $totalAssets = Asset::count();
-        $totalUsers = User::count();
-        $assetsRusak = Asset::where('kondisi', 'RUSAK')->count();
 
-        return view('dashboard.index', [
-            'totalAssets' => $totalAssets,
-            'totalUsers' => $totalUsers,
-            'assetsRusak' => $assetsRusak,
-        ]);
+        // Menghitung aset dengan kondisi 'Baik'
+        // Pastikan Anda memiliki kolom 'kondisi' di tabel 'assets' Anda.
+        $assetsBaik = Asset::where('kondisi', 'Baik')->count();
+
+        // Menghitung aset dengan kondisi 'Rusak'
+        $assetsRusak = Asset::where('kondisi', 'Rusak')->count();
+
+        // Mengirim data ke view dengan path yang benar
+        // 'Dashboard.index' mengarah ke resources/views/Dashboard/index.blade.php
+        return view('Dashboard.index', compact('totalAssets', 'assetsBaik', 'assetsRusak'));
     }
 }

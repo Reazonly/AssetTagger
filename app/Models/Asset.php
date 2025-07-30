@@ -10,6 +10,8 @@ class Asset extends Model
     use HasFactory;
     protected $guarded = ['id'];
 
+    // Pastikan method booted() sudah dihapus dari sini
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');

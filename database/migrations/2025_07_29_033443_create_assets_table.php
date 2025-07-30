@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('assets', function (Blueprint $table) {
             $table->id();
-            $table->string('code_asset')->unique()->comment('Kode Aset Unik');
+            $table->string('code_asset')->unique();
             $table->string('nama_barang');
             $table->string('merk_type')->nullable();
             $table->string('serial_number')->nullable()->unique();
@@ -20,16 +20,19 @@ return new class extends Migration
             $table->string('hdd_ssd')->nullable();
             $table->string('graphics')->nullable();
             $table->string('lcd')->nullable();
+            $table->string('spec_input_type')->default('detailed');
+            $table->text('spesifikasi_manual')->nullable();
             $table->year('thn_pembelian')->nullable();
+            $table->date('tanggal_pembelian')->nullable();
             $table->string('po_number')->nullable();
             $table->decimal('harga_total', 15, 2)->nullable();
             $table->string('sumber_dana')->nullable();
-            $table->string('code_aktiva')->nullable()->comment('Kode Aktiva');
+            $table->string('code_aktiva')->nullable();
             $table->string('kondisi')->nullable();
             $table->string('lokasi')->nullable();
             $table->integer('jumlah')->default(1);
             $table->string('satuan')->default('UNIT');
-            $table->string('nomor')->nullable()->comment('Nomor BAST');
+            $table->string('nomor')->nullable();
             $table->text('include_items')->nullable();
             $table->text('peruntukan')->nullable();
             $table->text('keterangan')->nullable();
