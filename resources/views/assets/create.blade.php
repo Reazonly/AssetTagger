@@ -44,9 +44,7 @@
 
             {{-- Informasi Pengguna --}}
             <div class="bg-white p-6 rounded-lg border shadow-sm">
-                <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-700">Informasi Pengguna</h3>
-                <div><label for="user_id" class="block text-sm font-medium text-gray-600">Pilih Pengguna Awal</label><select name="user_id" id="user_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-emerald-500 focus:ring-emerald-500 py-2 px-3"><option value="">-- Tidak Ada Pengguna --</option>@foreach($users as $user)<option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>{{ $user->nama_pengguna }}</option>@endforeach</select></div>
-                <div class="mt-4 text-center text-sm font-semibold text-gray-500">ATAU</div>
+                
                 <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-8">
                     <div><label for="new_user_name" class="block text-sm font-medium text-gray-600">Tambah Pengguna Baru</label><input type="text" name="new_user_name" id="new_user_name" placeholder="Nama Lengkap" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-emerald-500 focus:ring-emerald-500 py-2 px-3"></div>
                     <div><label for="jabatan" class="block text-sm font-medium text-gray-600">Jabatan</label><input type="text" name="jabatan" id="jabatan" placeholder="Jabatan pengguna baru" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-emerald-500 focus:ring-emerald-500 py-2 px-3"></div>
