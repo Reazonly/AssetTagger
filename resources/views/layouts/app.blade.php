@@ -56,7 +56,7 @@
                class="w-64 bg-sky-600 text-white flex-shrink-0 flex flex-col z-40 md:relative absolute h-full border-r border-gray-300">
             {{-- Logo --}}
             <div class="flex items-center justify-center h-20 bg-white border-b border-gray-200">
-                <img src="{{ asset('images/jhonlin_logo.png') }}" alt="Jhonlin Group Logo" class="h-10">
+                <img src="{{ asset('images/jhonlin_logo.png') }}" alt="Jhonlin Group Logo" class="h-30">
             </div>
 
             {{-- Navigation Menu --}}
