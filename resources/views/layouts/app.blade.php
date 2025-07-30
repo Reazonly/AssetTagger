@@ -19,6 +19,8 @@
                     <a href="{{ route('assets.index') }}" class="text-2xl font-bold text-gray-800 hover:text-emerald-600 transition-colors">
                         AssetTagger
                     </a>
+                <img src="{{ asset('images/jhonlin_logo.png') }}" alt="Logo Jhonlin Group" class="h-16">
+
                     
                     {{-- Menampilkan tombol logout hanya jika pengguna sudah login --}}
                     @auth
