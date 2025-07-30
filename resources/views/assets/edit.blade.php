@@ -15,23 +15,37 @@
 
             <div class="space-y-8">
                 {{-- Informasi Utama --}}
-                <div class="bg-white p-6 rounded-lg border shadow-sm">
-                    <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-700">Informasi Utama</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-8">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-600">Kode Aset</label>
-                            {{-- Kode Aset tidak bisa diedit --}}
-                            <div class="mt-1 block w-full bg-gray-100 border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-500">
-                                {{ $asset->code_asset }}
-                            </div>
+            <div class="bg-white p-6 rounded-lg border shadow-sm">
+                <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-700">Informasi Utama</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-8">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600">Kode Aset</label>
+                        <div class="mt-1 block w-full bg-gray-100 border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-500">
+                            {{ $asset->code_asset }}
                         </div>
-                        <div><label for="nama_barang" class="block text-sm font-medium text-gray-600">Nama Barang</label><input type="text" name="nama_barang" id="nama_barang" value="{{ old('nama_barang', $asset->nama_barang) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-emerald-500 focus:ring-emerald-500 py-2 px-3" required></div>
-                        <div><label for="merk_type" class="block text-sm font-medium text-gray-600">Merk/Tipe</label><input type="text" name="merk_type" id="merk_type" value="{{ old('merk_type', $asset->merk_type) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-emerald-500 focus:ring-emerald-500 py-2 px-3"></div>
-                        <div><label for="serial_number" class="block text-sm font-medium text-gray-600">Serial Number</label><input type="text" name="serial_number" id="serial_number" value="{{ old('serial_number', $asset->serial_number) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-emerald-500 focus:ring-emerald-500 py-2 px-3"></div>
-                        <div><label for="kondisi" class="block text-sm font-medium text-gray-600">Kondisi</label><select name="kondisi" id="kondisi" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-emerald-500 focus:ring-emerald-500 py-2 px-3"><option value="BAIK" {{ old('kondisi', $asset->kondisi) == 'BAIK' ? 'selected' : '' }}>BAIK</option><option value="RUSAK" {{ old('kondisi', $asset->kondisi) == 'RUSAK' ? 'selected' : '' }}>RUSAK</option><option value="DALAM PERBAIKAN" {{ old('kondisi', $asset->kondisi) == 'DALAM PERBAIKAN' ? 'selected' : '' }}>DALAM PERBAIKAN</option></select></div>
-                        <div><label for="lokasi" class="block text-sm font-medium text-gray-600">Lokasi Fisik</label><input type="text" name="lokasi" id="lokasi" value="{{ old('lokasi', $asset->lokasi) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-emerald-500 focus:ring-emerald-500 py-2 px-3"></div>
+                    </div>
+                    <div><label for="nama_barang" class="block text-sm font-medium text-gray-600">Nama Barang</label><input type="text" name="nama_barang" id="nama_barang" value="{{ old('nama_barang', $asset->nama_barang) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required></div>
+                    <div><label for="merk_type" class="block text-sm font-medium text-gray-600">Merk/Tipe</label><input type="text" name="merk_type" id="merk_type" value="{{ old('merk_type', $asset->merk_type) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                    <div><label for="serial_number" class="block text-sm font-medium text-gray-600">Serial Number</label><input type="text" name="serial_number" id="serial_number" value="{{ old('serial_number', $asset->serial_number) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                    <div><label for="kondisi" class="block text-sm font-medium text-gray-600">Kondisi</label><select name="kondisi" id="kondisi" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"><option value="BAIK" {{ old('kondisi', $asset->kondisi) == 'BAIK' ? 'selected' : '' }}>BAIK</option><option value="RUSAK" {{ old('kondisi', $asset->kondisi) == 'RUSAK' ? 'selected' : '' }}>RUSAK</option><option value="DALAM PERBAIKAN" {{ old('kondisi', $asset->kondisi) == 'DALAM PERBAIKAN' ? 'selected' : '' }}>DALAM PERBAIKAN</option></select></div>
+                    <div><label for="lokasi" class="block text-sm font-medium text-gray-600">Lokasi Fisik</label><input type="text" name="lokasi" id="lokasi" value="{{ old('lokasi', $asset->lokasi) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm"></div>
+                    
+                    {{-- FIELD JUMLAH & SATUAN YANG DITAMBAHKAN --}}
+                    <div>
+                        <label for="jumlah" class="block text-sm font-medium text-gray-600">Jumlah</label>
+                        <input type="number" name="jumlah" id="jumlah" value="{{ old('jumlah', $asset->jumlah) }}" min="1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                    </div>
+                    <div>
+                        <label for="satuan" class="block text-sm font-medium text-gray-600">Satuan</label>
+                        <select name="satuan" id="satuan" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                            <option value="Unit" @if(old('satuan', $asset->satuan) == 'Unit') selected @endif>Unit</option>
+                            <option value="Buah" @if(old('satuan', $asset->satuan) == 'Buah') selected @endif>Buah</option>
+                            <option value="Pcs" @if(old('satuan', $asset->satuan) == 'Pcs') selected @endif>Pcs</option>
+                            <option value="Set" @if(old('satuan', $asset->satuan) == 'Set') selected @endif>Set</option>
+                        </select>
                     </div>
                 </div>
+            </div>
 
                 {{-- Informasi Pengguna --}}
                 <div class="bg-white p-6 rounded-lg border shadow-sm">
