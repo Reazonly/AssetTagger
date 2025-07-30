@@ -75,12 +75,13 @@ class AssetController extends Controller
     {
         $request->validate([
             'nama_barang' => 'required|string|max:255',
-            'asset_category' => 'required|string|in:'.implode(',', array_keys($this->assetCategories)),
-            'company_code' => 'required|string|in:'.implode(',', array_keys($this->companyCodes)),
+            'asset_category' => 'required|string',
+            'company_code' => 'required|string',
             'spec_input_type' => 'required|in:detailed,manual',
             'spesifikasi_manual' => 'required_if:spec_input_type,manual|nullable|string',
-            'jumlah' => 'required|integer|min:1', // Validasi untuk jumlah
+            'jumlah' => 'required|integer|min:1',
             'satuan' => 'required|string|max:50',
+            'serial_number' => 'nullable|string|max:255|unique:assets,serial_number',
         ]);
 
         $data = $request->except(['_token', 'asset_category', 'company_code']);
@@ -141,11 +142,18 @@ class AssetController extends Controller
         $request->validate([
             'nama_barang' => 'required|string',
             'serial_number' => 'nullable|string|max:255|unique:assets,serial_number,' . $asset->id,
-            'jumlah' => 'required|integer|min:1', // Validasi untuk jumlah
-            'satuan' => 'required|string|max:50',  // Validasi untuk satuan
+            'jumlah' => 'required|integer|min:1',
+            'satuan' => 'required|string|max:50',
         ]);
         
         $updateData = $request->except(['_token', '_method', 'code_asset']);
+        
+        if ($request->filled('tanggal_pembelian')) {
+            $updateData['thn_pembelian'] = Carbon::parse($request->tanggal_pembelian)->format('Y');
+        } else {
+            $updateData['tanggal_pembelian'] = null;
+            $updateData['thn_pembelian'] = null;
+        }
         
         $oldUserId = $asset->user_id;
         $newUserId = $this->getUserIdFromRequest($request);
@@ -167,7 +175,6 @@ class AssetController extends Controller
 
         return redirect()->route('assets.index')->with('success', 'Data aset berhasil diperbarui.');
     }
-
 
     public function destroy(Asset $asset)
     {

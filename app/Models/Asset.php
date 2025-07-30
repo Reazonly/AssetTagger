@@ -10,7 +10,16 @@ class Asset extends Model
     use HasFactory;
     protected $guarded = ['id'];
 
-    // Pastikan method booted() sudah dihapus dari sini
+    /**
+     * The attributes that should be cast.
+     * Baris ini akan memastikan 'tanggal_pembelian' selalu diperlakukan
+     * sebagai objek tanggal (Carbon), yang memperbaiki masalah format.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'tanggal_pembelian' => 'date',
+    ];
 
     public function user()
     {
