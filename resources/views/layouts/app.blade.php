@@ -14,19 +14,21 @@
     <div id="app" class="min-h-screen flex flex-col">
         {{-- Header dengan Aksen Hijau --}}
         <header class="bg-white shadow-md sticky top-0 z-10">
-            <nav class="container mx-auto px-6 py-4">
+            <nav class="container mx-auto px-6 py-3">
                 <div class="flex items-center justify-between">
-                    <img src="{{ asset('images/jhonlin_logo.png') }}" alt="Logo Jhonlin Group" class="h-16">
-                    <a href="{{ route('assets.index') }}" class="text-2xl font-bold text-gray-800 hover:text-emerald-600 transition-colors">
-                        AssetTagger
-                    </a>
-                
-
                     
-                    {{-- Menampilkan tombol logout hanya jika pengguna sudah login --}}
+                    {{-- Sisi Kiri: Logo dan Judul Aplikasi --}}
+                    <div class="flex items-center gap-4">
+                        <img src="{{ asset('images/jhonlin_logo.png') }}" alt="Logo Jhonlin Group" class="h-12">
+                        <a href="{{ route('assets.index') }}" class="text-2xl font-bold text-gray-800 hover:text-emerald-600 transition-colors">
+                            AssetTagger
+                        </a>
+                    </div>
+                    
+                    {{-- Sisi Kanan: Informasi Pengguna dan Tombol Logout --}}
                     @auth
                     <div class="flex items-center gap-4">
-                        <span class="text-sm text-gray-600">Halo, {{ Auth::user()->nama_pengguna }}</span>
+                        <span class="text-sm text-gray-600 hidden sm:block">Halo, {{ Auth::user()->nama_pengguna }}</span>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <button type="submit" class="bg-red-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm">
