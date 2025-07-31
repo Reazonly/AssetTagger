@@ -81,10 +81,19 @@
             @auth
             <div class="px-6 py-4 border-t border-white/20">
                 <div class="flex items-center mb-2"> {{-- Flex container for profile pic and text --}}
-                    {{-- Profile Picture (Always default) --}}
-                    <img src="{{ asset('images/default_profile.png') }}" 
-                         alt="Default Profile" 
-                         class="h-10 w-10 rounded-full object-cover mr-3 border border-white">
+                    {{-- Profile Picture (Initials) --}}
+                    <div class="h-10 w-10 rounded-full bg-sky-700 flex items-center justify-center mr-3 border border-white text-lg font-semibold text-white uppercase">
+                        @php
+                            $nameParts = explode(' ', Auth::user()->nama_pengguna);
+                            $initials = '';
+                            if (count($nameParts) > 1) {
+                                $initials = strtoupper(substr($nameParts[0], 0, 1) . substr(end($nameParts), 0, 1));
+                            } else {
+                                $initials = strtoupper(substr($nameParts[0], 0, 1));
+                            }
+                        @endphp
+                        {{ $initials }}
+                    </div>
                     <div>
                         <p class="text-sm font-semibold">{{ Auth::user()->nama_pengguna }}</p>
                         <p class="text-xs text-gray-400 truncate">{{ Auth::user()->email }}</p>
