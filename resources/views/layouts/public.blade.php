@@ -17,8 +17,10 @@
         <main class="bg-white p-6 sm:p-8 rounded-lg shadow-lg max-w-4xl mx-auto">
             @yield('content')
         </main>
-        <footer class="text-center text-gray-400 text-xs mt-6">
-            Powered by AssetTagger
+        <footer class="text-center text-gray-400 text-xs mt-6 flex items-center justify-center">
+            {{-- Tambahkan gambar di sini --}}
+            <img src="{{ asset('images/jhonlin_logo.png') }}" alt="Jhonlin Group Logo" class="h-5 mr-2">
+            Powered by AssetTagger Jhonlin group
         </footer>
     </div>
 </body>
