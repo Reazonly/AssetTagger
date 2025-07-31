@@ -68,8 +68,7 @@
                     <span class="mx-4 font-medium">Dashboard</span>
                 </a>
                 <a href="{{ route('assets.index') }}" class="mt-2 flex items-center px-4 py-3 rounded-lg transition-colors duration-200 {{ request()->routeIs('assets.*') ? 'bg-jg-green' : 'hover:bg-white/20' }}">
-
-                    <span class="mx-4 font-medium">Manajemen Aset Jhonlin</span>
+                    <span class="mx-4 font-medium">Manajemen Aset</span>
                 </a>
             </nav>
 
@@ -109,7 +108,7 @@
                 </div>
             </header>
 
-            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-green-100">
                 <div class="container mx-auto px-6 py-8">
                     @if (session('success'))
                         <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-5 rounded-md shadow" role="alert">
