@@ -68,8 +68,8 @@
                     <span class="mx-4 font-medium">Dashboard</span>
                 </a>
                 <a href="{{ route('assets.index') }}" class="mt-2 flex items-center px-4 py-3 rounded-lg transition-colors duration-200 {{ request()->routeIs('assets.*') ? 'bg-jg-green' : 'hover:bg-white/20' }}">
-                    <img src="{{ asset('images/jhonlin_logo.png') }}" alt="Manajemen Aset" class="h-6 w-6 rounded">
-                    <span class="mx-4 font-medium">Manajemen Aset Jhonlin Group</span>
+
+                    <span class="mx-4 font-medium">Manajemen Aset Jhonlin</span>
                 </a>
             </nav>
 
@@ -99,7 +99,7 @@
                         </button>
                         
                         {{-- Header Title --}}
-                        <h1 class="text-xl font-semibold text-gray-700 ml-4">Manajemen Aset</h1>
+                        <h1 class="text-xl font-semibold text-gray-700 ml-4">Manajemen Aset Jhonlin Group</h1>
                     </div>
 
                     {{-- Header Logo --}}
