@@ -4,34 +4,46 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes; // Import untuk SoftDeletes
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Asset extends Model
 {
-    // Menggunakan HasFactory dan SoftDeletes
+    /**
+     * The HasFactory and SoftDeletes traits are used for model factories and soft deleting.
+     */
     use HasFactory, SoftDeletes;
 
+    /**
+     * The attributes that aren't mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $guarded = ['id'];
 
     /**
-     * The attributes that should be cast.
-     * Baris ini akan memastikan 'tanggal_pembelian' selalu diperlakukan
-     * sebagai objek tanggal (Carbon), yang memperbaiki masalah format.
+     * The attributes that should be cast to native types.
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $casts = [
         'tanggal_pembelian' => 'date',
     ];
 
+    /**
+     * Get the user that owns the asset.
+     */
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    /**
+     * Get the history records for the asset.
+     * Note: This assumes you have an 'AssetHistory' model defined in your application.
+     */
     public function history()
     {
-        // Menambahkan orderBy untuk mengurutkan riwayat dari yang terbaru
+        // Orders the history records from the newest to the oldest.
         return $this->hasMany(AssetHistory::class)->orderBy('tanggal_mulai', 'desc');
     }
 }
