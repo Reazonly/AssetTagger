@@ -9,6 +9,7 @@ class Asset extends Model
 {
     use HasFactory;
     protected $guarded = ['id'];
+    use HasFactory, SoftDeletes;
 
     /**
      * The attributes that should be cast.
