@@ -60,7 +60,7 @@
             </div>
 
             {{-- Navigation Menu --}}
-         <nav class="mt-6 flex-grow px-4">
+        <nav class="mt-6 flex-grow px-4">
     <a href="{{ route('dashboard') }}" class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 
         {{ request()->routeIs('dashboard') ? 'bg-jg-green text-gray-200' : 'text-white hover:bg-white/20 hover:text-gray-200' }}">
         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
