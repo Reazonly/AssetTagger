@@ -112,7 +112,7 @@
                 </div>
             </header>
 
-            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-green-100">
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-green-700">
                 <div class="container mx-auto px-6 py-8">
                     @if (session('success'))
                         <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-5 rounded-md shadow" role="alert">
