@@ -33,7 +33,7 @@
                     colors: {
                         'jg-green': '#0A9A5D',
                         'jg-green-light': '#44BB7E',
-                        'jg-blue': '#263C92',
+                        'jg-blue': '#3b82f6',
                         'jg-teal': '#459996',
                     }
                 }
