@@ -51,6 +51,7 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
 
             // Prepare data for asset creation/update
             $assetData = [
+                'code_asset'        => 'PENDING_IMPORT', // Add a placeholder to prevent SQL error
                 'nama_barang'       => trim($row['nama_item']),
                 'category_id'       => $category ? $category->id : null,
                 'user_id'           => $user ? $user->id : null,
@@ -79,22 +80,19 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
             ];
             
             // Use a unique identifier for updateOrCreate, e.g., serial_number if available and unique
-            // If not, we might need a different strategy. For now, let's assume S/N is the key.
             $uniqueIdentifier = ['serial_number' => $assetData['serial_number']];
 
-            // Only use S/N for lookup if it's not null
-            if (is_null($assetData['serial_number'])) {
+            // Only use S/N for lookup if it's not null and not empty
+            if (is_null($assetData['serial_number']) || trim($assetData['serial_number']) === '') {
                 // If S/N is null, we can't reliably update, so we create a new asset.
-                // A 'code_asset' will be generated upon creation.
                 $asset = Asset::create($assetData);
             } else {
                 // If S/N exists, try to update or create
                 $asset = Asset::updateOrCreate($uniqueIdentifier, $assetData);
             }
 
-
-            // 4. Update Asset Code if it was newly created
-            if ($asset->wasRecentlyCreated) {
+            // 4. Update Asset Code if it was newly created or is still a placeholder
+            if ($asset->wasRecentlyCreated || $asset->code_asset === 'PENDING_IMPORT') {
                 $asset->code_asset = $this->generateAssetCode($asset);
                 $asset->save();
             }
@@ -109,6 +107,9 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
      */
     private function generateAssetCode(Asset $asset): string
     {
+        // Refresh the asset instance to make sure relations are loaded
+        $asset->refresh();
+
         $namaBarang = strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $asset->nama_barang), 0, 3));
         
         $category = $asset->category;
