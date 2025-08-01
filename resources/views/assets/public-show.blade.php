@@ -1,9 +1,25 @@
 @extends('layouts.public')
 @section('title', 'Detail Aset - ' . $asset->code_asset)
 @section('content')
-    <div class="border-b pb-4 mb-8">
+    <div class="border-b pb-4 mb-6">
         <h1 class="text-3xl font-bold text-gray-800">{{ $asset->nama_barang }}</h1>
         <p class="text-lg text-emerald-600 font-mono">{{ $asset->code_asset }}</p>
+    </div>
+
+    {{-- Tombol Aksi Baru --}}
+    <div class="flex items-center gap-3 mb-8">
+        <a href="{{ route('assets.export', ['ids[]' => $asset->id]) }}" class="flex items-center bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Export ke Excel
+        </a>
+        <button id="shareBtn" class="flex items-center bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+            </svg>
+            <span id="shareBtnText">Bagikan</span>
+        </button>
     </div>
 
     <div class="space-y-8">
@@ -92,4 +108,51 @@
             </ul>
         </div>
     </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const shareBtn = document.getElementById('shareBtn');
+    const shareBtnText = document.getElementById('shareBtnText');
+
+    shareBtn.addEventListener('click', async () => {
+        const shareData = {
+            title: 'Detail Aset: {{ $asset->nama_barang }}',
+            text: 'Lihat detail untuk aset {{ $asset->nama_barang }} ({{ $asset->code_asset }})',
+            url: window.location.href
+        };
+
+        // Coba gunakan Web Share API (untuk mobile)
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+                // Tidak perlu feedback tambahan karena dialog share sudah muncul
+            } catch (err) {
+                console.error("Gagal membagikan:", err);
+            }
+        } else {
+            // Fallback: Salin ke clipboard (untuk desktop)
+            try {
+                const textArea = document.createElement('textarea');
+                textArea.value = window.location.href;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+
+                // Beri feedback visual
+                const originalText = shareBtnText.textContent;
+                shareBtnText.textContent = 'Link Disalin!';
+                setTimeout(() => {
+                    shareBtnText.textContent = originalText;
+                }, 2000);
+
+            } catch (err) {
+                console.error('Gagal menyalin link:', err);
+                alert('Gagal menyalin link ke clipboard.');
+            }
+        }
+    });
+});
+</script>
 @endsection

@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Asset;
 use App\Models\User;
 use App\Imports\AssetsImport;
-use App\Exports\AssetsExport; // <-- Pastikan ini ada
+use App\Exports\AssetsExport; // Pastikan ini ada
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;

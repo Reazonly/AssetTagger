@@ -1,52 +1,53 @@
 @extends('layouts.app')
 @section('title', 'Daftar Aset')
 @section('content')
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+    {{-- Header Halaman yang Diperbaiki --}}
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         {{-- Judul Halaman --}}
         <div>
             <h1 class="text-3xl font-bold text-gray-800">Daftar Aset</h1>
             <p class="text-sm text-gray-500 mt-1">Kelola dan cari semua aset perusahaan</p>
         </div>
         
-        {{-- Grup Tombol & Pencarian --}}
-        <div class="flex items-center gap-2 w-full sm:w-auto">
-             {{-- Form Pencarian --}}
-            <form action="{{ route('assets.index') }}" method="GET" class="w-full sm:w-auto flex-grow">
+        {{-- Grup Tombol & Pencarian yang Responsif --}}
+        <div class="w-full md:w-auto flex flex-col md:flex-row items-start md:items-center gap-2">
+            {{-- Form Pencarian --}}
+            <form action="{{ route('assets.index') }}" method="GET" class="w-full md:w-auto">
                 <div class="relative">
-                    <input type="text" name="search" placeholder="Cari aset..." value="{{ $search ?? '' }}" class="w-full sm:w-64 pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <input type="text" name="search" placeholder="Cari aset..." value="{{ $search ?? '' }}" class="w-full md:w-64 pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     <button type="submit" class="absolute right-0 top-0 mt-2 mr-3 text-gray-500 hover:text-emerald-600">
                         <svg class="h-5 w-5" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </button>
                 </div>
             </form>
-
-            {{-- Tombol Cetak Pilihan --}}
-            <button id="printSelectedBtn" disabled class="bg-gray-400 text-white font-semibold px-4 py-2 rounded-lg transition-colors flex-shrink-0 disabled:bg-gray-300 disabled:cursor-not-allowed">
-                Cetak Label
-            </button>
-
-            <!-- TOMBOL EXPORT Pilihan -->
-            <button id="exportSelectedBtn" disabled 
-               class="flex items-center bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex-shrink-0 disabled:bg-gray-300 disabled:cursor-not-allowed">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Export Pilihan
-            </button>
             
-            {{-- Tombol Import --}}
-            <button onclick="document.getElementById('importModal').classList.remove('hidden')" class="bg-gray-700 text-white font-semibold px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors flex-shrink-0">
-                Import
-            </button>
-            
-            {{-- Tombol Tambah Aset --}}
-            <a href="{{ route('assets.create') }}" class="bg-emerald-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors flex-shrink-0">
-                + Tambah
-            </a>
+            {{-- Grup Tombol Aksi --}}
+            <div class="w-full md:w-auto flex items-center gap-2 flex-wrap">
+                <button id="printSelectedBtn" disabled class="bg-gray-400 text-white font-semibold px-4 py-2 rounded-lg transition-colors flex-shrink-0 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                    Cetak Label
+                </button>
+
+                <button id="exportSelectedBtn" disabled 
+                   class="flex items-center bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex-shrink-0 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Export
+                </button>
+                
+                <button onclick="document.getElementById('importModal').classList.remove('hidden')" class="bg-gray-700 text-white font-semibold px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors flex-shrink-0">
+                    Import
+                </button>
+                
+                <a href="{{ route('assets.create') }}" class="bg-emerald-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors flex-shrink-0">
+                    + Tambah
+                </a>
+            </div>
         </div>
     </div>
 
-    <div class="overflow-hidden border border-gray-200 rounded-lg shadow">
+    {{-- Sisa Kode (Tabel, Modal, Script) Tetap Sama --}}
+    <div class="overflow-x-auto border border-gray-200 rounded-lg shadow">
         <table class="w-full min-w-full">
             <thead class="bg-gray-100">
                 <tr>
@@ -87,12 +88,10 @@
         </table>
     </div>
     
-    {{-- Link Paginasi --}}
     <div class="mt-6">
         {{ $assets->appends(['search' => $search ?? ''])->links() }}
     </div>
 
-    {{-- Modal untuk Import Excel --}}
     <div id="importModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-20">
         <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <h3 class="text-lg font-medium text-gray-900">Import Data dari Excel</h3>
@@ -114,27 +113,22 @@ document.addEventListener('DOMContentLoaded', function () {
     const selectAllCheckbox = document.getElementById('selectAllCheckbox');
     const assetCheckboxes = document.querySelectorAll('.asset-checkbox');
     const printSelectedBtn = document.getElementById('printSelectedBtn');
-    const exportSelectedBtn = document.getElementById('exportSelectedBtn'); // Tombol export baru
+    const exportSelectedBtn = document.getElementById('exportSelectedBtn');
 
     function toggleActionButtons() {
         const anyChecked = Array.from(assetCheckboxes).some(cb => cb.checked);
         
-        // Toggle tombol Cetak
         printSelectedBtn.disabled = !anyChecked;
+        exportSelectedBtn.disabled = !anyChecked;
+
         if (!anyChecked) {
             printSelectedBtn.classList.add('disabled:bg-gray-300', 'disabled:cursor-not-allowed');
             printSelectedBtn.classList.remove('hover:bg-blue-600');
-        } else {
-            printSelectedBtn.classList.remove('disabled:bg-gray-300', 'disabled:cursor-not-allowed');
-            printSelectedBtn.classList.add('hover:bg-blue-600');
-        }
-
-        // Toggle tombol Export
-        exportSelectedBtn.disabled = !anyChecked;
-         if (!anyChecked) {
             exportSelectedBtn.classList.add('disabled:bg-gray-300', 'disabled:cursor-not-allowed');
             exportSelectedBtn.classList.remove('hover:bg-green-700');
         } else {
+            printSelectedBtn.classList.remove('disabled:bg-gray-300', 'disabled:cursor-not-allowed');
+            printSelectedBtn.classList.add('hover:bg-blue-600');
             exportSelectedBtn.classList.remove('disabled:bg-gray-300', 'disabled:cursor-not-allowed');
             exportSelectedBtn.classList.add('hover:bg-green-700');
         }
@@ -177,11 +171,10 @@ document.addEventListener('DOMContentLoaded', function () {
         
         if (selectedIds.length > 0) {
             let exportUrl = "{{ route('assets.export') }}?ids[]=" + selectedIds.join('&ids[]=');
-            window.location.href = exportUrl; // Menggunakan window.location.href untuk memulai unduhan
+            window.location.href = exportUrl;
         }
     });
 
-    // Inisialisasi status tombol saat halaman dimuat
     toggleActionButtons();
 });
 </script>
