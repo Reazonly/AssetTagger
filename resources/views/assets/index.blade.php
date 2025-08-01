@@ -25,14 +25,14 @@
                 Cetak Label
             </button>
 
-            <!-- TOMBOL EXPORT KE EXCEL -->
-            <a href="{{ route('assets.export', ['search' => $search ?? '']) }}" 
-               class="flex items-center bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex-shrink-0">
+            <!-- TOMBOL EXPORT Pilihan -->
+            <button id="exportSelectedBtn" disabled 
+               class="flex items-center bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex-shrink-0 disabled:bg-gray-300 disabled:cursor-not-allowed">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                Export
-            </a>
+                Export Pilihan
+            </button>
             
             {{-- Tombol Import --}}
             <button onclick="document.getElementById('importModal').classList.remove('hidden')" class="bg-gray-700 text-white font-semibold px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors flex-shrink-0">
@@ -114,9 +114,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const selectAllCheckbox = document.getElementById('selectAllCheckbox');
     const assetCheckboxes = document.querySelectorAll('.asset-checkbox');
     const printSelectedBtn = document.getElementById('printSelectedBtn');
+    const exportSelectedBtn = document.getElementById('exportSelectedBtn'); // Tombol export baru
 
-    function togglePrintButton() {
+    function toggleActionButtons() {
         const anyChecked = Array.from(assetCheckboxes).some(cb => cb.checked);
+        
+        // Toggle tombol Cetak
         printSelectedBtn.disabled = !anyChecked;
         if (!anyChecked) {
             printSelectedBtn.classList.add('disabled:bg-gray-300', 'disabled:cursor-not-allowed');
@@ -125,13 +128,23 @@ document.addEventListener('DOMContentLoaded', function () {
             printSelectedBtn.classList.remove('disabled:bg-gray-300', 'disabled:cursor-not-allowed');
             printSelectedBtn.classList.add('hover:bg-blue-600');
         }
+
+        // Toggle tombol Export
+        exportSelectedBtn.disabled = !anyChecked;
+         if (!anyChecked) {
+            exportSelectedBtn.classList.add('disabled:bg-gray-300', 'disabled:cursor-not-allowed');
+            exportSelectedBtn.classList.remove('hover:bg-green-700');
+        } else {
+            exportSelectedBtn.classList.remove('disabled:bg-gray-300', 'disabled:cursor-not-allowed');
+            exportSelectedBtn.classList.add('hover:bg-green-700');
+        }
     }
 
     selectAllCheckbox.addEventListener('change', function () {
         assetCheckboxes.forEach(checkbox => {
             checkbox.checked = selectAllCheckbox.checked;
         });
-        togglePrintButton();
+        toggleActionButtons();
     });
 
     assetCheckboxes.forEach(checkbox => {
@@ -142,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const allChecked = Array.from(assetCheckboxes).every(cb => cb.checked);
                 selectAllCheckbox.checked = allChecked;
             }
-            togglePrintButton();
+            toggleActionButtons();
         });
     });
 
@@ -157,8 +170,19 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    exportSelectedBtn.addEventListener('click', function() {
+        const selectedIds = Array.from(assetCheckboxes)
+                                .filter(cb => cb.checked)
+                                .map(cb => cb.value);
+        
+        if (selectedIds.length > 0) {
+            let exportUrl = "{{ route('assets.export') }}?ids[]=" + selectedIds.join('&ids[]=');
+            window.location.href = exportUrl; // Menggunakan window.location.href untuk memulai unduhan
+        }
+    });
+
     // Inisialisasi status tombol saat halaman dimuat
-    togglePrintButton();
+    toggleActionButtons();
 });
 </script>
 @endpush
