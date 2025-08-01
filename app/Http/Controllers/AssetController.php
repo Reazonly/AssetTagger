@@ -14,7 +14,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class AssetController extends Controller
 {
-    // ... (semua properti dan method dari atas hingga 'store' tetap sama)
+    // ... (Semua method dari atas hingga store tetap sama)
     private $assetCategories = [
         'ELEC' => 'Elektronik',
         'FURN' => 'Furniture',
@@ -76,6 +76,7 @@ class AssetController extends Controller
 
     public function store(Request $request)
     {
+        // ... (kode store tidak berubah)
         $request->validate([
             'nama_barang' => 'required|string|max:255',
             'asset_category' => 'required|string',
@@ -120,37 +121,27 @@ class AssetController extends Controller
 
     public function show(Asset $asset)
     {
-        try {
-            $asset->load(['user', 'history.user']);
-            $urlToScan = route('assets.public.show', $asset->id);
-            $qrCode = QrCode::size(250)->generate($urlToScan);
-            return view('assets.show', compact('asset', 'qrCode'));
-        } catch (\Throwable $e) {
-            // Tampilkan pesan error detail jika terjadi masalah
-            return response("Terjadi error: " . $e->getMessage() . " di file: " . $e->getFile() . " pada baris: " . $e->getLine(), 500);
-        }
+        $asset->load(['user', 'history.user']);
+        $urlToScan = route('assets.public.show', $asset->id);
+        $qrCode = QrCode::size(250)->generate($urlToScan);
+        return view('assets.show', compact('asset', 'qrCode'));
     }
 
     /**
-     * PERUBAHAN UTAMA: Menambahkan try...catch untuk menangkap error
+     * PERUBAHAN UTAMA: Method ini sekarang akan menampilkan data mentah untuk diagnosis.
      */
     public function publicShow(Asset $asset)
     {
-        try {
-            // Kode ini akan mencoba memuat semua relasi yang dibutuhkan
-            $asset->load(['user', 'history.user']);
-            
-            // Jika berhasil, tampilkan halaman seperti biasa
-            return view('assets.public-show', compact('asset'));
+        // Kita akan memuat semua relasi yang dibutuhkan
+        $asset->load(['user', 'history.user']);
 
-        } catch (\Throwable $e) {
-            // Jika GAGAL, hentikan semua proses dan tampilkan pesan error yang jelas
-            // Ini akan memberi tahu kita apa masalah sebenarnya
-            return response("Terjadi error: " . $e->getMessage() . " di file: " . $e->getFile() . " pada baris: " . $e->getLine(), 500);
-        }
+        // Perintah dd() akan menghentikan eksekusi dan menampilkan isi dari variabel $asset.
+        // Ini akan menunjukkan kepada kita data apa yang sebenarnya dimuat dari database
+        // sebelum dikirim ke view.
+        dd($asset);
     }
 
-    // ... (method edit, update, destroy, import, print, export tetap sama)
+    // ... (sisa method tidak berubah)
     public function edit(Asset $asset)
     {
         return view('assets.edit', [
@@ -161,6 +152,7 @@ class AssetController extends Controller
 
     public function update(Request $request, Asset $asset)
     {
+        // ...
         $request->validate([
             'nama_barang' => 'required|string',
             'serial_number' => 'nullable|string|max:255|unique:assets,serial_number,' . $asset->id,
@@ -200,6 +192,7 @@ class AssetController extends Controller
 
     public function destroy(Asset $asset)
     {
+        // ...
         $asset->history()->delete();
         $asset->delete();
         return redirect()->route('assets.index')->with('success', 'Aset dan semua riwayatnya berhasil dihapus.');
@@ -207,6 +200,7 @@ class AssetController extends Controller
 
     public function import(Request $request)
     {
+        // ...
         $request->validate(['file' => 'required|mimes:xlsx,csv']);
         Excel::import(new AssetsImport, $request->file('file'));
         return redirect()->route('assets.index')->with('success', 'Data aset berhasil diimpor.');
@@ -214,6 +208,7 @@ class AssetController extends Controller
 
     public function print(Request $request)
     {
+        // ...
         $assetIds = $request->query('ids');
         if ($assetIds && is_array($assetIds) && count($assetIds) > 0) {
             $assets = Asset::with('user')->whereIn('id', $assetIds)->get();
@@ -225,6 +220,7 @@ class AssetController extends Controller
 
     public function export(Request $request)
     {
+        // ...
         $assetIds = $request->query('ids');
         $search = $request->query('search');
         $filename = 'aset_data_' . date('Y-m-d_H-i-s') . '.xlsx';
@@ -233,6 +229,7 @@ class AssetController extends Controller
 
     public function downloadPDF(Asset $asset)
     {
+        // ...
         $asset->load('user');
         $pdf = Pdf::loadView('assets.pdf', compact('asset'));
         $filename = 'ASET-' . str_replace('/', '-', $asset->code_asset) . '.pdf';
