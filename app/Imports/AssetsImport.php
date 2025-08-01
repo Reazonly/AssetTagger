@@ -51,7 +51,6 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
 
             // Prepare data for asset creation/update
             $assetData = [
-                'code_asset'        => 'PENDING_IMPORT', // Add a placeholder to prevent SQL error
                 'nama_barang'       => trim($row['nama_item']),
                 'category_id'       => $category ? $category->id : null,
                 'user_id'           => $user ? $user->id : null,
@@ -79,16 +78,25 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
                 'keterangan'        => trim($row['keterangan'] ?? null),
             ];
             
-            // Use a unique identifier for updateOrCreate, e.g., serial_number if available and unique
-            $uniqueIdentifier = ['serial_number' => $assetData['serial_number']];
+            $serialNumber = $assetData['serial_number'];
+            $asset = null;
 
-            // Only use S/N for lookup if it's not null and not empty
-            if (is_null($assetData['serial_number']) || trim($assetData['serial_number']) === '') {
-                // If S/N is null, we can't reliably update, so we create a new asset.
-                $asset = Asset::create($assetData);
+            // Find asset by serial number, including soft-deleted ones.
+            if (!is_null($serialNumber) && trim($serialNumber) !== '') {
+                $asset = Asset::withTrashed()->where('serial_number', $serialNumber)->first();
+            }
+
+            if ($asset) {
+                // If asset exists, update it
+                $asset->update($assetData);
+                // If it was soft-deleted, restore it
+                if ($asset->trashed()) {
+                    $asset->restore();
+                }
             } else {
-                // If S/N exists, try to update or create
-                $asset = Asset::updateOrCreate($uniqueIdentifier, $assetData);
+                // If asset does not exist, create it with a placeholder code
+                $assetData['code_asset'] = 'PENDING_IMPORT';
+                $asset = Asset::create($assetData);
             }
 
             // 4. Update Asset Code if it was newly created or is still a placeholder
