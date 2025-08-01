@@ -1,169 +1,199 @@
 @extends('layouts.app')
 @section('title', 'Daftar Aset')
 @section('content')
-    {{-- Header Halaman dengan Layout Baru --}}
-    <div class="mb-6">
-        {{-- Baris Atas: Judul dan Aksi Utama --}}
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-800">Daftar Aset</h1>
-                <p class="text-sm text-gray-500 mt-1">Kelola dan cari semua aset perusahaan</p>
-            </div>
-            
-            <div class="w-full md:w-auto flex flex-col md:flex-row items-start md:items-center gap-2">
-                {{-- Form Pencarian dan Filter --}}
-                <form action="{{ route('assets.index') }}" method="GET" class="w-full md:w-auto flex flex-wrap items-center gap-2">
-                    <div class="relative flex-grow md:flex-grow-0">
-                        <input type="text" name="search" placeholder="Cari aset..." value="{{ request('search') }}" class="w-full md:w-56 pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                        <span class="absolute right-0 top-0 mt-2 mr-3 text-gray-400">
-                            <svg class="h-5 w-5" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                        </span>
-                    </div>
-                    
-                    <div class="flex-grow md:flex-grow-0">
-                        {{-- Filter Kategori --}}
-                        <select name="category_id" onchange="this.form.submit()" class="w-full border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                            <option value="">Semua Kategori</option>
-                            @foreach($categories as $category)
-                                <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
-                                    {{ $category->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                </form>
-                
-                {{-- Grup Tombol Aksi Utama --}}
-                <div class="w-full md:w-auto flex items-center gap-2 flex-wrap">
-                    <button onclick="document.getElementById('importModal').classList.remove('hidden')" class="bg-gray-700 text-white font-semibold px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors flex-shrink-0">
-                        Import
-                    </button>
-                    <a href="{{ route('assets.create') }}" class="bg-emerald-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors flex-shrink-0">
-                        + Tambah
-                    </a>
-                </div>
-            </div>
-        </div>
+<div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
 
-        {{-- Baris Bawah: Aksi Berdasarkan Pilihan --}}
-        <div class="mt-4 flex items-center gap-2">
-            <button id="printSelectedBtn" disabled class="bg-gray-400 text-white font-semibold px-4 py-2 rounded-lg transition-colors flex-shrink-0 disabled:bg-gray-300 disabled:cursor-not-allowed">
-                Cetak Label
-            </button>
-            <button id="exportSelectedBtn" disabled 
-               class="flex items-center bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex-shrink-0 disabled:bg-gray-300 disabled:cursor-not-allowed">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Export Pilihan
-            </button>
-        </div>
-    </div>
+    {{-- Header: Judul dan Tombol Aksi Utama --}}
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-200 pb-6 mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Daftar Aset</h1>
+            <p class="text-sm text-gray-500 mt-1">Kelola, cari, dan filter semua aset perusahaan.</p>
+        </div>
+        <div class="flex items-center gap-3 mt-4 md:mt-0">
+            <button onclick="document.getElementById('importModal').classList.remove('hidden')" class="inline-flex items-center gap-2 bg-white text-gray-700 font-semibold px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Import
+            </button>
+            <a href="{{ route('assets.create') }}" class="inline-flex items-center gap-2 bg-emerald-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                Tambah Aset
+            </a>
+        </div>
+    </div>
 
-    <div class="overflow-x-auto border border-gray-200 rounded-lg shadow">
-        <table class="w-full min-w-full">
-            <thead class="bg-gray-100">
-                <tr>
-                    <th class="p-3 border-b border-r border-gray-200"><input type="checkbox" id="selectAllCheckbox" class="h-4 w-4 rounded"></th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase border-b border-r border-gray-200">Kode Aset</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase border-b border-r border-gray-200">Nama Barang</th>
-                    {{-- KOLOM BARU --}}
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase border-b border-r border-gray-200">Kategori</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase border-b border-r border-gray-200">Pengguna</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase border-b border-r border-gray-200">Kondisi</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase border-b border-gray-200">Aksi</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white">
-                @forelse ($assets as $asset)
-                    <tr class="border-b border-gray-200 hover:bg-gray-50">
-                        <td class="p-3 border-r border-gray-200 text-center"><input type="checkbox" name="asset_ids[]" value="{{ $asset->id }}" class="asset-checkbox h-4 w-4 rounded"></td>
-                        <td class="px-6 py-4 text-sm font-medium text-gray-800 border-r border-gray-200">{{ $asset->code_asset }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-600 border-r border-gray-200">{{ $asset->nama_barang }}</td>
-                        {{-- DATA KOLOM BARU --}}
-                        <td class="px-6 py-4 text-sm text-gray-600 border-r border-gray-200">{{ optional($asset->category)->name ?? 'N/A' }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-600 border-r border-gray-200">{{ optional($asset->user)->nama_pengguna ?? 'N/A' }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-600 border-r border-gray-200">{{ $asset->kondisi }}</td>
-                        <td class="px-6 py-4 text-left text-sm whitespace-nowrap">
-                            <a href="{{ route('assets.show', $asset->id) }}" class="font-semibold text-emerald-600 hover:text-emerald-800">Lihat</a>
-                            <a href="{{ route('assets.edit', $asset->id) }}" class="font-semibold text-emerald-600 hover:text-emerald-800 ml-4">Edit</a>
-                            <form action="{{ route('assets.destroy', $asset->id) }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus aset ini?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="font-semibold text-red-600 hover:text-red-800 ml-4">Hapus</button>
-                            </form>
-                        </td>
-                    </tr>
-                @empty
-                    {{-- UPDATE COLSPAN --}}
-                    <tr><td colspan="7" class="text-center py-10 text-gray-500">Aset tidak ditemukan.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-    
-    {{-- PAGINATION UPDATE --}}
-    <div class="mt-6">{{ $assets->appends(request()->query())->links() }}</div>
+    {{-- Filter, Pencarian, dan Aksi Pilihan --}}
+    <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
+        <form action="{{ route('assets.index') }}" method="GET" class="w-full md:w-auto flex flex-col sm:flex-row items-center gap-3">
+            <div class="relative w-full sm:w-64">
+                <input type="text" name="search" placeholder="Cari kode, nama, S/N..." value="{{ request('search') }}" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+            </div>
+            <div class="w-full sm:w-auto">
+                <select name="category_id" onchange="this.form.submit()" class="w-full border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <option value="">Semua Kategori</option>
+                    @foreach($categories as $category)
+                        <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                            {{ $category->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+        </form>
+        <div class="flex items-center gap-2">
+            <button id="printSelectedBtn" disabled class="flex items-center gap-2 bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                Cetak
+            </button>
+            <button id="exportSelectedBtn" disabled class="flex items-center gap-2 bg-green-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                Export
+            </button>
+        </div>
+    </div>
 
-    {{-- Modal Impor (Tidak ada perubahan) --}}
-    <div id="importModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-20">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <h3 class="text-lg font-medium text-gray-900">Import Data dari Excel</h3>
-            <form action="{{ route('assets.import') }}" method="POST" enctype="multipart/form-data" class="mt-4">
-                @csrf
-                <input type="file" name="file" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" required>
-                <div class="mt-6 flex justify-end space-x-2">
-                    <button type="button" onclick="document.getElementById('importModal').classList.add('hidden')" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Batal</button>
-                    <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700">Upload & Import</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    {{-- Tabel Aset --}}
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left text-gray-600">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                <tr>
+                    <th scope="col" class="p-4"><input type="checkbox" id="selectAllCheckbox" class="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"></th>
+                    <th scope="col" class="px-6 py-3">Kode Aset</th>
+                    <th scope="col" class="px-6 py-3">Nama Barang</th>
+                    <th scope="col" class="px-6 py-3">Kategori</th>
+                    <th scope="col" class="px-6 py-3">Pengguna</th>
+                    <th scope="col" class="px-6 py-3">Kondisi</th>
+                    <th scope="col" class="px-6 py-3 text-right">Aksi</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white">
+                @forelse ($assets as $asset)
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="w-4 p-4"><input type="checkbox" name="asset_ids[]" value="{{ $asset->id }}" class="asset-checkbox h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"></td>
+                        <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{ $asset->code_asset }}</td>
+                        <td class="px-6 py-4">{{ $asset->nama_barang }}</td>
+                        <td class="px-6 py-4">{{ optional($asset->category)->name ?? 'N/A' }}</td>
+                        <td class="px-6 py-4">{{ optional($asset->user)->nama_pengguna ?? 'N/A' }}</td>
+                        <td class="px-6 py-4">
+                            @if($asset->kondisi == 'BAIK')
+                                <span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full">BAIK</span>
+                            @elseif($asset->kondisi == 'RUSAK')
+                                <span class="px-2 py-1 text-xs font-semibold text-red-800 bg-red-100 rounded-full">RUSAK</span>
+                            @else
+                                <span class="px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded-full">PERBAIKAN</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 text-right whitespace-nowrap">
+                            <a href="{{ route('assets.show', $asset->id) }}" class="font-medium text-emerald-600 hover:text-emerald-800">Lihat</a>
+                            <a href="{{ route('assets.edit', $asset->id) }}" class="font-medium text-blue-600 hover:text-blue-800 ml-4">Edit</a>
+                            <form action="{{ route('assets.destroy', $asset->id) }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus aset ini?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="font-medium text-red-600 hover:text-red-800 ml-4">Hapus</button>
+                            </form>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="7" class="text-center py-10 text-gray-500">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                            <h3 class="mt-2 text-sm font-medium text-gray-900">Aset tidak ditemukan</h3>
+                            <p class="mt-1 text-sm text-gray-500">Coba ubah filter atau kata kunci pencarian Anda.</p>
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+    
+    {{-- Pagination --}}
+    <div class="mt-6">{{ $assets->appends(request()->query())->links() }}</div>
+</div>
+
+{{-- Modal Impor --}}
+<div id="importModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 overflow-y-auto h-full w-full hidden z-50 transition-opacity">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-xl bg-white">
+        <div class="flex justify-between items-center pb-3 border-b">
+            <h3 class="text-lg font-medium text-gray-900">Import Data dari Excel</h3>
+            <button onclick="document.getElementById('importModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+        <form action="{{ route('assets.import') }}" method="POST" enctype="multipart/form-data" class="mt-4">
+            @csrf
+            <p class="text-sm text-gray-600 mb-4">Pilih file Excel (.xlsx) atau CSV (.csv) untuk mengimpor data aset secara massal.</p>
+            <input type="file" name="file" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" required>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button type="button" onclick="document.getElementById('importModal').classList.add('hidden')" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">Batal</button>
+                <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">Upload & Import</button>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
-{{-- Tidak ada perubahan pada script --}}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
-    const assetCheckboxes = document.querySelectorAll('.asset-checkbox');
-    const printSelectedBtn = document.getElementById('printSelectedBtn');
-    const exportSelectedBtn = document.getElementById('exportSelectedBtn');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const assetCheckboxes = document.querySelectorAll('.asset-checkbox');
+    const printSelectedBtn = document.getElementById('printSelectedBtn');
+    const exportSelectedBtn = document.getElementById('exportSelectedBtn');
 
-    function toggleActionButtons() {
-        const anyChecked = Array.from(assetCheckboxes).some(cb => cb.checked);
-        printSelectedBtn.disabled = !anyChecked;
-        exportSelectedBtn.disabled = !anyChecked;
-        // ... (sisa fungsi tidak diubah)
-    }
+    function updateActionButtonsState() {
+        const selectedCount = Array.from(assetCheckboxes).filter(cb => cb.checked).length;
+        const anyChecked = selectedCount > 0;
 
-    selectAllCheckbox.addEventListener('change', function () {
-        assetCheckboxes.forEach(checkbox => { checkbox.checked = selectAllCheckbox.checked; });
-        toggleActionButtons();
-    });
+        printSelectedBtn.disabled = !anyChecked;
+        exportSelectedBtn.disabled = !anyChecked;
+    }
 
-    assetCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function () {
-            selectAllCheckbox.checked = Array.from(assetCheckboxes).every(cb => cb.checked);
-            toggleActionButtons();
-        });
-    });
+    selectAllCheckbox.addEventListener('change', function () {
+        assetCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateActionButtonsState();
+    });
 
-    printSelectedBtn.addEventListener('click', function () {
-        const selectedIds = Array.from(assetCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
-        if (selectedIds.length > 0) {
-            window.open("{{ route('assets.print') }}?ids[]=" + selectedIds.join('&ids[]='));
-        }
-    });
+    assetCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function () {
+            if (!this.checked) {
+                selectAllCheckbox.checked = false;
+            } else {
+                const allChecked = Array.from(assetCheckboxes).every(cb => cb.checked);
+                selectAllCheckbox.checked = allChecked;
+            }
+            updateActionButtonsState();
+        });
+    });
 
-    exportSelectedBtn.addEventListener('click', function() {
-        const selectedIds = Array.from(assetCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
-        if (selectedIds.length > 0) {
-            window.location.href = "{{ route('assets.export') }}?ids[]=" + selectedIds.join('&ids[]=');
-        }
-    });
+    printSelectedBtn.addEventListener('click', function () {
+        const selectedIds = Array.from(assetCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => 'ids[]=' + cb.value)
+            .join('&');
+        if (selectedIds) {
+            window.open("{{ route('assets.print') }}?" + selectedIds, '_blank');
+        }
+    });
 
-    // toggleActionButtons(); // Fungsi ini tidak lengkap di kode asli, jadi saya biarkan saja
+    exportSelectedBtn.addEventListener('click', function() {
+        const selectedIds = Array.from(assetCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => 'ids[]=' + cb.value)
+            .join('&');
+        if (selectedIds) {
+            window.location.href = "{{ route('assets.export') }}?" + selectedIds;
+        }
+    });
+
+    // Initial check
+    updateActionButtonsState();
 });
 </script>
 @endpush
