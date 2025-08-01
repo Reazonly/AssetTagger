@@ -1,13 +1,22 @@
 @extends('layouts.app')
 @section('title', 'Detail Aset - ' . $asset->code_asset)
 @section('content')
-    <div class="flex justify-between items-center mb-6">
+    <div class="flex flex-col sm:flex-row justify-between items-center mb-6">
         <div>
             <h1 class="text-3xl font-bold text-gray-800">{{ $asset->nama_barang }}</h1>
             <p class="text-lg text-emerald-600 font-mono">{{ $asset->code_asset }}</p>
         </div>
-        <div>
-            <a href="{{ route('assets.index') }}" class="text-sm font-semibold text-gray-600 hover:text-gray-900 mr-4">Kembali</a>
+        <div class="flex items-center gap-2 mt-4 sm:mt-0">
+            <a href="{{ route('assets.index') }}" class="text-sm font-semibold text-gray-600 hover:text-gray-900 px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300">Kembali</a>
+            
+            <!-- TOMBOL EXPORT BARU -->
+            <a href="{{ route('assets.export', ['ids[]' => $asset->id]) }}" class="flex items-center bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Export
+            </a>
+
             <a href="{{ route('assets.edit', $asset->id) }}" class="bg-emerald-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-emerald-700">Edit Aset</a>
         </div>
     </div>

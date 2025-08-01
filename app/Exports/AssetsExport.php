@@ -11,27 +11,40 @@ use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize
 {
     protected ?string $search;
+    protected ?array $ids;
 
-    public function __construct(?string $search)
+    /**
+     * Constructor untuk menerima parameter pencarian atau ID yang dipilih.
+     *
+     * @param string|null $search Kata kunci pencarian.
+     * @param array|null $ids Array dari ID aset yang dipilih.
+     */
+    public function __construct(?string $search = null, ?array $ids = null)
     {
         $this->search = $search;
+        $this->ids = $ids;
     }
 
     /**
      * Menjalankan query untuk mendapatkan data aset dari database.
-     * Menggunakan FromQuery lebih efisien untuk data besar.
+     * Logika ini memprioritaskan ID yang dipilih, jika tidak ada, baru menggunakan pencarian.
      */
     public function query()
     {
-        // Logika pencarian ini disalin dari AssetController untuk memastikan
-        // data yang diekspor sama dengan yang ditampilkan di halaman.
-        return Asset::with('user')
-            ->when($this->search, function ($query, $searchTerm) {
-                return $query->where('code_asset', 'like', "%{$searchTerm}%")
-                             ->orWhere('nama_barang', 'like', "%{$searchTerm}%")
-                             ->orWhereHas('user', function ($subQuery) use ($searchTerm) {
-                                 $subQuery->where('nama_pengguna', 'like', "%{$searchTerm}%");
-                             });
+        $query = Asset::with('user');
+
+        // Prioritaskan ekspor berdasarkan ID yang dipilih
+        if (!empty($this->ids)) {
+            return $query->whereIn('id', $this->ids);
+        }
+
+        // Jika tidak ada ID, gunakan kata kunci pencarian
+        return $query->when($this->search, function ($q, $searchTerm) {
+                return $q->where('code_asset', 'like', "%{$searchTerm}%")
+                         ->orWhere('nama_barang', 'like', "%{$searchTerm}%")
+                         ->orWhereHas('user', function ($subQuery) use ($searchTerm) {
+                             $subQuery->where('nama_pengguna', 'like', "%{$searchTerm}%");
+                         });
             })
             ->latest();
     }
@@ -72,12 +85,12 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $asset->nama_barang,
             $asset->merk_type,
             $asset->serial_number,
-            $asset->user->nama_pengguna ?? 'N/A', // Mengambil nama pengguna dari relasi
+            $asset->user->nama_pengguna ?? 'N/A',
             $asset->user->jabatan ?? 'N/A',
             $asset->user->departemen ?? 'N/A',
             $asset->kondisi,
             $asset->lokasi,
-            $asset->tanggal_pembelian ? $asset->tanggal_pembelian->format('d-m-Y') : 'N/A', // Format tanggal
+            $asset->tanggal_pembelian ? $asset->tanggal_pembelian->format('d-m-Y') : 'N/A',
             $asset->thn_pembelian,
             $asset->harga_total,
             $asset->po_number,

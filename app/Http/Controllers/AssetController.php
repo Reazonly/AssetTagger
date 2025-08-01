@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Asset;
 use App\Models\User;
 use App\Imports\AssetsImport;
-use App\Exports\AssetsExport; // <-- DITAMBAHKAN
+use App\Exports\AssetsExport; // <-- Pastikan ini ada
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
@@ -207,9 +207,13 @@ class AssetController extends Controller
      */
     public function export(Request $request)
     {
-        $search = $request->query('search'); // Mengambil parameter pencarian dari URL
+        // Mengambil parameter dari URL
+        $assetIds = $request->query('ids');
+        $search = $request->query('search');
+
         $filename = 'aset_data_' . date('Y-m-d_H-i-s') . '.xlsx';
 
-        return Excel::download(new AssetsExport($search), $filename);
+        // Mengirim parameter ke class AssetsExport
+        return Excel::download(new AssetsExport($search, $assetIds), $filename);
     }
 }
