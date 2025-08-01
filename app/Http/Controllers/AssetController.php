@@ -7,8 +7,9 @@ use App\Models\User;
 use App\Models\Company;
 use App\Models\Category;
 use App\Imports\AssetsImport;
+use App\Exports\AssetsExport; // Ditambahkan
 use Illuminate\Http\Request;
-use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Facades\Excel; // Pastikan ini ada
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Carbon\Carbon;
 
@@ -25,10 +26,10 @@ class AssetController extends Controller
         $company = Company::find($request->company_id);
 
         // Menentukan apakah menggunakan 'merk' atau 'tipe' berdasarkan data dari kategori
-        $merkOrTipe = $category->requires_merk ? $request->merk : $request->tipe;
+        $merkOrTipe = optional($category)->requires_merk ? $request->merk : $request->tipe;
         $merkOrTipeCode = strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $merkOrTipe), 0, 3));
 
-        $companyCode = $company->code;
+        $companyCode = optional($company)->code;
         $paddedId = str_pad($assetId, 3, '0', STR_PAD_LEFT);
 
         return "{$namaBarang}/{$merkOrTipeCode}/{$companyCode}/{$paddedId}";
@@ -172,7 +173,6 @@ class AssetController extends Controller
      */
     public function update(Request $request, Asset $asset)
     {
-        // ... (Logika update perlu disesuaikan dengan master data jika diperlukan)
         // Untuk saat ini, kita gunakan logika update yang lama yang sudah stabil
         $request->validate([
             'nama_barang' => 'required|string',
@@ -257,5 +257,24 @@ class AssetController extends Controller
             return redirect()->route('assets.index')->with('error', 'Tidak ada aset yang dipilih untuk dicetak.');
         }
         return view('assets.print', compact('assets'));
+    }
+    
+    /**
+     * Menangani proses ekspor data ke file Excel.
+     */
+    public function export(Request $request)
+    {
+        // Ambil ID aset yang dipilih dari query string, jika ada.
+        $assetIds = $request->query('ids');
+
+        // Ambil term pencarian dari query string, jika ada.
+        $searchTerm = $request->query('search');
+
+        // Tentukan nama file secara dinamis
+        $fileName = 'assets_' . date('Y-m-d_H-i-s') . '.xlsx';
+        
+        // Buat instance AssetsExport, kirimkan parameter search dan ids
+        // lalu langsung trigger download filenya.
+        return Excel::download(new AssetsExport($searchTerm, $assetIds), $fileName);
     }
 }
