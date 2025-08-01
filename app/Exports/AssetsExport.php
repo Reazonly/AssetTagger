@@ -13,32 +13,20 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
     protected ?string $search;
     protected ?array $ids;
 
-    /**
-     * Constructor untuk menerima parameter pencarian atau ID yang dipilih.
-     *
-     * @param string|null $search Kata kunci pencarian.
-     * @param array|null $ids Array dari ID aset yang dipilih.
-     */
     public function __construct(?string $search = null, ?array $ids = null)
     {
         $this->search = $search;
         $this->ids = $ids;
     }
 
-    /**
-     * Menjalankan query untuk mendapatkan data aset dari database.
-     * Logika ini memprioritaskan ID yang dipilih, jika tidak ada, baru menggunakan pencarian.
-     */
     public function query()
     {
         $query = Asset::with('user');
 
-        // Prioritaskan ekspor berdasarkan ID yang dipilih
         if (!empty($this->ids)) {
             return $query->whereIn('id', $this->ids);
         }
 
-        // Jika tidak ada ID, gunakan kata kunci pencarian
         return $query->when($this->search, function ($q, $searchTerm) {
                 return $q->where('code_asset', 'like', "%{$searchTerm}%")
                          ->orWhere('nama_barang', 'like', "%{$searchTerm}%")
@@ -49,9 +37,6 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             ->latest();
     }
 
-    /**
-     * Mendefinisikan judul kolom untuk file Excel.
-     */
     public function headings(): array
     {
         return [
@@ -85,9 +70,10 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $asset->nama_barang,
             $asset->merk_type,
             $asset->serial_number,
-            $asset->user->nama_pengguna ?? 'N/A',
-            $asset->user->jabatan ?? 'N/A',
-            $asset->user->departemen ?? 'N/A',
+            // DIPERBAIKI: Menggunakan optional() untuk menangani user yang null
+            optional($asset->user)->nama_pengguna ?? 'N/A',
+            optional($asset->user)->jabatan ?? 'N/A',
+            optional($asset->user)->departemen ?? 'N/A',
             $asset->kondisi,
             $asset->lokasi,
             $asset->tanggal_pembelian ? $asset->tanggal_pembelian->format('d-m-Y') : 'N/A',
