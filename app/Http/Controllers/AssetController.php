@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Asset;
 use App\Models\User;
 use App\Imports\AssetsImport;
+use App\Exports\AssetsExport; // <-- DITAMBAHKAN
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
@@ -199,5 +200,16 @@ class AssetController extends Controller
             return redirect()->route('assets.index')->with('error', 'Tidak ada aset yang dipilih untuk dicetak.');
         }
         return view('assets.print', compact('assets'));
+    }
+
+    /**
+     * Menangani permintaan ekspor data aset ke file Excel.
+     */
+    public function export(Request $request)
+    {
+        $search = $request->query('search'); // Mengambil parameter pencarian dari URL
+        $filename = 'aset_data_' . date('Y-m-d_H-i-s') . '.xlsx';
+
+        return Excel::download(new AssetsExport($search), $filename);
     }
 }

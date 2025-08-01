@@ -23,5 +23,6 @@ Route::middleware('auth')->group(function () {
 
     Route::post('assets/import', [AssetController::class, 'import'])->name('assets.import');
     Route::get('assets/print', [AssetController::class, 'print'])->name('assets.print');
+    Route::get('assets/export', [AssetController::class, 'export'])->name('assets.export');
     Route::resource('assets', AssetController::class);
 });
