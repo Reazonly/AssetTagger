@@ -60,7 +60,7 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase border-b border-r border-gray-200">Nama Barang</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase border-b border-r border-gray-200">Pengguna</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase border-b border-r border-gray-200">Kondisi</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase border-b border-gray-200">Aksi</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase border-b border-r border-gray-200">Aksi</th>
                 </tr>
             </thead>
             <tbody class="bg-white">
@@ -71,7 +71,8 @@
                         </td>
                         <td class="px-6 py-4 text-sm font-medium text-gray-800 border-r border-gray-200">{{ $asset->code_asset }}</td>
                         <td class="px-6 py-4 text-sm text-gray-600 border-r border-gray-200">{{ $asset->nama_barang }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-600 border-r border-gray-200">{{ $asset->user->nama_pengguna ?? 'N/A' }}</td>
+                        {{-- DIPERBAIKI: Menggunakan optional() untuk mencegah error --}}
+                        <td class="px-6 py-4 text-sm text-gray-600 border-r border-gray-200">{{ optional($asset->user)->nama_pengguna ?? 'N/A' }}</td>
                         <td class="px-6 py-4 text-sm text-gray-600 border-r border-gray-200">{{ $asset->kondisi }}</td>
                         <td class="px-6 py-4 text-left text-sm whitespace-nowrap">
                             <a href="{{ route('assets.show', $asset->id) }}" class="font-semibold text-emerald-600 hover:text-emerald-800">Lihat</a>

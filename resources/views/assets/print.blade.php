@@ -115,7 +115,8 @@
                     <p class="asset-code">{{ $asset->code_asset }}</p>
                     <p style="margin-top: 8px;">
                         <strong>Pengguna:</strong><br>
-                        <span>{{ $asset->user->nama_pengguna ?? 'N/A' }}</span>
+                        {{-- DIPERBAIKI: Menggunakan optional() untuk mencegah error --}}
+                        <span>{{ optional($asset->user)->nama_pengguna ?? 'N/A' }}</span>
                     </p>
                 </div>
                 <div class="label-qr">
