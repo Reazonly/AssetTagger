@@ -4,7 +4,7 @@
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         {{-- Judul Halaman --}}
         <div>
-            <h1 class="text-3xl font-bold text-gray-800">Daftar Aset </h1>
+            <h1 class="text-3xl font-bold text-gray-800">Daftar Aset</h1>
             <p class="text-sm text-gray-500 mt-1">Kelola dan cari semua aset perusahaan</p>
         </div>
         
@@ -19,14 +19,26 @@
                     </button>
                 </div>
             </form>
+
             {{-- Tombol Cetak Pilihan --}}
-            <button id="printSelectedBtn" disabled class="bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg transition-colors flex-shrink-0 disabled:bg-gray-300 disabled:cursor-not-allowed">
-                Cetak Pilihan
+            <button id="printSelectedBtn" disabled class="bg-gray-400 text-white font-semibold px-4 py-2 rounded-lg transition-colors flex-shrink-0 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                Cetak Label
             </button>
+
+            <!-- TOMBOL EXPORT KE EXCEL -->
+            <a href="{{ route('assets.export', ['search' => $search ?? '']) }}" 
+               class="flex items-center bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Export
+            </a>
+            
             {{-- Tombol Import --}}
             <button onclick="document.getElementById('importModal').classList.remove('hidden')" class="bg-gray-700 text-white font-semibold px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors flex-shrink-0">
                 Import
             </button>
+            
             {{-- Tombol Tambah Aset --}}
             <a href="{{ route('assets.create') }}" class="bg-emerald-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors flex-shrink-0">
                 + Tambah
@@ -77,7 +89,7 @@
     
     {{-- Link Paginasi --}}
     <div class="mt-6">
-        {{ $assets->appends(['search' => $search])->links() }}
+        {{ $assets->appends(['search' => $search ?? ''])->links() }}
     </div>
 
     {{-- Modal untuk Import Excel --}}
