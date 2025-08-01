@@ -31,10 +31,15 @@ class Asset extends Model
 
     /**
      * Get the user that owns the asset.
+     * DIPERBARUI: Menambahkan withDefault() untuk mencegah error jika user tidak ditemukan.
      */
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id')->withDefault([
+            'nama_pengguna' => 'Tidak Ada Pengguna',
+            'jabatan' => 'N/A',
+            'departemen' => 'N/A',
+        ]);
     }
 
     /**
