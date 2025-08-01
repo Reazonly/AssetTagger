@@ -6,7 +6,7 @@
         <p class="text-lg text-emerald-600 font-mono">{{ $asset->code_asset }}</p>
     </div>
 
-    {{-- Tombol Aksi Baru --}}
+    {{-- Tombol Aksi --}}
     <div class="flex items-center gap-3 mb-8">
         <a href="{{ route('assets.export', ['ids[]' => $asset->id]) }}" class="flex items-center bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -14,12 +14,12 @@
             </svg>
             Export ke Excel
         </a>
-        <button id="shareBtn" class="flex items-center bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+        <a href="{{ route('assets.pdf', $asset->id) }}" class="flex items-center bg-red-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            <span id="shareBtnText">Bagikan</span>
-        </button>
+            Download PDF
+        </a>
     </div>
 
     <div class="space-y-8">
@@ -27,9 +27,10 @@
         <div class="bg-white p-6 rounded-lg border">
             <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Informasi Umum</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
-                <div><strong class="text-gray-500 block">Pengguna Saat Ini:</strong> {{ $asset->user->nama_pengguna ?? 'Tidak ada' }}</div>
-                <div><strong class="text-gray-500 block">Jabatan:</strong> {{ $asset->user->jabatan ?? 'N/A' }}</div>
-                <div><strong class="text-gray-500 block">Departemen:</strong> {{ $asset->user->departemen ?? 'N/A' }}</div>
+                {{-- DIPERBAIKI: Menggunakan optional() untuk mencegah error --}}
+                <div><strong class="text-gray-500 block">Pengguna Saat Ini:</strong> {{ optional($asset->user)->nama_pengguna ?? 'Tidak ada' }}</div>
+                <div><strong class="text-gray-500 block">Jabatan:</strong> {{ optional($asset->user)->jabatan ?? 'N/A' }}</div>
+                <div><strong class="text-gray-500 block">Departemen:</strong> {{ optional($asset->user)->departemen ?? 'N/A' }}</div>
                 <div class="col-span-1 sm:col-span-2 mt-4 pt-4 border-t"></div>
                 <div><strong class="text-gray-500 block">Merk/Tipe:</strong> {{ $asset->merk_type ?? 'N/A' }}</div>
                 <div><strong class="text-gray-500 block">Serial Number:</strong> {{ $asset->serial_number ?? 'N/A' }}</div>
@@ -87,13 +88,15 @@
                 @forelse ($asset->history as $h)
                     <li class="border-b pb-3">
                         <div class="flex justify-between items-center">
-                            <p class="font-semibold text-gray-800">{{ $h->user->nama_pengguna ?? 'Pengguna Dihapus' }}</p>
-                            @if(is_null($h->tanggal_selesai) && $asset->user_id == $h->user_id)
+                            {{-- DIPERBAIKI: Menggunakan optional() untuk mencegah error --}}
+                            <p class="font-semibold text-gray-800">{{ optional($h->user)->nama_pengguna ?? 'Pengguna Dihapus' }}</p>
+                            @if(is_null($h->tanggal_selesai) && $asset->user_id == optional($h->user)->id)
                                 <span class="flex-shrink-0 text-xs bg-green-100 text-green-800 font-semibold px-2 py-1 rounded-full">Saat Ini</span>
                             @endif
                         </div>
                         <div class="mt-1">
-                            <p class="text-xs text-gray-500">{{ $h->user->jabatan ?? 'Jabatan tidak diketahui' }}</p>
+                            {{-- DIPERBAIKI: Menggunakan optional() untuk mencegah error --}}
+                            <p class="text-xs text-gray-500">{{ optional($h->user)->jabatan ?? 'Jabatan tidak diketahui' }}</p>
                             <p class="text-xs text-gray-400 mt-1">
                                 <span>Mulai: {{ \Carbon\Carbon::parse($h->tanggal_mulai)->format('d M Y') }}</span>
                                 @if($h->tanggal_selesai)
@@ -108,51 +111,4 @@
             </ul>
         </div>
     </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const shareBtn = document.getElementById('shareBtn');
-    const shareBtnText = document.getElementById('shareBtnText');
-
-    shareBtn.addEventListener('click', async () => {
-        const shareData = {
-            title: 'Detail Aset: {{ $asset->nama_barang }}',
-            text: 'Lihat detail untuk aset {{ $asset->nama_barang }} ({{ $asset->code_asset }})',
-            url: window.location.href
-        };
-
-        // Coba gunakan Web Share API (untuk mobile)
-        if (navigator.share) {
-            try {
-                await navigator.share(shareData);
-                // Tidak perlu feedback tambahan karena dialog share sudah muncul
-            } catch (err) {
-                console.error("Gagal membagikan:", err);
-            }
-        } else {
-            // Fallback: Salin ke clipboard (untuk desktop)
-            try {
-                const textArea = document.createElement('textarea');
-                textArea.value = window.location.href;
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-
-                // Beri feedback visual
-                const originalText = shareBtnText.textContent;
-                shareBtnText.textContent = 'Link Disalin!';
-                setTimeout(() => {
-                    shareBtnText.textContent = originalText;
-                }, 2000);
-
-            } catch (err) {
-                console.error('Gagal menyalin link:', err);
-                alert('Gagal menyalin link ke clipboard.');
-            }
-        }
-    });
-});
-</script>
 @endsection

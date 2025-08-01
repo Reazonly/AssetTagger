@@ -1,48 +1,50 @@
 @extends('layouts.app')
 @section('title', 'Daftar Aset')
 @section('content')
-    {{-- Header Halaman yang Diperbaiki --}}
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        {{-- Judul Halaman --}}
-        <div>
-            <h1 class="text-3xl font-bold text-gray-800">Daftar Aset</h1>
-            <p class="text-sm text-gray-500 mt-1">Kelola dan cari semua aset perusahaan</p>
-        </div>
-        
-        {{-- Grup Tombol & Pencarian yang Responsif --}}
-        <div class="w-full md:w-auto flex flex-col md:flex-row items-start md:items-center gap-2">
-            {{-- Form Pencarian --}}
-            <form action="{{ route('assets.index') }}" method="GET" class="w-full md:w-auto">
-                <div class="relative">
-                    <input type="text" name="search" placeholder="Cari aset..." value="{{ $search ?? '' }}" class="w-full md:w-64 pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                    <button type="submit" class="absolute right-0 top-0 mt-2 mr-3 text-gray-500 hover:text-emerald-600">
-                        <svg class="h-5 w-5" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    </button>
-                </div>
-            </form>
-            
-            {{-- Grup Tombol Aksi --}}
-            <div class="w-full md:w-auto flex items-center gap-2 flex-wrap">
-                <button id="printSelectedBtn" disabled class="bg-gray-400 text-white font-semibold px-4 py-2 rounded-lg transition-colors flex-shrink-0 disabled:bg-gray-300 disabled:cursor-not-allowed">
-                    Cetak Label
-                </button>
-
-                <button id="exportSelectedBtn" disabled 
-                   class="flex items-center bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex-shrink-0 disabled:bg-gray-300 disabled:cursor-not-allowed">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Export
-                </button>
-                
-                <button onclick="document.getElementById('importModal').classList.remove('hidden')" class="bg-gray-700 text-white font-semibold px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors flex-shrink-0">
-                    Import
-                </button>
-                
-                <a href="{{ route('assets.create') }}" class="bg-emerald-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors flex-shrink-0">
-                    + Tambah
-                </a>
+    {{-- Header Halaman dengan Layout Baru --}}
+    <div class="mb-6">
+        {{-- Baris Atas: Judul dan Aksi Utama --}}
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Daftar Aset</h1>
+                <p class="text-sm text-gray-500 mt-1">Kelola dan cari semua aset perusahaan</p>
             </div>
+            
+            <div class="w-full md:w-auto flex flex-col md:flex-row items-start md:items-center gap-2">
+                {{-- Form Pencarian --}}
+                <form action="{{ route('assets.index') }}" method="GET" class="w-full md:w-auto">
+                    <div class="relative">
+                        <input type="text" name="search" placeholder="Cari aset..." value="{{ $search ?? '' }}" class="w-full md:w-64 pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <button type="submit" class="absolute right-0 top-0 mt-2 mr-3 text-gray-500 hover:text-emerald-600">
+                            <svg class="h-5 w-5" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </button>
+                    </div>
+                </form>
+                
+                {{-- Grup Tombol Aksi Utama --}}
+                <div class="w-full md:w-auto flex items-center gap-2 flex-wrap">
+                    <button onclick="document.getElementById('importModal').classList.remove('hidden')" class="bg-gray-700 text-white font-semibold px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors flex-shrink-0">
+                        Import
+                    </button>
+                    <a href="{{ route('assets.create') }}" class="bg-emerald-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors flex-shrink-0">
+                        + Tambah
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {{-- Baris Bawah: Aksi Berdasarkan Pilihan --}}
+        <div class="mt-4 flex items-center gap-2">
+            <button id="printSelectedBtn" disabled class="bg-gray-400 text-white font-semibold px-4 py-2 rounded-lg transition-colors flex-shrink-0 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                Cetak Label
+            </button>
+            <button id="exportSelectedBtn" disabled 
+               class="flex items-center bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex-shrink-0 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Export Pilihan
+            </button>
         </div>
     </div>
 
