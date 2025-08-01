@@ -10,10 +10,11 @@ use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Carbon\Carbon;
-use Barryvdh\DomPDF\Facade\Pdf; // Diperlukan untuk fitur PDF
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AssetController extends Controller
 {
+    // ... (semua properti dan method dari atas hingga 'store' tetap sama)
     private $assetCategories = [
         'ELEC' => 'Elektronik',
         'FURN' => 'Furniture',
@@ -119,18 +120,37 @@ class AssetController extends Controller
 
     public function show(Asset $asset)
     {
-        $asset->load(['user', 'history.user']);
-        $urlToScan = route('assets.public.show', $asset->id);
-        $qrCode = QrCode::size(250)->generate($urlToScan);
-        return view('assets.show', compact('asset', 'qrCode'));
+        try {
+            $asset->load(['user', 'history.user']);
+            $urlToScan = route('assets.public.show', $asset->id);
+            $qrCode = QrCode::size(250)->generate($urlToScan);
+            return view('assets.show', compact('asset', 'qrCode'));
+        } catch (\Throwable $e) {
+            // Tampilkan pesan error detail jika terjadi masalah
+            return response("Terjadi error: " . $e->getMessage() . " di file: " . $e->getFile() . " pada baris: " . $e->getLine(), 500);
+        }
     }
 
+    /**
+     * PERUBAHAN UTAMA: Menambahkan try...catch untuk menangkap error
+     */
     public function publicShow(Asset $asset)
     {
-        $asset->load(['user', 'history.user']);
-        return view('assets.public-show', compact('asset'));
+        try {
+            // Kode ini akan mencoba memuat semua relasi yang dibutuhkan
+            $asset->load(['user', 'history.user']);
+            
+            // Jika berhasil, tampilkan halaman seperti biasa
+            return view('assets.public-show', compact('asset'));
+
+        } catch (\Throwable $e) {
+            // Jika GAGAL, hentikan semua proses dan tampilkan pesan error yang jelas
+            // Ini akan memberi tahu kita apa masalah sebenarnya
+            return response("Terjadi error: " . $e->getMessage() . " di file: " . $e->getFile() . " pada baris: " . $e->getLine(), 500);
+        }
     }
 
+    // ... (method edit, update, destroy, import, print, export tetap sama)
     public function edit(Asset $asset)
     {
         return view('assets.edit', [
@@ -211,21 +231,11 @@ class AssetController extends Controller
         return Excel::download(new AssetsExport($search, $assetIds), $filename);
     }
 
-    /**
-     * Menangani permintaan untuk mengunduh detail aset sebagai PDF.
-     */
     public function downloadPDF(Asset $asset)
     {
-        // Memuat data relasi yang dibutuhkan
         $asset->load('user');
-
-        // Membuat PDF dari view 'assets.pdf'
         $pdf = Pdf::loadView('assets.pdf', compact('asset'));
-
-        // Menyiapkan nama file untuk diunduh (mengganti '/' dengan '-')
         $filename = 'ASET-' . str_replace('/', '-', $asset->code_asset) . '.pdf';
-
-        // Mengirimkan PDF ke browser untuk diunduh
         return $pdf->download($filename);
     }
 }
