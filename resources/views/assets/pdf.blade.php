@@ -15,6 +15,8 @@
         td { padding: 8px 0; vertical-align: top; }
         td.label { font-weight: bold; width: 180px; color: #555; }
         .footer { text-align: center; font-size: 10px; color: #888; position: fixed; bottom: 0; width: 100%; }
+        .history-table th, .history-table td { border-bottom: 1px solid #eee; padding: 8px; text-align: left; }
+        .history-table th { background-color: #f7f7f7; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -35,6 +37,7 @@
                 <tr><td class="label">Serial Number</td><td>: {{ $asset->serial_number ?? 'N/A' }}</td></tr>
                 <tr><td class="label">Kondisi</td><td>: {{ $asset->kondisi ?? 'N/A' }}</td></tr>
                 <tr><td class="label">Lokasi Fisik</td><td>: {{ $asset->lokasi ?? 'N/A' }}</td></tr>
+                <tr><td class="label">Jumlah</td><td>: {{ $asset->jumlah }} {{ $asset->satuan }}</td></tr>
             </table>
         </div>
 
@@ -56,11 +59,60 @@
         </div>
 
         <div class="section">
-            <h3>Informasi Pembelian</h3>
+            <h3>Informasi Pembelian & Dokumen</h3>
             <table>
                 <tr><td class="label">Tanggal Beli</td><td>: {{ ($asset->tanggal_pembelian instanceof \Carbon\Carbon) ? $asset->tanggal_pembelian->isoFormat('D MMMM YYYY') : 'N/A' }}</td></tr>
                 <tr><td class="label">Harga</td><td>: Rp {{ number_format($asset->harga_total ?? 0, 0, ',', '.') }}</td></tr>
                 <tr><td class="label">Nomor PO</td><td>: {{ $asset->po_number ?? 'N/A' }}</td></tr>
+                <tr><td class="label">Nomor BAST</td><td>: {{ $asset->nomor ?? 'N/A' }}</td></tr>
+                <tr><td class="label">Kode Aktiva</td><td>: {{ $asset->code_aktiva ?? 'N/A' }}</td></tr>
+                <tr><td class="label">Sumber Dana</td><td>: {{ $asset->sumber_dana ?? 'N/A' }}</td></tr>
+            </table>
+        </div>
+
+        {{-- Section Informasi Tambahan --}}
+        <div class="section">
+            <h3>Informasi Tambahan</h3>
+            <table>
+                <tr><td class="label" style="vertical-align: top;">Item Termasuk</td><td style="vertical-align: top;">: {{ $asset->include_items ?? 'N/A' }}</td></tr>
+                <tr><td class="label" style="vertical-align: top;">Peruntukan</td><td style="vertical-align: top;">: {{ $asset->peruntukan ?? 'N/A' }}</td></tr>
+                <tr><td class="label" style="vertical-align: top;">Keterangan</td><td style="vertical-align: top;">: {{ $asset->keterangan ?? 'N/A' }}</td></tr>
+            </table>
+        </div>
+
+        {{-- Section Histori Pengguna --}}
+        <div class="section">
+            <h3>Histori Pengguna</h3>
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Pengguna</th>
+                        <th>Tanggal Mulai</th>
+                        <th>Tanggal Selesai</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($asset->history as $h)
+                        <tr>
+                            <td>
+                                {{ $h->user->nama_pengguna }}<br>
+                                <small style="color: #666;">{{ $h->user->jabatan }}</small>
+                            </td>
+                            <td>{{ \Carbon\Carbon::parse($h->tanggal_mulai)->isoFormat('D MMMM YYYY') }}</td>
+                            <td>
+                                @if($h->tanggal_selesai)
+                                    {{ \Carbon\Carbon::parse($h->tanggal_selesai)->isoFormat('D MMMM YYYY') }}
+                                @elseif($asset->user_id == $h->user_id)
+                                    <span style="font-weight: bold; color: #28a745;">Saat Ini</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="3" style="text-align: center;">Tidak ada riwayat pengguna.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
             </table>
         </div>
 
