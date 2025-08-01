@@ -48,30 +48,24 @@
         </div>
     </div>
 
-    {{-- Sisa Kode (Tabel, Modal, Script) Tetap Sama --}}
     <div class="overflow-x-auto border border-gray-200 rounded-lg shadow">
         <table class="w-full min-w-full">
             <thead class="bg-gray-100">
                 <tr>
-                    <th class="p-3 border-b border-r border-gray-200">
-                        <input type="checkbox" id="selectAllCheckbox" class="h-4 w-4 rounded">
-                    </th>
+                    <th class="p-3 border-b border-r border-gray-200"><input type="checkbox" id="selectAllCheckbox" class="h-4 w-4 rounded"></th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase border-b border-r border-gray-200">Kode Aset</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase border-b border-r border-gray-200">Nama Barang</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase border-b border-r border-gray-200">Pengguna</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase border-b border-r border-gray-200">Kondisi</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase border-b border-r border-gray-200">Aksi</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase border-b border-gray-200">Aksi</th>
                 </tr>
             </thead>
             <tbody class="bg-white">
                 @forelse ($assets as $asset)
                     <tr class="border-b border-gray-200 hover:bg-gray-50">
-                        <td class="p-3 border-r border-gray-200 text-center">
-                            <input type="checkbox" name="asset_ids[]" value="{{ $asset->id }}" class="asset-checkbox h-4 w-4 rounded">
-                        </td>
+                        <td class="p-3 border-r border-gray-200 text-center"><input type="checkbox" name="asset_ids[]" value="{{ $asset->id }}" class="asset-checkbox h-4 w-4 rounded"></td>
                         <td class="px-6 py-4 text-sm font-medium text-gray-800 border-r border-gray-200">{{ $asset->code_asset }}</td>
                         <td class="px-6 py-4 text-sm text-gray-600 border-r border-gray-200">{{ $asset->nama_barang }}</td>
-                        {{-- DIPERBAIKI: Menggunakan optional() untuk mencegah error --}}
                         <td class="px-6 py-4 text-sm text-gray-600 border-r border-gray-200">{{ optional($asset->user)->nama_pengguna ?? 'N/A' }}</td>
                         <td class="px-6 py-4 text-sm text-gray-600 border-r border-gray-200">{{ $asset->kondisi }}</td>
                         <td class="px-6 py-4 text-left text-sm whitespace-nowrap">
@@ -91,9 +85,7 @@
         </table>
     </div>
     
-    <div class="mt-6">
-        {{ $assets->appends(['search' => $search ?? ''])->links() }}
-    </div>
+    <div class="mt-6">{{ $assets->appends(['search' => $search ?? ''])->links() }}</div>
 
     <div id="importModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-20">
         <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
@@ -120,10 +112,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function toggleActionButtons() {
         const anyChecked = Array.from(assetCheckboxes).some(cb => cb.checked);
-        
         printSelectedBtn.disabled = !anyChecked;
         exportSelectedBtn.disabled = !anyChecked;
-
         if (!anyChecked) {
             printSelectedBtn.classList.add('disabled:bg-gray-300', 'disabled:cursor-not-allowed');
             printSelectedBtn.classList.remove('hover:bg-blue-600');
@@ -138,43 +128,28 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     selectAllCheckbox.addEventListener('change', function () {
-        assetCheckboxes.forEach(checkbox => {
-            checkbox.checked = selectAllCheckbox.checked;
-        });
+        assetCheckboxes.forEach(checkbox => { checkbox.checked = selectAllCheckbox.checked; });
         toggleActionButtons();
     });
 
     assetCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function () {
-            if (!this.checked) {
-                selectAllCheckbox.checked = false;
-            } else {
-                const allChecked = Array.from(assetCheckboxes).every(cb => cb.checked);
-                selectAllCheckbox.checked = allChecked;
-            }
+            selectAllCheckbox.checked = Array.from(assetCheckboxes).every(cb => cb.checked);
             toggleActionButtons();
         });
     });
 
     printSelectedBtn.addEventListener('click', function () {
-        const selectedIds = Array.from(assetCheckboxes)
-                                .filter(cb => cb.checked)
-                                .map(cb => cb.value);
-
+        const selectedIds = Array.from(assetCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
         if (selectedIds.length > 0) {
-            let printUrl = "{{ route('assets.print') }}?ids[]=" + selectedIds.join('&ids[]=');
-            window.open(printUrl, '_blank');
+            window.open("{{ route('assets.print') }}?ids[]=" + selectedIds.join('&ids[]='));
         }
     });
 
     exportSelectedBtn.addEventListener('click', function() {
-        const selectedIds = Array.from(assetCheckboxes)
-                                .filter(cb => cb.checked)
-                                .map(cb => cb.value);
-        
+        const selectedIds = Array.from(assetCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
         if (selectedIds.length > 0) {
-            let exportUrl = "{{ route('assets.export') }}?ids[]=" + selectedIds.join('&ids[]=');
-            window.location.href = exportUrl;
+            window.location.href = "{{ route('assets.export') }}?ids[]=" + selectedIds.join('&ids[]=');
         }
     });
 
