@@ -12,9 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('assets', function (Blueprint $table) {
-            // Menambahkan kolom 'tanggal_pembelian' dengan tipe data DATE
-            // Kolom ini bisa kosong (nullable) dan diletakkan setelah kolom 'thn_pembelian'
-            $table->date('tanggal_pembelian')->nullable()->after('thn_pembelian');
+            // Cek terlebih dahulu apakah kolomnya belum ada
+            if (!Schema::hasColumn('assets', 'tanggal_pembelian')) {
+                // Jika belum ada, baru tambahkan kolomnya
+                $table->date('tanggal_pembelian')->nullable()->after('thn_pembelian');
+            }
         });
     }
 
@@ -24,8 +26,11 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('assets', function (Blueprint $table) {
-            // Perintah untuk menghapus kolom jika migrasi di-rollback
-            $table->dropColumn('tanggal_pembelian');
+            // Cek terlebih dahulu apakah kolomnya ada
+            if (Schema::hasColumn('assets', 'tanggal_pembelian')) {
+                // Jika ada, baru hapus kolomnya
+                $table->dropColumn('tanggal_pembelian');
+            }
         });
     }
 };

@@ -15,7 +15,8 @@ Route::post('logout', [LoginController::class, 'logout'])->name('logout')->middl
 
 // Public Routes
 Route::get('assets/{asset}/public', [AssetController::class, 'publicShow'])->name('assets.public.show');
-Route::get('assets/{asset}/pdf', [AssetController::class, 'downloadPDF'])->name('assets.pdf'); // Rute untuk download PDF
+Route::get('assets/{asset}/pdf', [AssetController::class, 'downloadPDF'])->name('assets.pdf');
+Route::get('/assets/get-units/{category}', [\App\Http\Controllers\AssetController::class, 'getUnits'])->name('assets.getUnits'); 
 
 // Main application routes (protected by auth middleware)
 Route::middleware('auth')->group(function () {

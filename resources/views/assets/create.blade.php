@@ -32,12 +32,27 @@
         {{-- Main Form Content with Alpine.js --}}
         <div class="space-y-8" 
              x-data="{ 
-                asset_category: '{{ old('asset_category', 'ELEC') }}', 
-                spec_input_method: '{{ old('spec_input_type', 'detailed') }}'
-             }">
+                selectedCategory: {{ old('category_id', $categories->first()->id ?? 0) }},
+                categories: {{ $categories->keyBy('id')->map(fn($c) => ['id' => $c->id, 'requires_merk' => $c->requires_merk, 'units' => $c->units]) }},
+                units: [],
+                
+                init() {
+                    this.updateUnits();
+                },
 
-            {{-- This hidden input is the single source of truth for spec_input_type --}}
-            <input type="hidden" name="spec_input_type" :value="asset_category === 'ELEC' ? spec_input_method : 'manual'">
+                updateUnits() {
+                    if (this.categories[this.selectedCategory]) {
+                        this.units = this.categories[this.selectedCategory].units;
+                    } else {
+                        this.units = [];
+                    }
+                },
+
+                categoryRequiresMerk() {
+                    if (!this.selectedCategory || !this.categories[this.selectedCategory]) return false;
+                    return this.categories[this.selectedCategory].requires_merk;
+                }
+             }">
 
             {{-- Informasi Utama Section --}}
             <div class="bg-white p-6 rounded-lg border shadow-sm">
@@ -48,28 +63,35 @@
                         <input type="text" name="nama_barang" id="nama_barang" value="{{ old('nama_barang') }}" placeholder="Contoh: Laptop, Meja Kerja" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3" required>
                     </div>
                     <div>
-                        <label for="asset_category" class="block text-sm font-medium text-gray-600">Kategori Barang</label>
-                        <select name="asset_category" id="asset_category" x-model="asset_category" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
-                            @foreach($assetCategories as $code => $name)
-                                <option value="{{ $code }}">{{ $name }}</option>
+                        <label for="category_id" class="block text-sm font-medium text-gray-600">Kategori Barang</label>
+                        <select name="category_id" id="category_id" x-model="selectedCategory" @change="updateUnits()" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
+                            @foreach($categories as $category)
+                                <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div>
-                        <label for="company_code" class="block text-sm font-medium text-gray-600">Kode Perusahaan</label>
-                        <select name="company_code" id="company_code" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
-                            @foreach($companyCodes as $code => $name)
-                                <option value="{{ $code }}">{{ $code }} - {{ $name }}</option>
+                        <label for="company_id" class="block text-sm font-medium text-gray-600">Kode Perusahaan</label>
+                        <select name="company_id" id="company_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
+                            @foreach($companies as $company)
+                                <option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>{{ $company->code }} - {{ $company->name }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <div>
-                        <label for="merk_type" class="block text-sm font-medium text-gray-600">Merk/Tipe</label>
-                        <input type="text" name="merk_type" id="merk_type" value="{{ old('merk_type') }}" placeholder="Contoh: Asus ROG, IKEA" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
+                    
+                    <div x-show="categoryRequiresMerk()">
+                        <label for="merk" class="block text-sm font-medium text-gray-600">Merk</label>
+                        <input type="text" name="merk" id="merk" value="{{ old('merk') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
                     </div>
+
+                    <div x-show="!categoryRequiresMerk()">
+                        <label for="tipe" class="block text-sm font-medium text-gray-600">Tipe</label>
+                        <input type="text" name="tipe" id="tipe" value="{{ old('tipe') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
+                    </div>
+
                     <div>
                         <label for="serial_number" class="block text-sm font-medium text-gray-600">Serial Number</label>
-                        <input type="text" name="serial_number" id="serial_number" value="{{ old('serial_number') }}" placeholder="Contoh: ABC123XYZ789" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
+                        <input type="text" name="serial_number" id="serial_number" value="{{ old('serial_number') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
                     </div>
                     <div>
                         <label for="kondisi" class="block text-sm font-medium text-gray-600">Kondisi</label>
@@ -81,7 +103,7 @@
                     </div>
                     <div>
                         <label for="lokasi" class="block text-sm font-medium text-gray-600">Lokasi Fisik</label>
-                        <input type="text" name="lokasi" id="lokasi" value="{{ old('lokasi') }}" placeholder="Contoh: Gedung A Lantai 3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
+                        <input type="text" name="lokasi" id="lokasi" value="{{ old('lokasi') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
                     </div>
                     <div>
                         <label for="jumlah" class="block text-sm font-medium text-gray-600">Jumlah</label>
@@ -90,16 +112,14 @@
                     <div>
                         <label for="satuan" class="block text-sm font-medium text-gray-600">Satuan</label>
                         <select name="satuan" id="satuan" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
-                            <option value="Unit">Unit</option>
-                            <option value="Buah">Buah</option>
-                            <option value="Pcs">Pcs</option>
-                            <option value="Set">Set</option>
+                            <template x-for="unit in units" :key="unit.id">
+                                <option :value="unit.name" x-text="unit.name"></option>
+                            </template>
                         </select>
                     </div>
                 </div>
             </div>
-
-            {{-- Informasi Pengguna Section --}}
+            
             <div class="bg-white p-6 rounded-lg border shadow-sm">
                 <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Pengguna</h3>
                 <div>
@@ -107,7 +127,7 @@
                     <select name="user_id" id="user_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
                         <option value="">-- Tidak Ada Pengguna --</option>
                         @foreach($users as $user)
-                            <option value="{{ $user->id }}">{{ $user->nama_pengguna }}</option>
+                            <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>{{ $user->nama_pengguna }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -115,42 +135,35 @@
                 <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-8">
                     <div>
                         <label for="new_user_name" class="block text-sm font-medium text-gray-600">Tambah Pengguna Baru</label>
-                        <input type="text" name="new_user_name" placeholder="Nama Lengkap Pengguna Baru" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
+                        <input type="text" name="new_user_name" id="new_user_name" value="{{ old('new_user_name') }}" placeholder="Nama Lengkap Pengguna Baru" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
                     </div>
                     <div>
                         <label for="jabatan" class="block text-sm font-medium text-gray-600">Jabatan</label>
-                        <input type="text" name="jabatan" placeholder="Jabatan pengguna baru" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
+                        <input type="text" name="jabatan" id="jabatan" value="{{ old('jabatan') }}" placeholder="Jabatan pengguna baru" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
                     </div>
                     <div>
                         <label for="departemen" class="block text-sm font-medium text-gray-600">Departemen</label>
-                        <input type="text" name="departemen" placeholder="Departemen pengguna baru" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
+                        <input type="text" name="departemen" id="departemen" value="{{ old('departemen') }}" placeholder="Departemen pengguna baru" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
                     </div>
                 </div>
             </div>
 
-            {{-- Detail Spesifikasi & Pembelian Section --}}
             <div class="bg-white p-6 rounded-lg border shadow-sm">
                 <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Detail Spesifikasi & Pembelian</h3>
                 
-                <div class="mb-6" x-show="asset_category === 'ELEC'">
-                    <label for="spec_input_method_select" class="block text-sm font-medium text-gray-600">Metode Input Spesifikasi</label>
-                    <select x-model="spec_input_method" id="spec_input_method_select" class="mt-1 block w-full md:w-1/3 border-gray-300 rounded-md shadow-sm py-2 px-3">
-                        <option value="detailed">Input Rinci</option>
-                        <option value="manual">Input Manual (Teks)</option>
-                    </select>
+                <div x-show="categoryRequiresMerk()">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8">
+                        <div><label for="processor" class="block text-sm font-medium text-gray-600">Processor</label><input type="text" name="processor" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
+                        <div><label for="memory_ram" class="block text-sm font-medium text-gray-600">RAM</label><input type="text" name="memory_ram" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
+                        <div><label for="hdd_ssd" class="block text-sm font-medium text-gray-600">Storage</label><input type="text" name="hdd_ssd" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
+                        <div><label for="graphics" class="block text-sm font-medium text-gray-600">Graphics</label><input type="text" name="graphics" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
+                        <div><label for="lcd" class="block text-sm font-medium text-gray-600">Layar</label><input type="text" name="lcd" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
+                    </div>
                 </div>
 
-                <div x-show="asset_category === 'ELEC' && spec_input_method === 'detailed'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8">
-                    <div><label for="processor" class="block text-sm font-medium text-gray-600">Processor</label><input type="text" name="processor" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
-                    <div><label for="memory_ram" class="block text-sm font-medium text-gray-600">RAM</label><input type="text" name="memory_ram" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
-                    <div><label for="hdd_ssd" class="block text-sm font-medium text-gray-600">Storage</label><input type="text" name="hdd_ssd" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
-                    <div><label for="graphics" class="block text-sm font-medium text-gray-600">Graphics</label><input type="text" name="graphics" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
-                    <div><label for="lcd" class="block text-sm font-medium text-gray-600">Layar</label><input type="text" name="lcd" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
-                </div>
-
-                <div x-show="asset_category !== 'ELEC' || spec_input_method === 'manual'">
+                <div x-show="!categoryRequiresMerk()">
                     <label for="spesifikasi_manual" class="block text-sm font-medium text-gray-600">Detail Spesifikasi / Deskripsi</label>
-                    <textarea name="spesifikasi_manual" id="spesifikasi_manual" rows="6" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3" placeholder="Jika aset bukan elektronik, masukkan deskripsi di sini.&#10;Contoh: Meja kayu jati, 2 laci, warna coklat."></textarea>
+                    <textarea name="spesifikasi_manual" id="spesifikasi_manual" rows="6" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3" placeholder="Masukkan deskripsi untuk aset non-elektronik di sini."></textarea>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8 mt-8 pt-6 border-t">
@@ -162,7 +175,6 @@
                 </div>
             </div>
 
-            {{-- Informasi Tambahan Section --}}
             <div class="bg-white p-6 rounded-lg border shadow-sm">
                 <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Tambahan</h3>
                 <div class="space-y-6">

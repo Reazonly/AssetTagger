@@ -12,10 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('assets', function (Blueprint $table) {
-            // Kolom untuk menentukan tipe input: 'detailed' atau 'manual'
-            $table->string('spec_input_type')->default('detailed')->after('lcd');
-            // Kolom untuk menyimpan spesifikasi jika tipenya 'manual'
-            $table->text('spesifikasi_manual')->nullable()->after('spec_input_type');
+            // Cek terlebih dahulu apakah kolomnya belum ada
+            if (!Schema::hasColumn('assets', 'spec_input_type')) {
+                $table->string('spec_input_type')->default('detailed')->after('lcd');
+            }
+            if (!Schema::hasColumn('assets', 'spesifikasi_manual')) {
+                $table->text('spesifikasi_manual')->nullable()->after('spec_input_type');
+            }
         });
     }
 
@@ -25,7 +28,10 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('assets', function (Blueprint $table) {
-            $table->dropColumn(['spec_input_type', 'spesifikasi_manual']);
+            // Cek terlebih dahulu apakah kolomnya ada sebelum menghapusnya
+            if (Schema::hasColumn('assets', 'spec_input_type') && Schema::hasColumn('assets', 'spesifikasi_manual')) {
+                $table->dropColumn(['spec_input_type', 'spesifikasi_manual']);
+            }
         });
     }
 };
