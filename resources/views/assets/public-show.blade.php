@@ -25,7 +25,6 @@
         <div class="bg-white p-6 rounded-lg border">
             <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Informasi Umum</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
-                {{-- Kode ini sekarang aman karena perbaikan di Model --}}
                 <div><strong class="text-gray-500 block">Pengguna Saat Ini:</strong> {{ $asset->user->nama_pengguna }}</div>
                 <div><strong class="text-gray-500 block">Jabatan:</strong> {{ $asset->user->jabatan }}</div>
                 <div><strong class="text-gray-500 block">Departemen:</strong> {{ $asset->user->departemen }}</div>
@@ -43,7 +42,6 @@
                 @forelse ($asset->history as $h)
                     <li class="border-b pb-3">
                         <div class="flex justify-between items-center">
-                            {{-- Kode ini sekarang aman karena perbaikan di Model --}}
                             <p class="font-semibold text-gray-800">{{ $h->user->nama_pengguna }}</p>
                             @if(is_null($h->tanggal_selesai) && $asset->user_id == $h->user_id)
                                 <span class="flex-shrink-0 text-xs bg-green-100 text-green-800 font-semibold px-2 py-1 rounded-full">Saat Ini</span>

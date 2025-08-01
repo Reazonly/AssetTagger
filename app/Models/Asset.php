@@ -8,23 +8,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Asset extends Model
 {
-    /**
-     * The HasFactory and SoftDeletes traits are used for model factories and soft deleting.
-     */
     use HasFactory, SoftDeletes;
-
-    /**
-     * The attributes that aren't mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $guarded = ['id'];
 
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
         'tanggal_pembelian' => 'date',
     ];
@@ -44,11 +30,9 @@ class Asset extends Model
 
     /**
      * Get the history records for the asset.
-     * Note: This assumes you have an 'AssetHistory' model defined in your application.
      */
     public function history()
     {
-        // Orders the history records from the newest to the oldest.
         return $this->hasMany(AssetHistory::class)->orderBy('tanggal_mulai', 'desc');
     }
 }
