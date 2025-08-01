@@ -6,6 +6,7 @@
         <p class="text-lg text-emerald-600 font-mono">{{ $asset->code_asset }}</p>
     </div>
 
+    {{-- Tombol Aksi --}}
     <div class="flex items-center gap-3 mb-8">
         <a href="{{ route('assets.export', ['ids[]' => $asset->id]) }}" class="flex items-center bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -22,9 +23,11 @@
     </div>
 
     <div class="space-y-8">
+        {{-- Informasi Umum --}}
         <div class="bg-white p-6 rounded-lg border">
             <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Informasi Umum</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                {{-- DIPERBAIKI: Menggunakan optional() untuk mencegah error --}}
                 <div><strong class="text-gray-500 block">Pengguna Saat Ini:</strong> {{ optional($asset->user)->nama_pengguna ?? 'Tidak ada' }}</div>
                 <div><strong class="text-gray-500 block">Jabatan:</strong> {{ optional($asset->user)->jabatan ?? 'N/A' }}</div>
                 <div><strong class="text-gray-500 block">Departemen:</strong> {{ optional($asset->user)->departemen ?? 'N/A' }}</div>
@@ -36,6 +39,8 @@
                 <div><strong class="text-gray-500 block">Jumlah:</strong> {{ $asset->jumlah }} {{ $asset->satuan }}</div>
             </div>
         </div>
+
+        {{-- Spesifikasi Teknis --}}
         <div class="bg-white p-6 rounded-lg border">
             <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Spesifikasi & Deskripsi</h3>
             @if($asset->spec_input_type == 'manual' && !empty($asset->spesifikasi_manual))
@@ -52,6 +57,8 @@
                 <p class="text-sm text-gray-500">Tidak ada detail spesifikasi yang diberikan.</p>
             @endif
         </div>
+
+        {{-- Informasi Pembelian & Dokumen --}}
         <div class="bg-white p-6 rounded-lg border">
             <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Informasi Pembelian & Dokumen</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
@@ -63,6 +70,8 @@
                 <div><strong class="text-gray-500 block">Sumber Dana:</strong> {{ $asset->sumber_dana ?? 'N/A' }}</div>
             </div>
         </div>
+        
+        {{-- Informasi Tambahan --}}
         <div class="bg-white p-6 rounded-lg border">
             <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Informasi Tambahan</h3>
             <div class="text-sm space-y-4">
@@ -71,13 +80,14 @@
                 <div><strong class="text-gray-500 block">Keterangan:</strong><p class="text-gray-700 mt-1">{{ $asset->keterangan ?? 'N/A' }}</p></div>
             </div>
         </div>
+
         {{-- Histori Pengguna --}}
         <div class="bg-white p-6 rounded-lg border">
             <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Histori Pengguna</h3>
             <ul class="space-y-4 text-sm">
                 @forelse ($asset->history as $h)
                     <li class="border-b pb-3">
-                        {{-- PERBAIKAN FINAL: Memeriksa apakah relasi user ada sebelum menampilkannya --}}
+                        {{-- DIPERBAIKI: Memeriksa apakah relasi user ada sebelum menampilkannya --}}
                         @if ($h->user)
                             <div class="flex justify-between items-center">
                                 <p class="font-semibold text-gray-800">{{ $h->user->nama_pengguna }}</p>
@@ -95,7 +105,7 @@
                                 </p>
                             </div>
                         @else
-                            {{-- Tampilan fallback jika data user tidak ditemukan (misal: sudah dihapus) --}}
+                            {{-- Tampilan fallback jika data user tidak ditemukan --}}
                             <div class="flex justify-between items-center">
                                 <p class="font-semibold text-gray-500 italic">Pengguna Dihapus</p>
                             </div>
