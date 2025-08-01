@@ -22,6 +22,7 @@
     </div>
 
     <div class="space-y-8">
+        {{-- Informasi Umum --}}
         <div class="bg-white p-6 rounded-lg border">
             <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Informasi Umum</h3>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
@@ -36,6 +37,49 @@
                 <div><strong class="text-gray-500 block">Jumlah:</strong> {{ $asset->jumlah }} {{ $asset->satuan }}</div>
             </div>
         </div>
+
+        {{-- Spesifikasi Teknis --}}
+        <div class="bg-white p-6 rounded-lg border">
+            <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Spesifikasi & Deskripsi</h3>
+            @if($asset->spec_input_type == 'manual' && !empty($asset->spesifikasi_manual))
+                <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ $asset->spesifikasi_manual }}</div>
+            @elseif($asset->spec_input_type == 'detailed')
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                    <div><strong class="text-gray-500 block">Processor:</strong> {{ $asset->processor ?? 'N/A' }}</div>
+                    <div><strong class="text-gray-500 block">Memory (RAM):</strong> {{ $asset->memory_ram ?? 'N/A' }}</div>
+                    <div><strong class="text-gray-500 block">Storage:</strong> {{ $asset->hdd_ssd ?? 'N/A' }}</div>
+                    <div><strong class="text-gray-500 block">Graphics:</strong> {{ $asset->graphics ?? 'N/A' }}</div>
+                    <div class="col-span-1 sm:col-span-2"><strong class="text-gray-500 block">Layar (LCD):</strong> {{ $asset->lcd ?? 'N/A' }}</div>
+                </div>
+            @else
+                <p class="text-sm text-gray-500">Tidak ada detail spesifikasi yang diberikan.</p>
+            @endif
+        </div>
+
+        {{-- Informasi Pembelian & Dokumen --}}
+        <div class="bg-white p-6 rounded-lg border">
+            <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Informasi Pembelian & Dokumen</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                <div><strong class="text-gray-500 block">Tanggal Beli:</strong> {{ ($asset->tanggal_pembelian instanceof \Carbon\Carbon) ? $asset->tanggal_pembelian->isoFormat('D MMMM YYYY') : 'N/A' }}</div>
+                <div><strong class="text-gray-500 block">Harga:</strong> Rp {{ number_format($asset->harga_total ?? 0, 0, ',', '.') }}</div>
+                <div><strong class="text-gray-500 block">Nomor PO:</strong> {{ $asset->po_number ?? 'N/A' }}</div>
+                <div><strong class="text-gray-500 block">Nomor BAST:</strong> {{ $asset->nomor ?? 'N/A' }}</div>
+                <div><strong class="text-gray-500 block">Kode Aktiva:</strong> {{ $asset->code_aktiva ?? 'N/A' }}</div>
+                <div><strong class="text-gray-500 block">Sumber Dana:</strong> {{ $asset->sumber_dana ?? 'N/A' }}</div>
+            </div>
+        </div>
+        
+        {{-- Informasi Tambahan --}}
+        <div class="bg-white p-6 rounded-lg border">
+            <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Informasi Tambahan</h3>
+            <div class="text-sm space-y-4">
+                <div><strong class="text-gray-500 block">Item Termasuk:</strong><p class="text-gray-700 mt-1">{{ $asset->include_items ?? 'N/A' }}</p></div>
+                <div><strong class="text-gray-500 block">Peruntukan:</strong><p class="text-gray-700 mt-1">{{ $asset->peruntukan ?? 'N/A' }}</p></div>
+                <div><strong class="text-gray-500 block">Keterangan:</strong><p class="text-gray-700 mt-1">{{ $asset->keterangan ?? 'N/A' }}</p></div>
+            </div>
+        </div>
+
+        {{-- Histori Pengguna --}}
         <div class="bg-white p-6 rounded-lg border">
             <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Histori Pengguna</h3>
             <ul class="space-y-4 text-sm">

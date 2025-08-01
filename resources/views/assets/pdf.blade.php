@@ -9,7 +9,7 @@
         .header { text-align: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 25px; }
         .header h1 { margin: 0; font-size: 24px; color: #000; }
         .header p { margin: 5px 0 0; font-size: 16px; color: #555; }
-        .section { margin-bottom: 25px; }
+        .section { margin-bottom: 25px; page-break-inside: avoid; }
         .section h3 { font-size: 16px; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px; color: #222; }
         table { width: 100%; border-collapse: collapse; }
         td { padding: 8px 0; vertical-align: top; }
@@ -28,10 +28,9 @@
             <h3>Informasi Umum</h3>
             <table>
                 <tr><td class="label">Nama Barang</td><td>: {{ $asset->nama_barang }}</td></tr>
-                {{-- DIPERBAIKI: Menggunakan optional() --}}
-                <tr><td class="label">Pengguna Saat Ini</td><td>: {{ optional($asset->user)->nama_pengguna ?? 'Tidak ada' }}</td></tr>
-                <tr><td class="label">Jabatan</td><td>: {{ optional($asset->user)->jabatan ?? 'N/A' }}</td></tr>
-                <tr><td class="label">Departemen</td><td>: {{ optional($asset->user)->departemen ?? 'N/A' }}</td></tr>
+                <tr><td class="label">Pengguna Saat Ini</td><td>: {{ $asset->user->nama_pengguna }}</td></tr>
+                <tr><td class="label">Jabatan</td><td>: {{ $asset->user->jabatan }}</td></tr>
+                <tr><td class="label">Departemen</td><td>: {{ $asset->user->departemen }}</td></tr>
                 <tr><td class="label">Merk/Tipe</td><td>: {{ $asset->merk_type ?? 'N/A' }}</td></tr>
                 <tr><td class="label">Serial Number</td><td>: {{ $asset->serial_number ?? 'N/A' }}</td></tr>
                 <tr><td class="label">Kondisi</td><td>: {{ $asset->kondisi ?? 'N/A' }}</td></tr>
@@ -59,8 +58,8 @@
         <div class="section">
             <h3>Informasi Pembelian</h3>
             <table>
-                <tr><td class="label">Tanggal Beli</td><td>: {{ $asset->tanggal_pembelian ? $asset->tanggal_pembelian->isoFormat('D MMMM YYYY') : 'N/A' }}</td></tr>
-                <tr><td class="label">Harga</td><td>: Rp {{ number_format($asset->harga_total, 0, ',', '.') }}</td></tr>
+                <tr><td class="label">Tanggal Beli</td><td>: {{ ($asset->tanggal_pembelian instanceof \Carbon\Carbon) ? $asset->tanggal_pembelian->isoFormat('D MMMM YYYY') : 'N/A' }}</td></tr>
+                <tr><td class="label">Harga</td><td>: Rp {{ number_format($asset->harga_total ?? 0, 0, ',', '.') }}</td></tr>
                 <tr><td class="label">Nomor PO</td><td>: {{ $asset->po_number ?? 'N/A' }}</td></tr>
             </table>
         </div>
