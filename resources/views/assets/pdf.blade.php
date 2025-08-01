@@ -28,9 +28,10 @@
             <h3>Informasi Umum</h3>
             <table>
                 <tr><td class="label">Nama Barang</td><td>: {{ $asset->nama_barang }}</td></tr>
-                <tr><td class="label">Pengguna Saat Ini</td><td>: {{ $asset->user->nama_pengguna ?? 'Tidak ada' }}</td></tr>
-                <tr><td class="label">Jabatan</td><td>: {{ $asset->user->jabatan ?? 'N/A' }}</td></tr>
-                <tr><td class="label">Departemen</td><td>: {{ $asset->user->departemen ?? 'N/A' }}</td></tr>
+                {{-- DIPERBAIKI: Menggunakan optional() --}}
+                <tr><td class="label">Pengguna Saat Ini</td><td>: {{ optional($asset->user)->nama_pengguna ?? 'Tidak ada' }}</td></tr>
+                <tr><td class="label">Jabatan</td><td>: {{ optional($asset->user)->jabatan ?? 'N/A' }}</td></tr>
+                <tr><td class="label">Departemen</td><td>: {{ optional($asset->user)->departemen ?? 'N/A' }}</td></tr>
                 <tr><td class="label">Merk/Tipe</td><td>: {{ $asset->merk_type ?? 'N/A' }}</td></tr>
                 <tr><td class="label">Serial Number</td><td>: {{ $asset->serial_number ?? 'N/A' }}</td></tr>
                 <tr><td class="label">Kondisi</td><td>: {{ $asset->kondisi ?? 'N/A' }}</td></tr>
