@@ -5,11 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Asset;
 use App\Models\User;
 use App\Imports\AssetsImport;
-use App\Exports\AssetsExport; // Pastikan ini ada
+use App\Exports\AssetsExport;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf; // Diperlukan untuk fitur PDF
 
 class AssetController extends Controller
 {
@@ -202,18 +203,29 @@ class AssetController extends Controller
         return view('assets.print', compact('assets'));
     }
 
-    /**
-     * Menangani permintaan ekspor data aset ke file Excel.
-     */
     public function export(Request $request)
     {
-        // Mengambil parameter dari URL
         $assetIds = $request->query('ids');
         $search = $request->query('search');
-
         $filename = 'aset_data_' . date('Y-m-d_H-i-s') . '.xlsx';
-
-        // Mengirim parameter ke class AssetsExport
         return Excel::download(new AssetsExport($search, $assetIds), $filename);
+    }
+
+    /**
+     * Menangani permintaan untuk mengunduh detail aset sebagai PDF.
+     */
+    public function downloadPDF(Asset $asset)
+    {
+        // Memuat data relasi yang dibutuhkan
+        $asset->load('user');
+
+        // Membuat PDF dari view 'assets.pdf'
+        $pdf = Pdf::loadView('assets.pdf', compact('asset'));
+
+        // Menyiapkan nama file untuk diunduh (mengganti '/' dengan '-')
+        $filename = 'ASET-' . str_replace('/', '-', $asset->code_asset) . '.pdf';
+
+        // Mengirimkan PDF ke browser untuk diunduh
+        return $pdf->download($filename);
     }
 }

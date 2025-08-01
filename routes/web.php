@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\DashboardController; // <-- Add this
+use App\Http\Controllers\DashboardController;
 
 // Authentication Routes
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -13,8 +13,9 @@ Route::get('register', [RegisterController::class, 'showRegistrationForm'])->nam
 Route::post('register', [RegisterController::class, 'register']);
 Route::post('logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
-// Public QR Code Route
+// Public Routes
 Route::get('assets/{asset}/public', [AssetController::class, 'publicShow'])->name('assets.public.show');
+Route::get('assets/{asset}/pdf', [AssetController::class, 'downloadPDF'])->name('assets.pdf'); // Rute untuk download PDF
 
 // Main application routes (protected by auth middleware)
 Route::middleware('auth')->group(function () {
