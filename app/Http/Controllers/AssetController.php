@@ -50,23 +50,42 @@ class AssetController extends Controller
     }
 
     /**
-     * Menampilkan daftar semua aset.
+     * Menampilkan daftar semua aset dengan filter.
      */
     public function index(Request $request)
     {
-        $search = $request->input('search');
-        $assets = Asset::with(['user', 'category', 'company'])
-            ->when($search, function ($query, $searchTerm) {
-                return $query->where('code_asset', 'like', "%{$searchTerm}%")
-                             ->orWhere('nama_barang', 'like', "%{$searchTerm}%")
-                             ->orWhere('serial_number', 'like', "%{$searchTerm}%")
-                             ->orWhereHas('user', function ($subQuery) use ($searchTerm) {
-                                 $subQuery->where('nama_pengguna', 'like', "%{$searchTerm}%");
-                             });
-            })
-            ->latest()
-            ->paginate(15);
-        return view('assets.index', compact('assets', 'search'));
+        // Start the query with eager loading for better performance
+        $query = Asset::with(['user', 'category', 'company']);
+
+        // Apply search filter if a search term is provided
+        if ($request->filled('search')) {
+            $searchTerm = $request->input('search');
+            $query->where(function ($subQuery) use ($searchTerm) {
+                $subQuery->where('code_asset', 'like', "%{$searchTerm}%")
+                         ->orWhere('nama_barang', 'like', "%{$searchTerm}%")
+                         ->orWhere('serial_number', 'like', "%{$searchTerm}%")
+                         ->orWhereHas('user', function ($userQuery) use ($searchTerm) {
+                             $userQuery->where('nama_pengguna', 'like', "%{$searchTerm}%");
+                         });
+            });
+        }
+
+        // Apply category filter if a category_id is provided
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->input('category_id'));
+        }
+
+        // Fetch the filtered and paginated assets
+        $assets = $query->latest()->paginate(15);
+        
+        // Fetch all categories to populate the filter dropdown in the view
+        $categories = Category::orderBy('name')->get();
+
+        // Return the view with the necessary data
+        return view('assets.index', [
+            'assets' => $assets,
+            'categories' => $categories,
+        ]);
     }
 
     /**
