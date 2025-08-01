@@ -7,6 +7,7 @@ use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Carbon\Carbon;
 
 class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize
 {
@@ -19,82 +20,107 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
         $this->ids = $ids;
     }
 
+    /**
+    * Menentukan query untuk mengambil data aset dari database.
+    */
     public function query()
     {
-        $query = Asset::with('user');
+        // Eager load relasi untuk performa yang lebih baik (menghindari N+1 problem)
+        $query = Asset::with(['user', 'category', 'company']);
 
+        // Jika ada ID yang dipilih, hanya ekspor aset-aset tersebut.
         if (!empty($this->ids)) {
-            return $query->whereIn('id', $this->ids);
+            return $query->whereIn('id', $this->ids)->latest();
         }
 
+        // Jika tidak ada ID yang dipilih, gunakan filter pencarian.
         return $query->when($this->search, function ($q, $searchTerm) {
-                return $q->where('code_asset', 'like', "%{$searchTerm}%")
-                         ->orWhere('nama_barang', 'like', "%{$searchTerm}%")
-                         ->orWhereHas('user', function ($subQuery) use ($searchTerm) {
-                             $subQuery->where('nama_pengguna', 'like', "%{$searchTerm}%");
-                         });
-            })
-            ->latest();
+            return $q->where('code_asset', 'like', "%{$searchTerm}%")
+                     ->orWhere('nama_barang', 'like', "%{$searchTerm}%")
+                     ->orWhere('serial_number', 'like', "%{$searchTerm}%")
+                     ->orWhereHas('user', function ($subQuery) use ($searchTerm) {
+                         $subQuery->where('nama_pengguna', 'like', "%{$searchTerm}%");
+                     });
+        })->latest();
     }
 
+    /**
+    * Mendefinisikan judul untuk setiap kolom di file Excel.
+    */
     public function headings(): array
     {
         return [
             'Kode Aset',
             'Nama Barang',
-            'Merk/Tipe',
+            'Kategori',
+            'Perusahaan',
+            'Merk',
+            'Tipe',
             'Serial Number',
             'Pengguna Saat Ini',
             'Jabatan Pengguna',
             'Departemen Pengguna',
             'Kondisi',
             'Lokasi Fisik',
+            'Jumlah',
+            'Satuan',
+            'Processor',
+            'RAM',
+            'Storage',
+            'Graphics',
+            'Layar',
+            'Spesifikasi/Deskripsi Manual',
             'Tanggal Pembelian',
             'Tahun Pembelian',
             'Harga Total (Rp)',
             'Nomor PO',
+            'Nomor BAST',
             'Kode Aktiva',
+            'Item Termasuk',
+            'Peruntukan',
             'Keterangan',
         ];
     }
 
     /**
-     * Memetakan data dari setiap model Asset ke dalam format array untuk setiap baris Excel.
-     *
-     * @param Asset $asset
-     */
+    * Memetakan data dari setiap model Asset ke dalam format array untuk setiap baris Excel.
+    *
+    * @param Asset $asset
+    */
     public function map($asset): array
     {
-        // DIPERBARUI: Logika yang lebih aman untuk mengambil data pengguna
-        $userName = $asset->user ? $asset->user->nama_pengguna : 'N/A';
-        $userJabatan = $asset->user ? $asset->user->jabatan : 'N/A';
-        $userDepartemen = $asset->user ? $asset->user->departemen : 'N/A';
-
-        // Logika yang lebih aman untuk memformat tanggal
-        $tanggalPembelian = 'N/A';
-        if ($asset->tanggal_pembelian) {
-            try {
-                $tanggalPembelian = $asset->tanggal_pembelian->format('d-m-Y');
-            } catch (\Exception $e) {
-                $tanggalPembelian = 'Tanggal Tidak Valid';
-            }
-        }
+        // Logika untuk menampilkan Merk/Tipe dan Spesifikasi berdasarkan Kategori
+        $isDetailedSpec = optional($asset->category)->requires_merk;
 
         return [
             $asset->code_asset,
             $asset->nama_barang,
-            $asset->merk_type,
+            optional($asset->category)->name ?? 'N/A',
+            optional($asset->company)->name ?? 'N/A',
+            $isDetailedSpec ? $asset->merk : 'N/A',
+            !$isDetailedSpec ? $asset->tipe : 'N/A',
             $asset->serial_number,
-            $userName,
-            $userJabatan,
-            $userDepartemen,
+            optional($asset->user)->nama_pengguna ?? 'N/A',
+            optional($asset->user)->jabatan ?? 'N/A',
+            optional($asset->user)->departemen ?? 'N/A',
             $asset->kondisi,
             $asset->lokasi,
-            $tanggalPembelian,
+            $asset->jumlah,
+            $asset->satuan,
+            $isDetailedSpec ? $asset->processor : 'N/A',
+            $isDetailedSpec ? $asset->memory_ram : 'N/A',
+            $isDetailedSpec ? $asset->hdd_ssd : 'N/A',
+            $isDetailedSpec ? $asset->graphics : 'N/A',
+            $isDetailedSpec ? $asset->lcd : 'N/A',
+            !$isDetailedSpec ? $asset->spesifikasi_manual : 'N/A',
+            $asset->tanggal_pembelian ? $asset->tanggal_pembelian->format('d-m-Y') : 'N/A',
             $asset->thn_pembelian,
             $asset->harga_total,
             $asset->po_number,
+            $asset->nomor, // Nomor BAST
             $asset->code_aktiva,
+            $asset->include_items,
+            $asset->peruntukan,
             $asset->keterangan,
         ];
     }

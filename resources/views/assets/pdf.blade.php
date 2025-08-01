@@ -17,6 +17,7 @@
         .footer { text-align: center; font-size: 10px; color: #888; position: fixed; bottom: 0; width: 100%; }
         .history-table th, .history-table td { border-bottom: 1px solid #eee; padding: 8px; text-align: left; }
         .history-table th { background-color: #f7f7f7; font-weight: bold; }
+        p.spec-manual { white-space: pre-wrap; background-color: #f9f9f9; padding: 10px; border-radius: 4px; border: 1px solid #eee; }
     </style>
 </head>
 <body>
@@ -29,11 +30,17 @@
         <div class="section">
             <h3>Informasi Umum</h3>
             <table>
-                <tr><td class="label">Nama Barang</td><td>: {{ $asset->nama_barang }}</td></tr>
-                <tr><td class="label">Pengguna Saat Ini</td><td>: {{ $asset->user->nama_pengguna }}</td></tr>
-                <tr><td class="label">Jabatan</td><td>: {{ $asset->user->jabatan }}</td></tr>
-                <tr><td class="label">Departemen</td><td>: {{ $asset->user->departemen }}</td></tr>
-                <tr><td class="label">Merk/Tipe</td><td>: {{ $asset->merk_type ?? 'N/A' }}</td></tr>
+                <tr><td class="label">Nama Barang</td><td>: {{ $asset->nama_barang ?? 'N/A' }}</td></tr>
+                <tr><td class="label">Kategori</td><td>: {{ optional($asset->category)->name ?? 'N/A' }}</td></tr>
+                <tr><td class="label">Perusahaan</td><td>: {{ optional($asset->company)->name ?? 'N/A' }} ({{ optional($asset->company)->code ?? 'N/A' }})</td></tr>
+                <tr><td class="label">Pengguna Saat Ini</td><td>: {{ optional($asset->user)->nama_pengguna ?? 'N/A' }}</td></tr>
+                <tr><td class="label">Jabatan</td><td>: {{ optional($asset->user)->jabatan ?? 'N/A' }}</td></tr>
+                <tr><td class="label">Departemen</td><td>: {{ optional($asset->user)->departemen ?? 'N/A' }}</td></tr>
+                @if(optional($asset->category)->requires_merk)
+                <tr><td class="label">Merk</td><td>: {{ $asset->merk ?? 'N/A' }}</td></tr>
+                @else
+                <tr><td class="label">Tipe</td><td>: {{ $asset->tipe ?? 'N/A' }}</td></tr>
+                @endif
                 <tr><td class="label">Serial Number</td><td>: {{ $asset->serial_number ?? 'N/A' }}</td></tr>
                 <tr><td class="label">Kondisi</td><td>: {{ $asset->kondisi ?? 'N/A' }}</td></tr>
                 <tr><td class="label">Lokasi Fisik</td><td>: {{ $asset->lokasi ?? 'N/A' }}</td></tr>
@@ -43,9 +50,8 @@
 
         <div class="section">
             <h3>Spesifikasi & Deskripsi</h3>
-            @if($asset->spec_input_type == 'manual' && !empty($asset->spesifikasi_manual))
-                <p>{{ $asset->spesifikasi_manual }}</p>
-            @elseif($asset->spec_input_type == 'detailed')
+            {{-- Logika disesuaikan dengan create.blade.php --}}
+            @if(optional($asset->category)->requires_merk)
                 <table>
                     <tr><td class="label">Processor</td><td>: {{ $asset->processor ?? 'N/A' }}</td></tr>
                     <tr><td class="label">Memory (RAM)</td><td>: {{ $asset->memory_ram ?? 'N/A' }}</td></tr>
@@ -53,6 +59,8 @@
                     <tr><td class="label">Graphics</td><td>: {{ $asset->graphics ?? 'N/A' }}</td></tr>
                     <tr><td class="label">Layar (LCD)</td><td>: {{ $asset->lcd ?? 'N/A' }}</td></tr>
                 </table>
+            @elseif(!empty($asset->spesifikasi_manual))
+                 <p class="spec-manual">{{ $asset->spesifikasi_manual }}</p>
             @else
                 <p>Tidak ada detail spesifikasi yang diberikan.</p>
             @endif
@@ -61,26 +69,23 @@
         <div class="section">
             <h3>Informasi Pembelian & Dokumen</h3>
             <table>
-                <tr><td class="label">Tanggal Beli</td><td>: {{ ($asset->tanggal_pembelian instanceof \Carbon\Carbon) ? $asset->tanggal_pembelian->isoFormat('D MMMM YYYY') : 'N/A' }}</td></tr>
+                <tr><td class="label">Tanggal Beli</td><td>: {{ $asset->tanggal_pembelian ? $asset->tanggal_pembelian->isoFormat('D MMMM YYYY') : 'N/A' }}</td></tr>
                 <tr><td class="label">Harga</td><td>: Rp {{ number_format($asset->harga_total ?? 0, 0, ',', '.') }}</td></tr>
                 <tr><td class="label">Nomor PO</td><td>: {{ $asset->po_number ?? 'N/A' }}</td></tr>
                 <tr><td class="label">Nomor BAST</td><td>: {{ $asset->nomor ?? 'N/A' }}</td></tr>
                 <tr><td class="label">Kode Aktiva</td><td>: {{ $asset->code_aktiva ?? 'N/A' }}</td></tr>
-                <tr><td class="label">Sumber Dana</td><td>: {{ $asset->sumber_dana ?? 'N/A' }}</td></tr>
             </table>
         </div>
 
-        {{-- Section Informasi Tambahan --}}
         <div class="section">
             <h3>Informasi Tambahan</h3>
             <table>
-                <tr><td class="label" style="vertical-align: top;">Item Termasuk</td><td style="vertical-align: top;">: {{ $asset->include_items ?? 'N/A' }}</td></tr>
-                <tr><td class="label" style="vertical-align: top;">Peruntukan</td><td style="vertical-align: top;">: {{ $asset->peruntukan ?? 'N/A' }}</td></tr>
-                <tr><td class="label" style="vertical-align: top;">Keterangan</td><td style="vertical-align: top;">: {{ $asset->keterangan ?? 'N/A' }}</td></tr>
+                <tr><td class="label">Item Termasuk</td><td>: {{ $asset->include_items ?? 'N/A' }}</td></tr>
+                <tr><td class="label">Peruntukan</td><td>: {{ $asset->peruntukan ?? 'N/A' }}</td></tr>
+                <tr><td class="label">Keterangan</td><td>: {{ $asset->keterangan ?? 'N/A' }}</td></tr>
             </table>
         </div>
 
-        {{-- Section Histori Pengguna --}}
         <div class="section">
             <h3>Histori Pengguna</h3>
             <table class="history-table">
@@ -95,8 +100,8 @@
                     @forelse ($asset->history as $h)
                         <tr>
                             <td>
-                                {{ $h->user->nama_pengguna }}<br>
-                                <small style="color: #666;">{{ $h->user->jabatan }}</small>
+                                {{ optional($h->user)->nama_pengguna ?? 'User Dihapus' }}<br>
+                                <small style="color: #666;">{{ optional($h->user)->jabatan ?? '' }}</small>
                             </td>
                             <td>{{ \Carbon\Carbon::parse($h->tanggal_mulai)->isoFormat('D MMMM YYYY') }}</td>
                             <td>
@@ -117,7 +122,7 @@
         </div>
 
         <div class="footer">
-            Dokumen ini dibuat secara otomatis pada {{ date('d M Y H:i') }}
+            Dokumen ini dibuat secara otomatis pada {{ now()->isoFormat('D MMMM YYYY, HH:mm') }}
         </div>
     </div>
 </body>
