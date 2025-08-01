@@ -19,12 +19,10 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {{-- KOLOM KIRI (INFORMASI DETAIL) --}}
         <div class="md:col-span-2 space-y-8">
             <div class="bg-white p-6 rounded-lg border shadow-sm">
                 <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Informasi Umum</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4 text-sm">
-                    {{-- DIPERBAIKI: Menggunakan optional() --}}
                     <div><strong class="text-gray-500 block">Pengguna Saat Ini:</strong> {{ optional($asset->user)->nama_pengguna ?? 'Tidak ada' }}</div>
                     <div><strong class="text-gray-500 block">Jabatan:</strong> {{ optional($asset->user)->jabatan ?? 'N/A' }}</div>
                     <div><strong class="text-gray-500 block">Departemen:</strong> {{ optional($asset->user)->departemen ?? 'N/A' }}</div>
@@ -36,7 +34,6 @@
                     <div><strong class="text-gray-500 block">Jumlah:</strong> {{ $asset->jumlah }} {{ $asset->satuan }}</div>
                 </div>
             </div>
-            {{-- ... sisa kode tidak berubah ... --}}
             <div class="bg-white p-6 rounded-lg border shadow-sm">
                 <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Spesifikasi & Deskripsi</h3>
                 @if($asset->spec_input_type == 'manual' && !empty($asset->spesifikasi_manual))
@@ -56,8 +53,8 @@
             <div class="bg-white p-6 rounded-lg border shadow-sm">
                 <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Informasi Pembelian & Dokumen</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4 text-sm">
-                    <div><strong class="text-gray-500 block">Tanggal Beli:</strong> {{ $asset->tanggal_pembelian ? $asset->tanggal_pembelian->isoFormat('D MMMM YYYY') : 'N/A' }}</div>
-                    <div><strong class="text-gray-500 block">Harga:</strong> Rp {{ number_format($asset->harga_total, 0, ',', '.') }}</div>
+                    <div><strong class="text-gray-500 block">Tanggal Beli:</strong> {{ ($asset->tanggal_pembelian instanceof \Carbon\Carbon) ? $asset->tanggal_pembelian->isoFormat('D MMMM YYYY') : 'N/A' }}</div>
+                    <div><strong class="text-gray-500 block">Harga:</strong> Rp {{ number_format($asset->harga_total ?? 0, 0, ',', '.') }}</div>
                     <div><strong class="text-gray-500 block">Nomor PO:</strong> {{ $asset->po_number ?? 'N/A' }}</div>
                     <div><strong class="text-gray-500 block">Nomor BAST:</strong> {{ $asset->nomor ?? 'N/A' }}</div>
                     <div><strong class="text-gray-500 block">Kode Aktiva:</strong> {{ $asset->code_aktiva ?? 'N/A' }}</div>
@@ -73,8 +70,6 @@
                 </div>
             </div>
         </div>
-
-        {{-- KOLOM KANAN (TINDAKAN & HISTORI) --}}
         <div class="space-y-6">
             <div class="bg-white p-6 rounded-lg shadow-md text-center border">
                 <h3 class="text-xl font-semibold mb-4">QR Code</h3>
@@ -86,23 +81,35 @@
                 <ul class="space-y-4 text-sm">
                     @forelse ($asset->history as $h)
                         <li class="border-b pb-3">
-                            <div class="flex justify-between items-center">
-                                {{-- DIPERBAIKI: Menggunakan optional() --}}
-                                <p class="font-semibold text-gray-800">{{ optional($h->user)->nama_pengguna ?? 'Pengguna Dihapus' }}</p>
-                                @if(is_null($h->tanggal_selesai) && $asset->user_id == $h->user_id)
-                                    <span class="flex-shrink-0 text-xs bg-green-100 text-green-800 font-semibold px-2 py-1 rounded-full">Saat Ini</span>
-                                @endif
-                            </div>
-                            <div class="mt-1">
-                                {{-- DIPERBAIKI: Menggunakan optional() --}}
-                                <p class="text-xs text-gray-500">{{ optional($h->user)->jabatan ?? 'Jabatan tidak diketahui' }}</p>
-                                <p class="text-xs text-gray-400 mt-1">
-                                    <span>Mulai: {{ \Carbon\Carbon::parse($h->tanggal_mulai)->format('d M Y') }}</span>
-                                    @if($h->tanggal_selesai)
-                                        <span> - Selesai: {{ \Carbon\Carbon::parse($h->tanggal_selesai)->format('d M Y') }}</span>
+                            @if ($h->user)
+                                <div class="flex justify-between items-center">
+                                    <p class="font-semibold text-gray-800">{{ $h->user->nama_pengguna }}</p>
+                                    @if(is_null($h->tanggal_selesai) && $asset->user_id == $h->user_id)
+                                        <span class="flex-shrink-0 text-xs bg-green-100 text-green-800 font-semibold px-2 py-1 rounded-full">Saat Ini</span>
                                     @endif
-                                </p>
-                            </div>
+                                </div>
+                                <div class="mt-1">
+                                    <p class="text-xs text-gray-500">{{ $h->user->jabatan ?? 'Jabatan tidak diketahui' }}</p>
+                                    <p class="text-xs text-gray-400 mt-1">
+                                        <span>Mulai: {{ \Carbon\Carbon::parse($h->tanggal_mulai)->format('d M Y') }}</span>
+                                        @if($h->tanggal_selesai)
+                                            <span> - Selesai: {{ \Carbon\Carbon::parse($h->tanggal_selesai)->format('d M Y') }}</span>
+                                        @endif
+                                    </p>
+                                </div>
+                            @else
+                                <div class="flex justify-between items-center">
+                                    <p class="font-semibold text-gray-500 italic">Pengguna Dihapus</p>
+                                </div>
+                                <div class="mt-1">
+                                    <p class="text-xs text-gray-400 mt-1">
+                                        <span>Mulai: {{ \Carbon\Carbon::parse($h->tanggal_mulai)->format('d M Y') }}</span>
+                                        @if($h->tanggal_selesai)
+                                            <span> - Selesai: {{ \Carbon\Carbon::parse($h->tanggal_selesai)->format('d M Y') }}</span>
+                                        @endif
+                                    </p>
+                                </div>
+                            @endif
                         </li>
                     @empty
                         <li class="text-gray-500">Tidak ada riwayat pengguna.</li>
