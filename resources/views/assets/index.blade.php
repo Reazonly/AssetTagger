@@ -35,7 +35,7 @@
                 </div>
             </div>
             <div class="w-full sm:w-auto">
-                <select name="category_id" onchange="this.form.submit()" class="w-full border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <select name="category_id" id="category_filter" onchange="this.form.submit()" class="w-full border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     <option value="">Semua Kategori</option>
                     @foreach($categories as $category)
                         <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
@@ -47,12 +47,13 @@
         </form>
         <div class="flex items-center gap-2">
             <button id="printSelectedBtn" disabled class="flex items-center gap-2 bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                Cetak
+                Cetak Terpilih
             </button>
             <button id="exportSelectedBtn" disabled class="flex items-center gap-2 bg-green-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                Export
+                Export Terpilih
+            </button>
+            <button id="exportFilteredBtn" class="flex items-center gap-2 bg-green-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors">
+                Export Hasil Filter
             </button>
         </div>
     </div>
@@ -144,6 +145,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const assetCheckboxes = document.querySelectorAll('.asset-checkbox');
     const printSelectedBtn = document.getElementById('printSelectedBtn');
     const exportSelectedBtn = document.getElementById('exportSelectedBtn');
+    const exportFilteredBtn = document.getElementById('exportFilteredBtn');
 
     function updateActionButtonsState() {
         const selectedCount = Array.from(assetCheckboxes).filter(cb => cb.checked).length;
@@ -182,14 +184,40 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    // --- PERBAIKAN LOGIKA EKSPOR ---
+
+    // 1. Ekspor item yang dipilih saja
     exportSelectedBtn.addEventListener('click', function() {
         const selectedIds = Array.from(assetCheckboxes)
             .filter(cb => cb.checked)
             .map(cb => 'ids[]=' + cb.value)
             .join('&');
+        
         if (selectedIds) {
-            window.location.href = "{{ route('assets.export') }}?" + selectedIds;
+            // Kita tetap sertakan filter kategori jika ada, agar nama file dan kolomnya sesuai
+            const categoryId = document.getElementById('category_filter').value;
+            let exportUrl = "{{ route('assets.export') }}?" + selectedIds;
+            if (categoryId) {
+                exportUrl += `&category_id=${categoryId}`;
+            }
+            window.location.href = exportUrl;
         }
+    });
+
+    // 2. Ekspor semua hasil yang sedang difilter (tidak peduli dicentang atau tidak)
+    exportFilteredBtn.addEventListener('click', function() {
+        const categoryId = document.getElementById('category_filter').value;
+        const searchTerm = document.querySelector('input[name="search"]').value;
+        
+        const params = new URLSearchParams();
+        if (categoryId) {
+            params.append('category_id', categoryId);
+        }
+        if (searchTerm) {
+            params.append('search', searchTerm);
+        }
+
+        window.location.href = "{{ route('assets.export') }}?" + params.toString();
     });
 
     // Initial check
