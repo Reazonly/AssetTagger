@@ -20,6 +20,13 @@
                 </svg>
                 Edit Aset
             </a>
+            {{-- TOMBOL EKSPOR BARU --}}
+            <a href="{{ route('assets.export', ['ids[]' => $asset->id, 'category_id' => $asset->category_id]) }}" class="bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 shadow-md transition-colors inline-flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+                Export
+            </a>
         </div>
     </div>
 
@@ -31,11 +38,11 @@
             <div class="bg-white p-6 rounded-xl border shadow-sm">
                 <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-800">Informasi Umum</h3>
                 <dl class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-5 text-sm">
-                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Kategori</dt><dd class="text-gray-900 mt-1">{{ $asset->category->name ?? 'N/A' }}</dd></div>
+                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Kategori</dt><dd class="text-gray-900 mt-1">{{ optional($asset->category)->name ?? 'N/A' }}</dd></div>
                     <div class="flex flex-col"><dt class="font-medium text-gray-500">Sub Kategori</dt><dd class="text-gray-900 mt-1">{{ $asset->sub_category ?? 'N/A' }}</dd></div>
-                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Perusahaan</dt><dd class="text-gray-900 mt-1">{{ $asset->company->name ?? 'N/A' }}</dd></div>
+                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Perusahaan</dt><dd class="text-gray-900 mt-1">{{ optional($asset->company)->name ?? 'N/A' }}</dd></div>
                     
-                    @if($asset->category && $asset->category->requires_merk)
+                    @if(optional($asset->category)->requires_merk)
                         <div class="flex flex-col"><dt class="font-medium text-gray-500">Merk</dt><dd class="text-gray-900 mt-1">{{ $asset->merk ?? 'N/A' }}</dd></div>
                     @else
                         <div class="flex flex-col"><dt class="font-medium text-gray-500">Tipe</dt><dd class="text-gray-900 mt-1">{{ $asset->tipe ?? 'N/A' }}</dd></div>
@@ -49,9 +56,9 @@
                     <div class="sm:col-span-2 md:col-span-3 mt-4 pt-5 border-t">
                         <h4 class="text-lg font-semibold text-gray-800 mb-4">Informasi Pengguna</h4>
                         <dl class="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-5 text-sm">
-                            <div class="flex flex-col"><dt class="font-medium text-gray-500">Pengguna Saat Ini</dt><dd class="text-gray-900 mt-1">{{ $asset->user->nama_pengguna ?? 'Tidak ada' }}</dd></div>
-                            <div class="flex flex-col"><dt class="font-medium text-gray-500">Jabatan</dt><dd class="text-gray-900 mt-1">{{ $asset->user->jabatan ?? 'N/A' }}</dd></div>
-                            <div class="flex flex-col"><dt class="font-medium text-gray-500">Departemen</dt><dd class="text-gray-900 mt-1">{{ $asset->user->departemen ?? 'N/A' }}</dd></div>
+                            <div class="flex flex-col"><dt class="font-medium text-gray-500">Pengguna Saat Ini</dt><dd class="text-gray-900 mt-1">{{ optional($asset->user)->nama_pengguna ?? 'Tidak ada' }}</dd></div>
+                            <div class="flex flex-col"><dt class="font-medium text-gray-500">Jabatan</dt><dd class="text-gray-900 mt-1">{{ optional($asset->user)->jabatan ?? 'N/A' }}</dd></div>
+                            <div class="flex flex-col"><dt class="font-medium text-gray-500">Departemen</dt><dd class="text-gray-900 mt-1">{{ optional($asset->user)->departemen ?? 'N/A' }}</dd></div>
                         </dl>
                     </div>
                 </dl>
@@ -114,13 +121,13 @@
                     @forelse ($asset->history as $h)
                         <li class="border-b border-gray-200 pb-3 last:border-b-0">
                             <div class="flex justify-between items-center">
-                                <p class="font-semibold text-gray-800">{{ $h->user->nama_pengguna ?? 'Pengguna Dihapus' }}</p>
+                                <p class="font-semibold text-gray-800">{{ optional($h->user)->nama_pengguna ?? 'Pengguna Dihapus' }}</p>
                                 @if(is_null($h->tanggal_selesai) && $asset->user_id == $h->user_id)
                                     <span class="flex-shrink-0 text-xs bg-green-100 text-green-800 font-semibold px-2 py-1 rounded-full">Saat Ini</span>
                                 @endif
                             </div>
                             <div class="mt-1">
-                                <p class="text-xs text-gray-500">{{ $h->user->jabatan ?? 'Jabatan tidak diketahui' }}</p>
+                                <p class="text-xs text-gray-500">{{ optional($h->user)->jabatan ?? 'Jabatan tidak diketahui' }}</p>
                                 <p class="text-xs text-gray-400 mt-1">
                                     <span>Mulai: {{ \Carbon\Carbon::parse($h->tanggal_mulai)->format('d M Y') }}</span>
                                     @if($h->tanggal_selesai)

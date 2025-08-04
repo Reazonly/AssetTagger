@@ -52,9 +52,7 @@
             <button id="exportSelectedBtn" disabled class="flex items-center gap-2 bg-green-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed">
                 Export Terpilih
             </button>
-            <button id="exportFilteredBtn" class="flex items-center gap-2 bg-green-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors">
-                Export Hasil Filter
-            </button>
+           
         </div>
     </div>
 
@@ -204,21 +202,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // 2. Ekspor semua hasil yang sedang difilter (tidak peduli dicentang atau tidak)
-    exportFilteredBtn.addEventListener('click', function() {
-        const categoryId = document.getElementById('category_filter').value;
-        const searchTerm = document.querySelector('input[name="search"]').value;
-        
-        const params = new URLSearchParams();
-        if (categoryId) {
-            params.append('category_id', categoryId);
-        }
-        if (searchTerm) {
-            params.append('search', searchTerm);
-        }
-
-        window.location.href = "{{ route('assets.export') }}?" + params.toString();
-    });
+   
 
     // Initial check
     updateActionButtonsState();

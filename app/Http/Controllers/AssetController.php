@@ -299,13 +299,25 @@ class AssetController extends Controller
     public function export(Request $request)
     {
         $assetIds = $request->query('ids');
-        $searchTerm = $request->query('search');
-        $categoryId = $request->query('category_id');
+        
+        // Karena fitur "Export Hasil Filter" dihapus, sekarang ekspor HANYA berfungsi untuk item yang dipilih.
+        if (empty($assetIds)) {
+            return redirect()->route('assets.index')->with('error', 'Tidak ada aset yang dipilih untuk diekspor.');
+        }
 
+        $categoryId = $request->query('category_id');
         $categoryCode = $categoryId ? \App\Models\Category::find($categoryId)?->code : null;
 
-        $fileName = 'assets_' . ($categoryCode ? strtolower($categoryCode) . '_' : '') . date('Y-m-d_H-i-s') . '.xlsx';
+        // Jika tidak ada filter kategori di URL, kita bisa coba tentukan dari item pertama yang dipilih
+        // untuk penamaan file yang lebih baik dan format kolom yang lebih spesifik.
+        if (!$categoryCode) {
+            $firstAsset = Asset::find($assetIds[0]);
+            $categoryCode = optional($firstAsset->category)->code;
+        }
+
+        $fileName = 'assets_export_' . ($categoryCode ? strtolower($categoryCode) . '_' : '') . date('Y-m-d_H-i-s') . '.xlsx';
         
-        return Excel::download(new AssetsExport($searchTerm, $assetIds, $categoryCode), $fileName);
+        // Hanya teruskan parameter yang relevan. Search term sudah tidak digunakan.
+        return Excel::download(new AssetsExport(null, $assetIds, $categoryCode), $fileName);
     }
 }
