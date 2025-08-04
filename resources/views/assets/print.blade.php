@@ -6,41 +6,45 @@
     <title>Cetak Label Aset</title>
     <style>
         body {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f4;
+            background-color: #f0f2f5;
         }
         .label-container {
             width: 320px;
             height: 180px;
             background-color: #ffffff;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
             margin: 20px auto;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            page-break-after: always;
+        }
+        .label-container:last-child {
+            page-break-after: auto;
         }
         .label-header {
             text-align: center;
-            border-bottom: 2px solid #333;
-            padding-bottom: 5px;
-            margin-bottom: 10px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
         }
         .label-header h1 {
             margin: 0;
-            font-size: 14px;
+            font-size: 16px;
             font-weight: bold;
+            color: #333;
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
         .label-content {
             display: flex;
             flex-grow: 1;
-            gap: 12px;
+            gap: 15px;
+            align-items: center;
         }
         .label-info {
             flex-grow: 1;
@@ -49,20 +53,22 @@
             justify-content: center;
         }
         .label-info p {
-            margin: 1px 0;
-            font-size: 11px;
+            margin: 2px 0;
+            font-size: 12px;
+            color: #555;
         }
         .label-info .asset-name {
-            font-size: 13px;
-            font-weight: bold;
-            margin-bottom: 6px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 8px;
             word-wrap: break-word;
         }
         .label-info .asset-code {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 11px;
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            font-size: 13px;
             font-weight: bold;
-            color: #d9534f;
+            color: #28a745; /* Warna hijau untuk kode aset */
         }
         .label-qr {
             flex-shrink: 0;
@@ -74,19 +80,22 @@
         .label-qr img, .label-qr svg {
             width: 90px !important;
             height: 90px !important;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
         }
         .label-qr span {
-            font-size: 9px;
-            margin-top: 4px;
-            color: #555;
+            font-size: 10px;
+            margin-top: 6px;
+            color: #777;
+            font-style: italic;
         }
         .label-footer {
-            font-size: 8px;
+            font-size: 9px;
             text-align: center;
-            color: #777;
-            margin-top: 5px;
+            color: #999;
+            margin-top: 10px;
             border-top: 1px dashed #ccc;
-            padding-top: 5px;
+            padding-top: 8px;
         }
         @media print {
             body {
@@ -95,10 +104,7 @@
             .label-container {
                 margin: 0;
                 box-shadow: none;
-                page-break-after: always;
-            }
-            .label-container:last-child {
-                page-break-after: auto;
+                border: 1px solid #ccc; /* Border tetap ada saat dicetak */
             }
         }
     </style>
@@ -113,20 +119,18 @@
                 <div class="label-info">
                     <p class="asset-name">{{ Str::limit($asset->nama_barang, 40) }}</p>
                     <p class="asset-code">{{ $asset->code_asset }}</p>
-                    <p style="margin-top: 8px;">
+                    <p style="margin-top: 10px;">
                         <strong>Pengguna:</strong><br>
-                        {{-- DIPERBAIKI: Menggunakan optional() untuk mencegah error --}}
                         <span>{{ optional($asset->user)->nama_pengguna ?? 'N/A' }}</span>
                     </p>
                 </div>
                 <div class="label-qr">
-                    {{-- Mengarahkan QR Code ke halaman publik read-only --}}
                     {!! QrCode::size(100)->generate(route('assets.public.show', $asset->id)) !!}
                     <span>Scan Me</span>
                 </div>
             </div>
             <div class="label-footer">
-                Nama Perusahaan Anda - {{ date('Y') }}
+                PT Jhonlin Group - {{ date('Y') }}
             </div>
         </div>
     @endforeach
