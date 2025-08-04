@@ -6,16 +6,13 @@
     <form action="{{ route('assets.store') }}" method="POST">
         @csrf
 
-        {{-- Page Header and Action Buttons --}}
+        {{-- Page Header --}}
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <div>
                 <h1 class="text-3xl font-bold text-gray-800">Tambah Aset Baru</h1>
                 <p class="text-sm text-gray-500 mt-1">Isi detail aset yang akan ditambahkan.</p>
             </div>
-            <div class="flex space-x-2">
-                <a href="{{ route('assets.index') }}" class="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors py-2 px-4 rounded-lg bg-gray-200 hover:bg-gray-300">Batal</a>
-                <button type="submit" class="bg-emerald-600 text-white font-semibold px-5 py-2 rounded-lg hover:bg-emerald-700 transition-colors shadow-md">Simpan Aset</button>
-            </div>
+            {{-- Tombol Aksi dipindahkan ke bawah --}}
         </div>
 
         @if ($errors->any())
@@ -246,6 +243,12 @@
                     <div><label for="keterangan" class="block text-sm font-medium text-gray-600">Keterangan</label><textarea name="keterangan" id="keterangan" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">{{ old('keterangan') }}</textarea></div>
                 </div>
             </div>
+        </div>
+
+        {{-- Tombol Aksi di Bawah --}}
+        <div class="mt-8 pt-6 border-t flex justify-end items-center gap-3">
+            <a href="{{ route('assets.index') }}" class="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors py-2 px-4 rounded-lg bg-gray-200 hover:bg-gray-300">Batal</a>
+            <button type="submit" class="bg-emerald-600 text-white font-semibold px-5 py-2 rounded-lg hover:bg-emerald-700 transition-colors shadow-md">Simpan Aset</button>
         </div>
     </form>
 @endsection
