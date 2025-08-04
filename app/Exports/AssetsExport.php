@@ -70,6 +70,9 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             'Storage',
             'Graphics',
             'Layar',
+            'Tipe Mesin', // Ditambahkan
+            'CC Mesin', // Ditambahkan
+            'Bahan Bakar', // Ditambahkan
             'Spesifikasi/Deskripsi Lainnya',
             'Tanggal Pembelian',
             'Tahun Pembelian',
@@ -110,12 +113,17 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $asset->jumlah,
             $asset->satuan,
             
-            // Mengambil data dari array specifications dengan aman
+            // Mengambil data spesifikasi elektronik
             $specs['processor'] ?? 'N/A',
             $specs['ram'] ?? 'N/A',
             $specs['storage'] ?? 'N/A',
             $specs['graphics'] ?? 'N/A',
             $specs['layar'] ?? 'N/A',
+
+            // Mengambil data spesifikasi kendaraan
+            $specs['tipe_mesin'] ?? 'N/A',
+            $specs['cc_mesin'] ?? 'N/A',
+            $specs['bahan_bakar'] ?? 'N/A',
             
             // Menggabungkan deskripsi atau spesifikasi lain untuk kolom manual
             $specs['deskripsi'] ?? $specs['lainnya'] ?? 'N/A',
