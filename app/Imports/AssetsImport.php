@@ -4,9 +4,10 @@ namespace App\Imports;
 
 use App\Models\Asset;
 use App\Models\User;
-use App\Models\Category; // Import the Category model
-use App\Models\Company;  // Import the Company model
+use App\Models\Category;
+use App\Models\Company;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -14,176 +15,191 @@ use Carbon\Carbon;
 
 class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
 {
-    /**
-     * @param Collection $rows
-     */
+    private $companies;
+    private $categories;
+
+    public function __construct()
+    {
+        // Pre-load master data untuk efisiensi
+        $this->companies = Company::all()->keyBy('code');
+        $this->categories = Category::all()->keyBy('name');
+    }
+
     public function collection(Collection $rows)
     {
         foreach ($rows as $row) 
         {
-            // Skip row if essential data like nama_item is missing
             if (empty($row['nama_item'])) {
                 continue;
             }
 
-            // 1. Find or create the Category
+            // 1. Menentukan Kategori secara cerdas berdasarkan kolom 'jenis'
+            $jenis = strtolower(trim($row['jenis'] ?? ''));
             $category = null;
-            if (!empty($row['kategori'])) {
-                $category = Category::firstOrCreate(
-                    ['name' => trim($row['kategori'])]
-                );
+            if (in_array($jenis, ['laptop', 'pc', 'printer', 'monitor', 'proyektor'])) {
+                $category = $this->categories['Elektronik'] ?? null;
+            } elseif (in_array($jenis, ['mobil', 'motor', 'alat berat'])) {
+                $category = $this->categories['Kendaraan'] ?? null;
+            } else {
+                $category = $this->categories['Furniture'] ?? null;
             }
 
-            // 2. Find or create the User
+            // 2. Menentukan Perusahaan berdasarkan 'code_asset'
+            $companyCode = explode('/', trim($row['code_asset'] ?? ''))[2] ?? null;
+            $company = $this->companies[$companyCode] ?? null;
+
+            // 3. Cari atau buat User berdasarkan kolom 'nama_2'
             $user = null;
-            if (!empty($row['nama_pengguna'])) {
+            if (!empty($row['nama_2'])) {
                 $user = User::firstOrCreate(
-                    ['nama_pengguna' => trim($row['nama_pengguna'])],
-                    ['jabatan' => trim($row['jabatan'] ?? null), 'departemen' => trim($row['departemen'] ?? null)]
+                    ['nama_pengguna' => trim($row['nama_2'])],
+                    [
+                        'jabatan' => trim($row['jabatan_2'] ?? null), 
+                        'departemen' => trim($row['departemen_2'] ?? null)
+                    ]
                 );
             }
             
-            // 3. Find the Company (assuming company code exists in Excel)
-            $company = null;
-            if (!empty($row['kode_perusahaan'])) {
-                $company = Company::where('code', trim($row['kode_perusahaan']))->first();
-            }
+            // 4. Kumpulkan data spesifikasi dinamis
+            $specifications = $this->collectSpecifications($row, $category);
 
-            // Prepare data for asset creation/update
+            // 5. Siapkan data utama untuk aset
             $assetData = [
                 'nama_barang'       => trim($row['nama_item']),
                 'category_id'       => $category ? $category->id : null,
-                'user_id'           => $user ? $user->id : null,
                 'company_id'        => $company ? $company->id : null,
-                'merk'              => trim($row['merk'] ?? null),
-                'tipe'              => trim($row['tipe'] ?? null),
+                'sub_category'      => trim($row['jenis'] ?? null),
+                'merk'              => trim($row['type'] ?? null), // Menggunakan 'type' sebagai 'merk'
+                'tipe'              => trim($row['type'] ?? null), // Juga menggunakan 'type' sebagai 'tipe'
                 'serial_number'     => trim($row['serial_number'] ?? null),
-                'processor'         => trim($row['processor'] ?? null),
-                'memory_ram'        => trim($row['memory_ram'] ?? null),
-                'hdd_ssd'           => trim($row['hdd_ssd'] ?? $row['storage'] ?? null),
-                'graphics'          => trim($row['graphics'] ?? null),
-                'lcd'               => trim($row['lcd'] ?? null),
-                'tanggal_pembelian' => $this->parseDate($row['tanggal_pembelian'] ?? null),
-                'thn_pembelian'     => $this->parseYear($row['tanggal_pembelian'] ?? null),
-                'po_number'         => trim($row['po_number'] ?? null),
-                'harga_total'       => is_numeric($row['harga_total'] ?? null) ? $row['harga_total'] : null,
-                'code_aktiva'       => trim($row['code_aktiva'] ?? null),
                 'kondisi'           => trim($row['kondisi'] ?? 'BAIK'),
                 'lokasi'            => trim($row['lokasi'] ?? null),
                 'jumlah'            => is_numeric($row['jumlah'] ?? null) ? $row['jumlah'] : 1,
-                'satuan'            => trim($row['satuan'] ?? 'UNIT'),
-                'nomor'             => trim($row['nomor_bast'] ?? null),
-                'include_items'     => trim($row['include_items'] ?? null),
+                'satuan'            => trim($row['satuan'] ?? 'Unit'),
+                'user_id'           => $user ? $user->id : null,
+                'specifications'    => $specifications,
+                'tanggal_pembelian' => $this->parseDate($row['tgl'], $row['bulan'], $row['tahun']),
+                'thn_pembelian'     => trim($row['tahun'] ?? null),
+                'harga_total'       => is_numeric($row['harga_total'] ?? null) ? $row['harga_total'] : null,
+                'po_number'         => trim($row['po'] ?? null),
+                'nomor'             => trim($row['nomor'] ?? null),
+                'code_aktiva'       => trim($row['code_aktiva'] ?? null),
+                'include_items'     => trim($row['include'] ?? null),
                 'peruntukan'        => trim($row['peruntukan'] ?? null),
                 'keterangan'        => trim($row['keterangan'] ?? null),
             ];
             
-            $serialNumber = $assetData['serial_number'];
+            // 6. Gunakan 'serial_number' sebagai kunci unik untuk update/create
             $asset = null;
-
-            // Find asset by serial number, including soft-deleted ones.
-            if (!is_null($serialNumber) && trim($serialNumber) !== '') {
+            $serialNumber = trim($row['serial_number'] ?? null);
+            if (!empty($serialNumber)) {
                 $asset = Asset::withTrashed()->where('serial_number', $serialNumber)->first();
             }
 
             if ($asset) {
-                // If asset exists, update it
                 $asset->update($assetData);
-                // If it was soft-deleted, restore it
                 if ($asset->trashed()) {
                     $asset->restore();
                 }
             } else {
-                // If asset does not exist, create it with a placeholder code
-                $assetData['code_asset'] = 'PENDING_IMPORT';
+                $assetData['code_asset'] = trim($row['code_asset']);
                 $asset = Asset::create($assetData);
             }
-
-            // 4. Update Asset Code if it was newly created or is still a placeholder
-            if ($asset->wasRecentlyCreated || $asset->code_asset === 'PENDING_IMPORT') {
-                $asset->code_asset = $this->generateAssetCode($asset);
-                $asset->save();
-            }
             
-            // 5. Handle user history
+            // 7. Tangani pencatatan riwayat pengguna
             $this->updateUserHistory($asset, $user ? $user->id : null);
         }
     }
 
-    /**
-     * Generate asset code based on the asset's data.
-     */
-    private function generateAssetCode(Asset $asset): string
-    {
-        // Refresh the asset instance to make sure relations are loaded
-        $asset->refresh();
-
-        $namaBarang = strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $asset->nama_barang), 0, 3));
-        
-        $category = $asset->category;
-        $company = $asset->company;
-
-        $merkOrTipe = optional($category)->requires_merk ? $asset->merk : $asset->tipe;
-        $merkOrTipeCode = strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $merkOrTipe), 0, 3));
-
-        $companyCode = optional($company)->code ?? 'N/A';
-        $paddedId = str_pad($asset->id, 3, '0', STR_PAD_LEFT);
-
-        return "{$namaBarang}/{$merkOrTipeCode}/{$companyCode}/{$paddedId}";
+    private function collectSpecifications(Collection $row, ?Category $category): array
+{
+    $specs = [];
+    if (!$category) {
+        return $specs;
     }
 
-    /**
-     * Update the user history for the asset.
-     */
+    $specMap = [];
+    // Kita gunakan 'jenis' yang ada di hasil debug Anda
+    $subCategory = strtolower(trim($row['jenis'] ?? ''));
+
+    if ($category->name === 'Elektronik') {
+        switch ($subCategory) {
+            case 'laptop':
+            case 'pc':
+                $specMap = [
+                    'processor'  => 'processor', // Menggunakan kunci 'processor'
+                    'memory_ram' => 'ram',       // Menggunakan kunci 'memory_ram'
+                    'hddssd'     => 'storage',   // PERBAIKAN: Menggunakan kunci 'hddssd' yang kita temukan
+                    'graphics'   => 'graphics',  // Menggunakan kunci 'graphics'
+                    'lcd'        => 'layar',     // Menggunakan kunci 'lcd'
+                ];
+                break;
+            case 'printer':
+                $specMap = [
+                    'tipe_printer'      => 'tipe_printer',
+                    'kecepatan_cetak'   => 'kecepatan_cetak',
+                    'resolusi_cetak'    => 'resolusi_cetak',
+                    'konektivitas'      => 'konektivitas',
+                ];
+                break;
+            case 'proyektor':
+                $specMap = [
+                    'teknologi' => 'teknologi',
+                    'kecerahan' => 'kecerahan',
+                    'resolusi'  => 'resolusi',
+                ];
+                break;
+            default:
+                $specMap = ['lainnya' => 'lainnya'];
+                break;
+        }
+    } elseif ($category->name === 'Kendaraan') {
+        $specMap = [
+            'tipe_mesin'   => 'tipe_mesin',
+            'cc_mesin'     => 'cc_mesin',
+            'bahan_bakar'  => 'bahan_bakar',
+            'lainnya'      => 'lainnya',
+        ];
+    } else {
+        $specMap = ['deskripsi' => 'deskripsi'];
+    }
+
+    // --- LOGIKA UTAMA PERBAIKAN ---
+   foreach ($specMap as $rowKey => $specKey) {
+        if (!empty($row[$rowKey])) {
+            $specs[$specKey] = trim($row[$rowKey]);
+        }
+    }
+
+    return $specs;
+}
+
     private function updateUserHistory(Asset $asset, ?int $newUserId): void
     {
         $latestHistory = $asset->history()->latest()->first();
-
         if (!$latestHistory || $latestHistory->user_id != $newUserId) {
-            // End date for any previous history record for this asset
             $asset->history()->whereNull('tanggal_selesai')->update(['tanggal_selesai' => now()]);
-
-            // Create a new history record if there's a new user
             if ($newUserId) {
-                $asset->history()->create([
-                    'user_id'       => $newUserId,
-                    'tanggal_mulai' => now(),
-                ]);
+                $asset->history()->create(['user_id' => $newUserId, 'tanggal_mulai' => now()]);
             }
         }
     }
 
-    /**
-     * Robust date parser.
-     */
-    private function parseDate($dateValue)
+    private function parseDate($day, $month, $year)
     {
-        if (empty($dateValue)) {
-            return null;
-        }
+        if (empty($day) || empty($month) || empty($year)) return null;
         try {
-            // Handles both Excel's numeric date and string dates like 'Y-m-d' or 'd-m-Y'
-            if (is_numeric($dateValue)) {
-                return Carbon::instance(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($dateValue))->toDateString();
-            }
-            return Carbon::parse($dateValue)->toDateString();
+            $monthNames = [
+                'januari' => '01', 'februari' => '02', 'maret' => '03', 'april' => '04', 'mei' => '05', 'juni' => '06',
+                'juli' => '07', 'agustus' => '08', 'september' => '09', 'oktober' => '10', 'november' => '11', 'desember' => '12',
+            ];
+            $monthNum = $monthNames[strtolower(trim($month))] ?? Carbon::parse($month)->month;
+            return Carbon::createFromDate($year, $monthNum, $day)->toDateString();
         } catch (\Exception $e) {
             return null;
         }
     }
 
-    /**
-     * Parse year from a date value.
-     */
-    private function parseYear($dateValue)
-    {
-        $date = $this->parseDate($dateValue);
-        return $date ? Carbon::parse($date)->format('Y') : null;
-    }
-
-    /**
-     * Define chunk size for memory-efficient reading.
-     */
     public function chunkSize(): int
     {
         return 100;

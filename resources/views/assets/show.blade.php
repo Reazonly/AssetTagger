@@ -1,95 +1,118 @@
 @extends('layouts.app')
 @section('title', 'Detail Aset - ' . $asset->code_asset)
 @section('content')
-    <div class="flex flex-col sm:flex-row justify-between items-center mb-6">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
             <h1 class="text-3xl font-bold text-gray-800">{{ $asset->nama_barang }}</h1>
-            <p class="text-lg text-emerald-600 font-mono">{{ $asset->code_asset }}</p>
+            <p class="text-lg text-emerald-600 font-mono tracking-wider">{{ $asset->code_asset }}</p>
         </div>
-        <div class="flex items-center gap-2 mt-4 sm:mt-0">
-            <a href="{{ route('assets.index') }}" class="text-sm font-semibold text-gray-600 hover:text-gray-900 px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300">Kembali</a>
-            <a href="{{ route('assets.export', ['ids[]' => $asset->id]) }}" class="flex items-center bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
-                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        <div class="flex items-center gap-2">
+            <a href="{{ route('assets.index') }}" class="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors py-2 px-4 rounded-lg bg-gray-200 hover:bg-gray-300">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
                 </svg>
-                Export
+                Kembali
             </a>
-            <a href="{{ route('assets.edit', $asset->id) }}" class="bg-emerald-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-emerald-700">Edit Aset</a>
+            <a href="{{ route('assets.edit', $asset->id) }}" class="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 shadow-md transition-colors inline-flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                    <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
+                </svg>
+                Edit Aset
+            </a>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {{-- KOLOM KIRI (INFORMASI DETAIL) --}}
-        <div class="md:col-span-2 space-y-8">
-            <div class="bg-white p-6 rounded-lg border shadow-sm">
-                <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Informasi Umum</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4 text-sm">
-                    <div><strong class="text-gray-500 block">Pengguna Saat Ini:</strong> {{ optional($asset->user)->nama_pengguna ?? 'Tidak ada' }}</div>
-                    <div><strong class="text-gray-500 block">Jabatan:</strong> {{ optional($asset->user)->jabatan ?? 'N/A' }}</div>
-                    <div><strong class="text-gray-500 block">Departemen:</strong> {{ optional($asset->user)->departemen ?? 'N/A' }}</div>
-                    <div class="col-span-1 sm:col-span-2 md:col-span-3 mt-4 pt-4 border-t"></div>
-                    <div><strong class="text-gray-500 block">Merk/Tipe:</strong> {{ $asset->merk_type ?? 'N/A' }}</div>
-                    <div><strong class="text-gray-500 block">Serial Number:</strong> {{ $asset->serial_number ?? 'N/A' }}</div>
-                    <div><strong class="text-gray-500 block">Kondisi:</strong> {{ $asset->kondisi ?? 'N/A' }}</div>
-                    <div><strong class="text-gray-500 block">Lokasi Fisik:</strong> {{ $asset->lokasi ?? 'N/A' }}</div>
-                    <div><strong class="text-gray-500 block">Jumlah:</strong> {{ $asset->jumlah }} {{ $asset->satuan }}</div>
-                    <div class="col-span-1 sm:col-span-2 md:col-span-3 mt-4 pt-4 border-t"></div>
-                    <div><strong class="text-gray-500 block">Pengguna Saat Ini:</strong> {{ $asset->user->nama_pengguna ?? 'Tidak ada' }}</div>
-                    <div><strong class="text-gray-500 block">Jabatan:</strong> {{ $asset->user->jabatan ?? 'N/A' }}</div>
-                    <div><strong class="text-gray-500 block">Departemen:</strong> {{ $asset->user->departemen ?? 'N/A' }}</div>
-                </div>
-            </div>
-            <div class="bg-white p-6 rounded-lg border shadow-sm">
-                <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Spesifikasi & Deskripsi</h3>
-                @if($asset->spec_input_type == 'manual' && !empty($asset->spesifikasi_manual))
-                    <div class="text-sm text-gray-700 whitespace-pre-wrap">{{ $asset->spesifikasi_manual }}</div>
-                @elseif($asset->spec_input_type == 'detailed' && ($asset->processor || $asset->memory_ram))
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4 text-sm">
-                        <div><strong class="text-gray-500 block">Processor:</strong> {{ $asset->processor ?? 'N/A' }}</div>
-                        <div><strong class="text-gray-500 block">Memory (RAM):</strong> {{ $asset->memory_ram ?? 'N/A' }}</div>
-                        <div><strong class="text-gray-500 block">Storage:</strong> {{ $asset->hdd_ssd ?? 'N/A' }}</div>
-                        <div><strong class="text-gray-500 block">Graphics:</strong> {{ $asset->graphics ?? 'N/A' }}</div>
-                        <div class="col-span-1 sm:col-span-2"><strong class="text-gray-500 block">Layar (LCD):</strong> {{ $asset->lcd ?? 'N/A' }}</div>
+        <div class="lg:col-span-2 space-y-6">
+            
+            {{-- Informasi Umum & Pengguna --}}
+            <div class="bg-white p-6 rounded-xl border shadow-sm">
+                <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-800">Informasi Umum</h3>
+                <dl class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-5 text-sm">
+                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Kategori</dt><dd class="text-gray-900 mt-1">{{ $asset->category->name ?? 'N/A' }}</dd></div>
+                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Sub Kategori</dt><dd class="text-gray-900 mt-1">{{ $asset->sub_category ?? 'N/A' }}</dd></div>
+                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Perusahaan</dt><dd class="text-gray-900 mt-1">{{ $asset->company->name ?? 'N/A' }}</dd></div>
+                    
+                    @if($asset->category && $asset->category->requires_merk)
+                        <div class="flex flex-col"><dt class="font-medium text-gray-500">Merk</dt><dd class="text-gray-900 mt-1">{{ $asset->merk ?? 'N/A' }}</dd></div>
+                    @else
+                        <div class="flex flex-col"><dt class="font-medium text-gray-500">Tipe</dt><dd class="text-gray-900 mt-1">{{ $asset->tipe ?? 'N/A' }}</dd></div>
+                    @endif
+
+                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Serial Number</dt><dd class="text-gray-900 mt-1">{{ $asset->serial_number ?? 'N/A' }}</dd></div>
+                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Kondisi</dt><dd class="text-gray-900 mt-1">{{ $asset->kondisi ?? 'N/A' }}</dd></div>
+                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Lokasi Fisik</dt><dd class="text-gray-900 mt-1">{{ $asset->lokasi ?? 'N/A' }}</dd></div>
+                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Jumlah</dt><dd class="text-gray-900 mt-1">{{ $asset->jumlah }} {{ $asset->satuan }}</dd></div>
+                    
+                    <div class="sm:col-span-2 md:col-span-3 mt-4 pt-5 border-t">
+                        <h4 class="text-lg font-semibold text-gray-800 mb-4">Informasi Pengguna</h4>
+                        <dl class="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-5 text-sm">
+                            <div class="flex flex-col"><dt class="font-medium text-gray-500">Pengguna Saat Ini</dt><dd class="text-gray-900 mt-1">{{ $asset->user->nama_pengguna ?? 'Tidak ada' }}</dd></div>
+                            <div class="flex flex-col"><dt class="font-medium text-gray-500">Jabatan</dt><dd class="text-gray-900 mt-1">{{ $asset->user->jabatan ?? 'N/A' }}</dd></div>
+                            <div class="flex flex-col"><dt class="font-medium text-gray-500">Departemen</dt><dd class="text-gray-900 mt-1">{{ $asset->user->departemen ?? 'N/A' }}</dd></div>
+                        </dl>
                     </div>
-                @else
-                    <p class="text-sm text-gray-500">Tidak ada detail spesifikasi yang diberikan.</p>
-                @endif
+                </dl>
+            </div>
+
+            {{-- Spesifikasi Teknis --}}
+            <div class="bg-white p-6 rounded-xl border shadow-sm">
+                <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-800">Spesifikasi & Deskripsi</h3>
+                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm">
+                    @forelse($asset->specifications ?? [] as $key => $value)
+                        <div class="flex flex-col">
+                            <dt class="font-medium text-gray-500">{{ Str::title(str_replace('_', ' ', $key)) }}</dt>
+                            <dd class="text-gray-900 mt-1">{{ $value ?? 'N/A' }}</dd>
+                        </div>
+                    @empty
+                        <p class="text-gray-500 sm:col-span-2">Tidak ada detail spesifikasi yang diberikan.</p>
+                    @endforelse
+                </dl>
             </div>
 
             {{-- Informasi Pembelian & Dokumen --}}
-            <div class="bg-white p-6 rounded-lg border shadow-sm">
-                <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Informasi Pembelian & Dokumen</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4 text-sm">
-                    <div><strong class="text-gray-500 block">Tanggal Beli:</strong> {{ ($asset->tanggal_pembelian instanceof \Carbon\Carbon) ? $asset->tanggal_pembelian->isoFormat('D MMMM YYYY') : 'N/A' }}</div>
-                    <div><strong class="text-gray-500 block">Harga:</strong> Rp {{ number_format($asset->harga_total ?? 0, 0, ',', '.') }}</div>
-                    <div><strong class="text-gray-500 block">Nomor PO:</strong> {{ $asset->po_number ?? 'N/A' }}</div>
-                    <div><strong class="text-gray-500 block">Nomor BAST:</strong> {{ $asset->nomor ?? 'N/A' }}</div>
-                    <div><strong class="text-gray-500 block">Kode Aktiva:</strong> {{ $asset->code_aktiva ?? 'N/A' }}</div>
-                </div>
+            <div class="bg-white p-6 rounded-xl border shadow-sm">
+                <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-800">Informasi Pembelian & Dokumen</h3>
+                <dl class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-5 text-sm">
+                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Tanggal Beli</dt><dd class="text-gray-900 mt-1">{{ $asset->tanggal_pembelian ? $asset->tanggal_pembelian->isoFormat('D MMMM YYYY') : 'N/A' }}</dd></div>
+                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Harga</dt><dd class="text-gray-900 mt-1">Rp {{ number_format($asset->harga_total, 0, ',', '.') }}</dd></div>
+                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Nomor PO</dt><dd class="text-gray-900 mt-1">{{ $asset->po_number ?? 'N/A' }}</dd></div>
+                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Nomor BAST</dt><dd class="text-gray-900 mt-1">{{ $asset->nomor ?? 'N/A' }}</dd></div>
+                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Kode Aktiva</dt><dd class="text-gray-900 mt-1">{{ $asset->code_aktiva ?? 'N/A' }}</dd></div>
+                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Sumber Dana</dt><dd class="text-gray-900 mt-1">{{ $asset->sumber_dana ?? 'N/A' }}</dd></div>
+                </dl>
             </div>
-            <div class="bg-white p-6 rounded-lg border shadow-sm">
-                <h3 class="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Informasi Tambahan</h3>
-                <div class="text-sm space-y-4">
-                    <div><strong class="text-gray-500 block">Item Termasuk:</strong><p class="text-gray-700 mt-1 whitespace-pre-wrap">{{ $asset->include_items ?? 'N/A' }}</p></div>
-                    <div><strong class="text-gray-500 block">Peruntukan:</strong><p class="text-gray-700 mt-1 whitespace-pre-wrap">{{ $asset->peruntukan ?? 'N/A' }}</p></div>
-                    <div><strong class="text-gray-500 block">Keterangan:</strong><p class="text-gray-700 mt-1 whitespace-pre-wrap">{{ $asset->keterangan ?? 'N/A' }}</p></div>
+            
+            {{-- Informasi Tambahan --}}
+            <div class="bg-white p-6 rounded-xl border shadow-sm">
+                <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-800">Informasi Tambahan</h3>
+                <div class="text-sm space-y-5">
+                    <div><dt class="font-medium text-gray-500">Item Termasuk</dt><dd class="text-gray-700 mt-1 prose-sm max-w-none">{{ $asset->include_items ?? 'N/A' }}</dd></div>
+                    <div><dt class="font-medium text-gray-500">Peruntukan</dt><dd class="text-gray-700 mt-1 prose-sm max-w-none">{{ $asset->peruntukan ?? 'N/A' }}</dd></div>
+                    <div><dt class="font-medium text-gray-500">Keterangan</dt><dd class="text-gray-700 mt-1 prose-sm max-w-none">{{ $asset->keterangan ?? 'N/A' }}</dd></div>
                 </div>
             </div>
         </div>
-        <div class="space-y-6">
-            {{-- QR Code --}}
-            <div class="bg-white p-6 rounded-lg shadow-md text-center border">
-                <h3 class="text-xl font-semibold mb-4">QR Code</h3>
-                <div class="flex justify-center">{!! $qrCode !!}</div>
-                <a href="{{ route('assets.print', ['ids[]' => $asset->id]) }}" target="_blank" class="mt-4 inline-block w-full bg-gray-200 py-2 rounded-md hover:bg-gray-300 transition">Cetak Label</a>
-            </div>
 
-            {{-- Histori Pengguna --}}
-            <div class="bg-white p-6 rounded-lg shadow-md border">
+        {{-- KOLOM KANAN (TINDAKAN & HISTORI) --}}
+        <div class="space-y-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm text-center border">
+                <h3 class="text-xl font-semibold mb-4">QR Code</h3>
+                <div class="flex justify-center p-2 bg-gray-50 rounded-lg">{!! QrCode::size(200)->generate(route('assets.public.show', $asset->id)) !!}</div>
+                <a href="{{ route('assets.print', ['ids[]' => $asset->id]) }}" target="_blank" class="mt-4 inline-flex items-center justify-center gap-2 w-full bg-gray-200 py-2.5 rounded-lg hover:bg-gray-300 transition font-semibold text-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v3a2 2 0 002 2h6a2 2 0 002-2v-3h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v3h6v-3z" clip-rule="evenodd" />
+                    </svg>
+                    Cetak Label
+                </a>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
                 <h3 class="text-xl font-semibold mb-4">Histori Pengguna</h3>
                 <ul class="space-y-4 text-sm">
                     @forelse ($asset->history as $h)
-                        <li class="border-b pb-3">
+                        <li class="border-b border-gray-200 pb-3 last:border-b-0">
                             <div class="flex justify-between items-center">
                                 <p class="font-semibold text-gray-800">{{ $h->user->nama_pengguna ?? 'Pengguna Dihapus' }}</p>
                                 @if(is_null($h->tanggal_selesai) && $asset->user_id == $h->user_id)
@@ -107,7 +130,7 @@
                             </div>
                         </li>
                     @empty
-                        <li class="text-gray-500">Tidak ada riwayat pengguna.</li>
+                        <li class="text-gray-500 text-center py-4">Tidak ada riwayat pengguna.</li>
                     @endforelse
                 </ul>
             </div>

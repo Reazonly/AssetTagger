@@ -92,7 +92,7 @@ class AssetController extends Controller
     /**
      * Menampilkan form untuk membuat aset baru.
      */
-    public function create()
+   public function create()
     {
         return view('assets.create', [
             'users' => User::all(),
@@ -101,46 +101,84 @@ class AssetController extends Controller
         ]);
     }
 
-    /**
-     * Menyimpan aset baru ke database.
-     */
     public function store(Request $request)
+{
+    $category = Category::find($request->category_id);
+    $merkRule = $category && $category->requires_merk ? 'required|string|max:255' : 'nullable';
+    $tipeRule = $category && !$category->requires_merk ? 'required|string|max:255' : 'nullable';
+
+    // Menentukan apakah sub_category wajib diisi
+    $subCategoryRequired = $category && in_array($category->code, ['ELEC', 'VEHI']);
+
+    $request->validate([
+        'nama_barang' => 'required|string|max:255',
+        'category_id' => 'required|exists:categories,id',
+        'company_id' => 'required|exists:companies,id',
+        // Validasi sub_category sekarang kondisional
+        'sub_category' => $subCategoryRequired ? 'required|string' : 'nullable|string',
+        'merk' => $merkRule,
+        'tipe' => $tipeRule,
+        'jumlah' => 'required|integer|min:1',
+        'satuan' => 'required|string|max:50',
+        'serial_number' => 'nullable|string|max:255|unique:assets,serial_number',
+    ]);
+
+    // Mengumpulkan spesifikasi yang relevan saja
+    $specifications = $this->collectSpecificationsFromRequest($request, $category);
+
+    $data = $request->except(['_token', 'spec', 'new_user_name', 'jabatan', 'departemen']);
+    $data['specifications'] = $specifications;
+
+    if ($request->filled('tanggal_pembelian')) {
+        $data['thn_pembelian'] = Carbon::parse($request->tanggal_pembelian)->format('Y');
+    }
+
+    $userId = $this->getUserIdFromRequest($request);
+    $data['user_id'] = $userId;
+    
+    $data['code_asset'] = 'PENDING';
+    $asset = Asset::create($data);
+
+    $asset->code_asset = $this->generateAssetCode($request, $asset->id);
+    $asset->save();
+
+    if ($userId) {
+        $asset->history()->create(['user_id' => $userId, 'tanggal_mulai' => now()]);
+    }
+
+    return redirect()->route('assets.index')->with('success', 'Aset baru berhasil ditambahkan: ' . $asset->code_asset);
+}
+
+    /**
+     * Helper method baru untuk memfilter spesifikasi dari form request.
+     */
+    private function collectSpecificationsFromRequest(Request $request, ?Category $category): array
     {
-        $category = Category::find($request->category_id);
-        $merkRule = $category && $category->requires_merk ? 'required|string|max:255' : 'nullable';
-        $tipeRule = $category && !$category->requires_merk ? 'required|string|max:255' : 'nullable';
+        $specs = [];
+        if (!$category) return $specs;
 
-        $request->validate([
-            'nama_barang' => 'required|string|max:255',
-            'category_id' => 'required|exists:categories,id',
-            'company_id' => 'required|exists:companies,id',
-            'merk' => $merkRule,
-            'tipe' => $tipeRule,
-            'jumlah' => 'required|integer|min:1',
-            'satuan' => 'required|string|max:50',
-            'serial_number' => 'nullable|string|max:255|unique:assets,serial_number',
-        ]);
+        $subCategory = $request->input('sub_category');
+        $allSpecInputs = $request->input('spec', []);
 
-        $data = $request->except(['_token']);
-        
-        if ($request->filled('tanggal_pembelian')) {
-            $data['thn_pembelian'] = Carbon::parse($request->tanggal_pembelian)->format('Y');
+        if ($category->code === 'ELEC') {
+            switch ($subCategory) {
+                case 'Laptop': $specFields = ['processor', 'ram', 'storage', 'graphics', 'layar']; break;
+                case 'Printer': $specFields = ['tipe_printer', 'kecepatan_cetak', 'resolusi_cetak', 'konektivitas']; break;
+                case 'Proyektor': $specFields = ['teknologi', 'kecerahan', 'resolusi']; break;
+                default: $specFields = ['lainnya']; break;
+            }
+        } elseif ($category->code === 'VEHI') {
+            $specFields = ['tipe_mesin', 'cc_mesin', 'bahan_bakar', 'lainnya'];
+        } else {
+            $specFields = ['deskripsi'];
         }
 
-        $userId = $this->getUserIdFromRequest($request);
-        $data['user_id'] = $userId;
-        
-        $data['code_asset'] = 'PENDING';
-        $asset = Asset::create($data);
-
-        $asset->code_asset = $this->generateAssetCode($request, $asset->id);
-        $asset->save();
-
-        if ($userId) {
-            $asset->history()->create(['user_id' => $userId, 'tanggal_mulai' => now()]);
+        foreach ($specFields as $field) {
+            if (!empty($allSpecInputs[$field])) {
+                $specs[$field] = $allSpecInputs[$field];
+            }
         }
-
-        return redirect()->route('assets.index')->with('success', 'Aset baru berhasil ditambahkan: ' . $asset->code_asset);
+        return $specs;
     }
     
     /**

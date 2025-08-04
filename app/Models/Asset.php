@@ -13,6 +13,7 @@ class Asset extends Model
     protected $guarded = ['id'];
     protected $casts = [
         'tanggal_pembelian' => 'date',
+        'specifications' => 'array',
     ];
 
     public function user()
