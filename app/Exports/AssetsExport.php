@@ -53,6 +53,7 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             'Kode Aset',
             'Nama Barang',
             'Kategori',
+            'Sub Kategori',
             'Perusahaan',
             'Merk',
             'Tipe',
@@ -69,7 +70,7 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             'Storage',
             'Graphics',
             'Layar',
-            'Spesifikasi/Deskripsi Manual',
+            'Spesifikasi/Deskripsi Lainnya',
             'Tanggal Pembelian',
             'Tahun Pembelian',
             'Harga Total (Rp)',
@@ -89,16 +90,17 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
     */
     public function map($asset): array
     {
-        // Logika untuk menampilkan Merk/Tipe dan Spesifikasi berdasarkan Kategori
-        $isDetailedSpec = optional($asset->category)->requires_merk;
+        // Ambil data spesifikasi dari kolom JSON, jika tidak ada, gunakan array kosong.
+        $specs = $asset->specifications ?? [];
 
         return [
             $asset->code_asset,
             $asset->nama_barang,
             optional($asset->category)->name ?? 'N/A',
+            $asset->sub_category ?? 'N/A',
             optional($asset->company)->name ?? 'N/A',
-            $isDetailedSpec ? $asset->merk : 'N/A',
-            !$isDetailedSpec ? $asset->tipe : 'N/A',
+            $asset->merk ?? 'N/A',
+            $asset->tipe ?? 'N/A',
             $asset->serial_number,
             optional($asset->user)->nama_pengguna ?? 'N/A',
             optional($asset->user)->jabatan ?? 'N/A',
@@ -107,12 +109,17 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $asset->lokasi,
             $asset->jumlah,
             $asset->satuan,
-            $isDetailedSpec ? $asset->processor : 'N/A',
-            $isDetailedSpec ? $asset->memory_ram : 'N/A',
-            $isDetailedSpec ? $asset->hdd_ssd : 'N/A',
-            $isDetailedSpec ? $asset->graphics : 'N/A',
-            $isDetailedSpec ? $asset->lcd : 'N/A',
-            !$isDetailedSpec ? $asset->spesifikasi_manual : 'N/A',
+            
+            // Mengambil data dari array specifications dengan aman
+            $specs['processor'] ?? 'N/A',
+            $specs['ram'] ?? 'N/A',
+            $specs['storage'] ?? 'N/A',
+            $specs['graphics'] ?? 'N/A',
+            $specs['layar'] ?? 'N/A',
+            
+            // Menggabungkan deskripsi atau spesifikasi lain untuk kolom manual
+            $specs['deskripsi'] ?? $specs['lainnya'] ?? 'N/A',
+
             $asset->tanggal_pembelian ? $asset->tanggal_pembelian->format('d-m-Y') : 'N/A',
             $asset->thn_pembelian,
             $asset->harga_total,
