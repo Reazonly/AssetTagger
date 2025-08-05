@@ -108,24 +108,35 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
     }
 
     /**
-    * Memberi warna dan gaya pada baris judul.
+    * Memberi warna dan gaya pada sheet Excel.
     */
     public function styles(Worksheet $sheet)
     {
+        // Menghitung jumlah kolom secara dinamis dari headings()
+        $columnCount = count($this->headings());
+        // Mengubah jumlah kolom menjadi range kolom Excel (misal: 34 -> 'AH')
+        $lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($columnCount);
+
         return [
-            // Terapkan gaya pada baris pertama (baris judul)
+            // Aturan untuk baris pertama (Judul/Header)
             1 => [
                 'font' => [
                     'bold' => true,
-                    'color' => ['rgb' => 'FFFFFF'], // Warna teks putih
+                    'color' => ['rgb' => 'FFFFFF'],
                 ],
                 'fill' => [
                     'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                    // PERUBAHAN: Warna latar diubah menjadi hijau
-                    'startColor' => ['rgb' => '28A745'], 
+                    'startColor' => ['rgb' => '28A745'], // Warna hijau
                 ],
-                // PERUBAHAN: Teks judul dibuat rata tengah (center)
                 'alignment' => [
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                ],
+            ],
+
+            // PERUBAHAN: Aturan untuk semua kolom dari A hingga kolom terakhir
+            'A:' . $lastColumn => [
+                'alignment' => [
+                    // Membuat semua tulisan di kolom ini menjadi rata tengah
                     'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
                 ],
             ],
