@@ -7,9 +7,10 @@ use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Carbon\Carbon;
+use Maatwebsite\Excel\Concerns\WithStyles; // <-- Import untuk styling
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet; // <-- Import untuk styling
 
-class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize
+class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize, WithStyles
 {
     protected ?string $search;
     protected ?array $ids;
@@ -22,12 +23,8 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
         $this->categoryCode = $categoryCode;
     }
 
-    /**
-    * Menentukan query untuk mengambil data aset dari database.
-    */
     public function query()
     {
-        // PERBAIKAN: Menambahkan 'subCategory' ke eager loading untuk efisiensi
         $query = Asset::with(['user', 'category', 'company', 'subCategory']);
 
         if (!empty($this->ids)) {
@@ -55,50 +52,40 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
     }
 
     /**
-    * Mendefinisikan judul untuk setiap kolom di file Excel.
+    * PERBAIKAN: Mendefinisikan judul kolom yang tetap (konsisten) untuk semua ekspor.
     */
     public function headings(): array
     {
-        $baseHeadings = [
+        return [
+            // Kolom Dasar
             'Kode Aset', 'Nama Barang', 'Kategori', 'Sub Kategori', 'Perusahaan',
             'Merk', 'Tipe', 'Serial Number', 'Pengguna Saat Ini', 'Jabatan Pengguna',
-            'Departemen Pengguna', 'Kondisi', 'Lokasi Fisik', 'Jumlah', 'Satuan'
-        ];
+            'Departemen Pengguna', 'Kondisi', 'Lokasi Fisik', 'Jumlah', 'Satuan',
 
-        $endHeadings = [
+            // Kolom Spesifikasi (Semua kemungkinan digabung)
+            'Processor', 'RAM', 'Storage', 'Graphics', 'Layar',
+            'Nomor Polisi', 'Nomor Rangka', 'Nomor Mesin',
+            'Spesifikasi/Deskripsi Lainnya',
+
+            // Kolom Akhir
             'Tanggal Pembelian', 'Tahun Pembelian', 'Harga Total (Rp)', 'Nomor PO',
             'Nomor BAST', 'Kode Aktiva', 'Sumber Dana', 'Item Termasuk', 'Peruntukan', 'Keterangan'
         ];
-
-        $specHeadings = [];
-        switch ($this->categoryCode) {
-            case 'ELEC':
-                $specHeadings = ['Processor', 'RAM', 'Storage', 'Graphics', 'Layar', 'Spesifikasi Lainnya'];
-                break;
-            case 'VEHI':
-                $specHeadings = ['Nomor Polisi', 'Nomor Rangka', 'Nomor Mesin', 'Spesifikasi Lainnya'];
-                break;
-            default:
-                $specHeadings = ['Spesifikasi/Deskripsi'];
-                break;
-        }
-
-        return array_merge($baseHeadings, $specHeadings, $endHeadings);
     }
 
     /**
-    * Memetakan data dari setiap model Asset ke dalam format array.
+    * PERBAIKAN: Memetakan data agar sesuai dengan urutan judul kolom yang konsisten.
     * @param Asset $asset
     */
     public function map($asset): array
     {
         $specs = $asset->specifications ?? [];
 
-        $baseData = [
+        return [
+            // Data Dasar
             $asset->code_asset,
             $asset->nama_barang,
             optional($asset->category)->name,
-            // PERBAIKAN: Menggunakan relasi 'subCategory' untuk mendapatkan nama
             optional($asset->subCategory)->name,
             optional($asset->company)->name,
             $asset->merk,
@@ -111,9 +98,19 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $asset->lokasi,
             $asset->jumlah,
             $asset->satuan,
-        ];
 
-        $endData = [
+            // Data Spesifikasi (diberi nilai null jika tidak ada)
+            $specs['processor'] ?? null,
+            $specs['ram'] ?? null,
+            $specs['storage'] ?? null,
+            $specs['graphics'] ?? null,
+            $specs['layar'] ?? null,
+            $specs['nomor_polisi'] ?? null,
+            $specs['nomor_rangka'] ?? null,
+            $specs['nomor_mesin'] ?? null,
+            $specs['deskripsi'] ?? $specs['lainnya'] ?? null,
+
+            // Data Akhir
             $asset->tanggal_pembelian ? $asset->tanggal_pembelian->format('d-m-Y') : null,
             $asset->thn_pembelian,
             $asset->harga_total,
@@ -125,34 +122,25 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $asset->peruntukan,
             $asset->keterangan,
         ];
+    }
 
-        $specData = [];
-        switch ($this->categoryCode) {
-            case 'ELEC':
-                $specData = [
-                    $specs['processor'] ?? null,
-                    $specs['ram'] ?? null,
-                    $specs['storage'] ?? null,
-                    $specs['graphics'] ?? null,
-                    $specs['layar'] ?? null,
-                    $specs['lainnya'] ?? null,
-                ];
-                break;
-            case 'VEHI':
-                $specData = [
-                    $specs['nomor_polisi'] ?? null,
-                    $specs['nomor_rangka'] ?? null,
-                    $specs['nomor_mesin'] ?? null,
-                    $specs['lainnya'] ?? null,
-                ];
-                break;
-            default:
-                $specData = [
-                    $specs['deskripsi'] ?? null
-                ];
-                break;
-        }
-        
-        return array_merge($baseData, $specData, $endData);
+    /**
+    * FUNGSI BARU: Memberi warna dan gaya pada baris judul.
+    */
+    public function styles(Worksheet $sheet)
+    {
+        return [
+            // Terapkan gaya pada baris pertama (baris judul)
+            1 => [
+                'font' => [
+                    'bold' => true,
+                    'color' => ['rgb' => 'FFFFFF'], // Warna teks putih
+                ],
+                'fill' => [
+                    'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => '0070C0'], // Warna latar biru tua
+                ]
+            ],
+        ];
     }
 }
