@@ -13,7 +13,7 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
 {
     protected ?string $search;
     protected ?array $ids;
-    protected ?string $categoryCode; // Kode kategori yang akan diekspor, misal: 'ELEC', 'VEHI'
+    protected ?string $categoryCode;
 
     public function __construct(?string $search = null, ?array $ids = null, ?string $categoryCode = null)
     {
@@ -27,21 +27,19 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
     */
     public function query()
     {
-        $query = Asset::with(['user', 'category', 'company']);
+        // PERBAIKAN: Menambahkan 'subCategory' ke eager loading untuk efisiensi
+        $query = Asset::with(['user', 'category', 'company', 'subCategory']);
 
-        // Jika ada ID yang dipilih, hanya ekspor aset-aset tersebut.
         if (!empty($this->ids)) {
             return $query->whereIn('id', $this->ids)->latest();
         }
 
-        // Jika kategori spesifik diberikan, filter query berdasarkan kode kategori tersebut.
         if ($this->categoryCode) {
             $query->whereHas('category', function ($q) {
                 $q->where('code', $this->categoryCode);
             });
         }
 
-        // Terapkan filter pencarian jika ada.
         if ($this->search) {
             $query->where(function ($q) {
                 $q->where('code_asset', 'like', "%{$this->search}%")
@@ -57,40 +55,31 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
     }
 
     /**
-    * Mendefinisikan judul untuk setiap kolom di file Excel secara dinamis.
+    * Mendefinisikan judul untuk setiap kolom di file Excel.
     */
     public function headings(): array
     {
-        // Header dasar yang selalu ada
         $baseHeadings = [
             'Kode Aset', 'Nama Barang', 'Kategori', 'Sub Kategori', 'Perusahaan',
             'Merk', 'Tipe', 'Serial Number', 'Pengguna Saat Ini', 'Jabatan Pengguna',
             'Departemen Pengguna', 'Kondisi', 'Lokasi Fisik', 'Jumlah', 'Satuan'
         ];
 
-        // Header akhir yang selalu ada
         $endHeadings = [
             'Tanggal Pembelian', 'Tahun Pembelian', 'Harga Total (Rp)', 'Nomor PO',
-            'Nomor BAST', 'Kode Aktiva', 'Item Termasuk', 'Peruntukan', 'Keterangan'
+            'Nomor BAST', 'Kode Aktiva', 'Sumber Dana', 'Item Termasuk', 'Peruntukan', 'Keterangan'
         ];
 
         $specHeadings = [];
-        // Tentukan header spesifikasi berdasarkan kode kategori
         switch ($this->categoryCode) {
             case 'ELEC':
-                $specHeadings = ['Processor', 'RAM', 'Storage', 'Graphics', 'Layar'];
+                $specHeadings = ['Processor', 'RAM', 'Storage', 'Graphics', 'Layar', 'Spesifikasi Lainnya'];
                 break;
             case 'VEHI':
-                $specHeadings = ['Tipe Mesin', 'CC Mesin', 'Bahan Bakar'];
+                $specHeadings = ['Nomor Polisi', 'Nomor Rangka', 'Nomor Mesin', 'Spesifikasi Lainnya'];
                 break;
-            case null: // Jika tidak ada kategori, tampilkan semua kemungkinan header
-                $specHeadings = [
-                    'Processor', 'RAM', 'Storage', 'Graphics', 'Layar',
-                    'Tipe Mesin', 'CC Mesin', 'Bahan Bakar', 'Spesifikasi/Deskripsi Lainnya'
-                ];
-                break;
-            default: // Untuk kategori lain seperti Furniture
-                $specHeadings = ['Spesifikasi/Deskripsi Lainnya'];
+            default:
+                $specHeadings = ['Spesifikasi/Deskripsi'];
                 break;
         }
 
@@ -98,81 +87,68 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
     }
 
     /**
-    * Memetakan data dari setiap model Asset ke dalam format array secara dinamis.
-    *
+    * Memetakan data dari setiap model Asset ke dalam format array.
     * @param Asset $asset
     */
     public function map($asset): array
     {
         $specs = $asset->specifications ?? [];
 
-        // Data dasar yang selalu ada
         $baseData = [
             $asset->code_asset,
             $asset->nama_barang,
-            optional($asset->category)->name ?? 'N/A',
-            $asset->sub_category ?? 'N/A',
-            optional($asset->company)->name ?? 'N/A',
-            $asset->merk ?? 'N/A',
-            $asset->tipe ?? 'N/A',
+            optional($asset->category)->name,
+            // PERBAIKAN: Menggunakan relasi 'subCategory' untuk mendapatkan nama
+            optional($asset->subCategory)->name,
+            optional($asset->company)->name,
+            $asset->merk,
+            $asset->tipe,
             $asset->serial_number,
-            optional($asset->user)->nama_pengguna ?? 'N/A',
-            optional($asset->user)->jabatan ?? 'N/A',
-            optional($asset->user)->departemen ?? 'N/A',
+            optional($asset->user)->nama_pengguna,
+            optional($asset->user)->jabatan,
+            optional($asset->user)->departemen,
             $asset->kondisi,
             $asset->lokasi,
             $asset->jumlah,
             $asset->satuan,
         ];
 
-        // Data akhir yang selalu ada
         $endData = [
-            $asset->tanggal_pembelian ? $asset->tanggal_pembelian->format('d-m-Y') : 'N/A',
+            $asset->tanggal_pembelian ? $asset->tanggal_pembelian->format('d-m-Y') : null,
             $asset->thn_pembelian,
             $asset->harga_total,
             $asset->po_number,
             $asset->nomor, // Nomor BAST
             $asset->code_aktiva,
+            $asset->sumber_dana,
             $asset->include_items,
             $asset->peruntukan,
             $asset->keterangan,
         ];
 
         $specData = [];
-        // Tentukan data spesifikasi berdasarkan kode kategori
         switch ($this->categoryCode) {
             case 'ELEC':
                 $specData = [
-                    $specs['processor'] ?? 'N/A',
-                    $specs['ram'] ?? 'N/A',
-                    $specs['storage'] ?? 'N/A',
-                    $specs['graphics'] ?? 'N/A',
-                    $specs['layar'] ?? 'N/A',
+                    $specs['processor'] ?? null,
+                    $specs['ram'] ?? null,
+                    $specs['storage'] ?? null,
+                    $specs['graphics'] ?? null,
+                    $specs['layar'] ?? null,
+                    $specs['lainnya'] ?? null,
                 ];
                 break;
             case 'VEHI':
                 $specData = [
-                    $specs['tipe_mesin'] ?? 'N/A',
-                    $specs['cc_mesin'] ?? 'N/A',
-                    $specs['bahan_bakar'] ?? 'N/A',
+                    $specs['nomor_polisi'] ?? null,
+                    $specs['nomor_rangka'] ?? null,
+                    $specs['nomor_mesin'] ?? null,
+                    $specs['lainnya'] ?? null,
                 ];
                 break;
-            case null: // Jika tidak ada kategori, tampilkan semua kemungkinan data
+            default:
                 $specData = [
-                    $specs['processor'] ?? 'N/A',
-                    $specs['ram'] ?? 'N/A',
-                    $specs['storage'] ?? 'N/A',
-                    $specs['graphics'] ?? 'N/A',
-                    $specs['layar'] ?? 'N/A',
-                    $specs['tipe_mesin'] ?? 'N/A',
-                    $specs['cc_mesin'] ?? 'N/A',
-                    $specs['bahan_bakar'] ?? 'N/A',
-                    $specs['deskripsi'] ?? $specs['lainnya'] ?? 'N/A',
-                ];
-                break;
-            default: // Untuk kategori lain
-                $specData = [
-                    $specs['deskripsi'] ?? $specs['lainnya'] ?? 'N/A'
+                    $specs['deskripsi'] ?? null
                 ];
                 break;
         }
