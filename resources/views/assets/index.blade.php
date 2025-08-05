@@ -1,5 +1,7 @@
 @extends('layouts.app')
+
 @section('title', 'Daftar Aset')
+
 @section('content')
 <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
 
@@ -52,19 +54,20 @@
             <button id="exportSelectedBtn" disabled class="flex items-center gap-2 bg-green-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed">
                 Export Terpilih
             </button>
-           
         </div>
     </div>
 
     {{-- Tabel Aset --}}
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto border border-gray-200 rounded-lg">
         <table class="w-full text-sm text-left text-gray-600">
-            <thead class="text-xs text-gray-700 uppercase bg-gray-100">
-                <tr>
+            <thead class="text-xs text-gray-700 uppercase bg-gray-100 border-b-2 border-black">
+                {{-- PERUBAHAN: Menambahkan class divide-x untuk garis vertikal di header --}}
+                <tr class="divide-x divide-gray-300">
                     <th scope="col" class="p-4"><input type="checkbox" id="selectAllCheckbox" class="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"></th>
                     <th scope="col" class="px-6 py-3">Kode Aset</th>
-                    <th scope="col" class="px-6 py-3">Nama Barang</th>
+                    <th scope="col" class="px-6 py-3">Nama/Tipe Barang</th>
                     <th scope="col" class="px-6 py-3">Kategori</th>
+                    <th scope="col" class="px-6 py-3">Sub-Kategori</th>
                     <th scope="col" class="px-6 py-3">Pengguna</th>
                     <th scope="col" class="px-6 py-3">Kondisi</th>
                     <th scope="col" class="px-6 py-3 text-right">Aksi</th>
@@ -72,11 +75,13 @@
             </thead>
             <tbody class="bg-white">
                 @forelse ($assets as $asset)
-                    <tr class="border-b hover:bg-gray-50">
+                    {{-- PERUBAHAN: Menambahkan class divide-x untuk garis vertikal di setiap baris data --}}
+                    <tr class="border-b hover:bg-gray-50 divide-x divide-gray-200">
                         <td class="w-4 p-4"><input type="checkbox" name="asset_ids[]" value="{{ $asset->id }}" class="asset-checkbox h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"></td>
                         <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{ $asset->code_asset }}</td>
                         <td class="px-6 py-4">{{ $asset->nama_barang }}</td>
                         <td class="px-6 py-4">{{ optional($asset->category)->name ?? 'N/A' }}</td>
+                        <td class="px-6 py-4">{{ optional($asset->subCategory)->name ?? '-' }}</td>
                         <td class="px-6 py-4">{{ optional($asset->user)->nama_pengguna ?? 'N/A' }}</td>
                         <td class="px-6 py-4">
                             @if($asset->kondisi == 'BAIK')
@@ -99,7 +104,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center py-10 text-gray-500">
+                        <td colspan="8" class="text-center py-10 text-gray-500">
                             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                             <h3 class="mt-2 text-sm font-medium text-gray-900">Aset tidak ditemukan</h3>
                             <p class="mt-1 text-sm text-gray-500">Coba ubah filter atau kata kunci pencarian Anda.</p>
@@ -143,8 +148,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const assetCheckboxes = document.querySelectorAll('.asset-checkbox');
     const printSelectedBtn = document.getElementById('printSelectedBtn');
     const exportSelectedBtn = document.getElementById('exportSelectedBtn');
-    const exportFilteredBtn = document.getElementById('exportFilteredBtn');
-
+    
     function updateActionButtonsState() {
         const selectedCount = Array.from(assetCheckboxes).filter(cb => cb.checked).length;
         const anyChecked = selectedCount > 0;
@@ -182,9 +186,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // --- PERBAIKAN LOGIKA EKSPOR ---
-
-    // 1. Ekspor item yang dipilih saja
     exportSelectedBtn.addEventListener('click', function() {
         const selectedIds = Array.from(assetCheckboxes)
             .filter(cb => cb.checked)
@@ -192,7 +193,6 @@ document.addEventListener('DOMContentLoaded', function () {
             .join('&');
         
         if (selectedIds) {
-            // Kita tetap sertakan filter kategori jika ada, agar nama file dan kolomnya sesuai
             const categoryId = document.getElementById('category_filter').value;
             let exportUrl = "{{ route('assets.export') }}?" + selectedIds;
             if (categoryId) {
@@ -201,8 +201,6 @@ document.addEventListener('DOMContentLoaded', function () {
             window.location.href = exportUrl;
         }
     });
-
-   
 
     // Initial check
     updateActionButtonsState();

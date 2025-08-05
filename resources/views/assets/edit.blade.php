@@ -96,11 +96,11 @@
                     
                     <div x-show="categories[selectedCategoryId]?.requires_merk">
                         <label for="merk" class="block text-sm font-medium text-gray-600">Merk</label>
-                        <input type="text" name="merk" id="merk" value="{{ old('merk', $asset->merk) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
+                        <input type="text" name="merk" id="merk" value="{{ old('merk', $asset->merk) }}"class="mt-1 block w-full bg-gray-100 border-gray-300 rounded-md shadow-sm py-2 px-3 cursor-not-allowed" readonly>
                     </div>
                     <div x-show="!categories[selectedCategoryId]?.requires_merk">
                         <label for="tipe" class="block text-sm font-medium text-gray-600">Tipe</label>
-                        <input type="text" name="tipe" id="tipe" value="{{ old('tipe', $asset->tipe) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
+                        <input type="text" name="tipe" id="tipe" value="{{ old('tipe', $asset->tipe) }}"class="mt-1 block w-full bg-gray-100 border-gray-300 rounded-md shadow-sm py-2 px-3 cursor-not-allowed" readonly>
                     </div>
                     <div>
                         <label for="serial_number" class="block text-sm font-medium text-gray-600">Serial Number</label>

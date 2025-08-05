@@ -7,21 +7,31 @@
     </div>
 
     <div class="space-y-6">
-        {{-- Informasi Umum --}}
         <div class="bg-white p-6 rounded-xl border">
             <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">Informasi Umum</h3>
             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm">
+
+                <div class="flex flex-col">
+                    <dt class="font-medium text-gray-500">
+                        @if(in_array(optional($asset->category)->code, ['ELEC', 'VEHI']))
+                            Nama Tipe
+                        @else
+                            Nama Barang
+                        @endif
+                    </dt>
+                    <dd class="text-gray-900 mt-1">{{ $asset->nama_barang ?? 'N/A' }}</dd>
+                </div>
+                
                 <div class="flex flex-col"><dt class="font-medium text-gray-500">Kategori</dt><dd class="text-gray-900 mt-1">{{ optional($asset->category)->name ?? 'N/A' }}</dd></div>
-                
-                {{-- PERBAIKAN: Menggunakan relasi subCategory untuk menampilkan nama, bukan ID --}}
                 <div class="flex flex-col"><dt class="font-medium text-gray-500">Sub Kategori</dt><dd class="text-gray-900 mt-1">{{ optional($asset->subCategory)->name ?? 'N/A' }}</dd></div>
-                
                 <div class="flex flex-col"><dt class="font-medium text-gray-500">Perusahaan</dt><dd class="text-gray-900 mt-1">{{ optional($asset->company)->name ?? 'N/A' }}</dd></div>
                 
                 @if(optional($asset->category)->requires_merk)
                     <div class="flex flex-col"><dt class="font-medium text-gray-500">Merk</dt><dd class="text-gray-900 mt-1">{{ $asset->merk ?? 'N/A' }}</dd></div>
                 @else
-                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Tipe</dt><dd class="text-gray-900 mt-1">{{ $asset->tipe ?? 'N/A' }}</dd></div>
+                    @if($asset->tipe)
+                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Tipe</dt><dd class="text-gray-900 mt-1">{{ $asset->tipe }}</dd></div>
+                    @endif
                 @endif
 
                 @if($asset->serial_number)
@@ -45,45 +55,21 @@
                 </div>
             </dl>
         </div>
-        {{-- Spesifikasi Teknis --}}
-        <div class="bg-white p-6 rounded-xl border">
-            <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">Spesifikasi & Deskripsi</h3>
-            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm">
-                @forelse($asset->specifications ?? [] as $key => $value)
-                    <div class="flex flex-col">
-                        <dt class="font-medium text-gray-500">{{ Str::title(str_replace('_', ' ', $key)) }}</dt>
-                        <dd class="text-gray-900 mt-1">{{ $value ?? 'N/A' }}</dd>
-                    </div>
-                @empty
-                    <p class="text-gray-500 sm:col-span-2">Tidak ada detail spesifikasi yang diberikan.</p>
-                @endforelse
-            </dl>
-        </div>
 
-        {{-- Informasi Pembelian & Dokumen --}}
-        <div class="bg-white p-6 rounded-xl border">
-            <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">Informasi Pembelian & Dokumen</h3>
-            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm">
-                <div class="flex flex-col"><dt class="font-medium text-gray-500">Tanggal Beli</dt><dd class="text-gray-900 mt-1">{{ optional($asset->tanggal_pembelian)->isoFormat('D MMMM YYYY') ?? 'N/A' }}</dd></div>
-                <div class="flex flex-col"><dt class="font-medium text-gray-500">Harga</dt><dd class="text-gray-900 mt-1">Rp {{ number_format($asset->harga_total ?? 0, 0, ',', '.') }}</dd></div>
-                <div class="flex flex-col"><dt class="font-medium text-gray-500">Nomor PO</dt><dd class="text-gray-900 mt-1">{{ $asset->po_number ?? 'N/A' }}</dd></div>
-                <div class="flex flex-col"><dt class="font-medium text-gray-500">Nomor BAST</dt><dd class="text-gray-900 mt-1">{{ $asset->nomor ?? 'N/A' }}</dd></div>
-                <div class="flex flex-col"><dt class="font-medium text-gray-500">Kode Aktiva</dt><dd class="text-gray-900 mt-1">{{ $asset->code_aktiva ?? 'N/A' }}</dd></div>
-                <div class="flex flex-col"><dt class="font-medium text-gray-500">Sumber Dana</dt><dd class="text-gray-900 mt-1">{{ $asset->sumber_dana ?? 'N/A' }}</dd></div>
-            </dl>
-        </div>
-
-        {{-- Informasi Tambahan --}}
-        <div class="bg-white p-6 rounded-xl border">
-            <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">Informasi Tambahan</h3>
-            <div class="text-sm space-y-5">
-                <div><dt class="font-medium text-gray-500">Item Termasuk</dt><dd class="text-gray-700 mt-1 prose-sm max-w-none">{{ $asset->include_items ?? 'N/A' }}</dd></div>
-                <div><dt class="font-medium text-gray-500">Peruntukan</dt><dd class="text-gray-700 mt-1 prose-sm max-w-none">{{ $asset->peruntukan ?? 'N/A' }}</dd></div>
-                <div><dt class="font-medium text-gray-500">Keterangan</dt><dd class="text-gray-700 mt-1 prose-sm max-w-none">{{ $asset->keterangan ?? 'N/A' }}</dd></div>
+        @if($asset->specifications)
+            <div class="bg-white p-6 rounded-xl border">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">Spesifikasi & Deskripsi</h3>
+                <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm">
+                    @foreach($asset->specifications as $key => $value)
+                        <div class="flex flex-col">
+                            <dt class="font-medium text-gray-500">{{ Str::title(str_replace('_', ' ', $key)) }}</dt>
+                            <dd class="text-gray-900 mt-1">{{ $value }}</dd>
+                        </div>
+                    @endforeach
+                </dl>
             </div>
-        </div>
+        @endif
         
-        {{-- Histori Pengguna --}}
         <div class="bg-white p-6 rounded-xl border">
             <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">Histori Pengguna</h3>
             <ul class="space-y-4 text-sm">
@@ -110,5 +96,6 @@
                 @endforelse
             </ul>
         </div>
+
     </div>
 @endsection
