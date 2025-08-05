@@ -76,7 +76,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8">
                     <div>
                         <label for="nama_barang" class="block text-sm font-medium text-gray-600">Nama Barang <span class="text-red-500">*</span></label>
-                        <input type="text" name="nama_barang" id="nama_barang" value="{{ old('nama_barang') }}" placeholder="Contoh: Laptop, Meja Kerja" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3" required>
+                        <input type="text" name="nama_barang" id="nama_barang" value="{{ old('nama_barang') }}" placeholder="Contoh: Pongo 760, Meja" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3" required>
                     </div>
                     <div>
                         <label for="category_id" class="block text-sm font-medium text-gray-600">Kategori Barang</label>
@@ -97,12 +97,12 @@
                     
                     <div x-show="categories[selectedCategoryId]?.requires_merk">
                         <label for="merk" class="block text-sm font-medium text-gray-600">Merk</label>
-                        <input type="text" name="merk" id="merk" value="{{ old('merk') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
+                        <input type="text" name="merk" id="merk" value="{{ old('merk') }}" placeholder="Contoh: Axioo,Lenovo" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
                     </div>
 
                     <div x-show="!categories[selectedCategoryId]?.requires_merk">
                         <label for="tipe" class="block text-sm font-medium text-gray-600">Tipe</label>
-                        <input type="text" name="tipe" id="tipe" value="{{ old('tipe') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
+                        <input type="text" name="tipe" id="tipe" value="{{ old('tipe') }}" placeholder="Contoh: Ulin,Jati" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
                     </div>
 
                     <div>
