@@ -97,7 +97,6 @@ class AssetController extends Controller
         $tipeRule = $category && !$category->requires_merk ? 'required|string|max:255' : 'nullable';
         $subCategoryRequired = $category && in_array($category->code, ['ELEC', 'VEHI']);
 
-        // --- PERBAIKAN UTAMA: Validasi semua field yang ada di form create ---
         $validatedData = $request->validate([
             'nama_barang' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
@@ -121,35 +120,30 @@ class AssetController extends Controller
             'keterangan' => 'nullable|string',
             'spec' => 'nullable|array',
         ]);
-        // --- AKHIR PERBAIKAN VALIDASI ---
 
-        // Gunakan data yang sudah divalidasi sebagai dasar
         $data = $validatedData;
 
-        // Tambahkan data yang perlu diproses secara terpisah
         $data['specifications'] = $this->collectSpecificationsFromRequest($request);
         if ($request->filled('tanggal_pembelian')) {
             $data['thn_pembelian'] = Carbon::parse($request->tanggal_pembelian)->format('Y');
         }
         $data['user_id'] = $this->getUserIdFromRequest($request);
         
-        // Hapus 'spec' dari array utama karena sudah diproses ke 'specifications'
         unset($data['spec']);
         
-        // Buat aset baru dengan data yang sudah lengkap
         $data['code_asset'] = 'PENDING';
         $asset = Asset::create($data);
 
-        // Generate dan simpan kode aset
         $asset->code_asset = $this->generateAssetCode($request, $asset->id);
         $asset->save();
 
-        // Buat riwayat jika ada user
         if ($data['user_id']) {
             $asset->history()->create(['user_id' => $data['user_id'], 'tanggal_mulai' => now()]);
         }
 
-        return redirect()->route('assets.index')->with('success', 'Aset baru berhasil ditambahkan: ' . $asset->code_asset);
+        // --- PERUBAHAN ---
+        // Mengarahkan ke halaman detail aset yang baru dibuat, bukan ke halaman index.
+        return redirect()->route('assets.show', $asset)->with('success', 'Aset baru berhasil ditambahkan.');
     }
 
     public function show(Asset $asset)
