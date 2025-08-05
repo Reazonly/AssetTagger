@@ -17,74 +17,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class AssetController extends Controller
 {
-    // ... (method generateAssetCode, getUserIdFromRequest, collectSpecificationsFromRequest, index, create tidak berubah) ...
-
-    /**
-     * Menyimpan aset baru ke database.
-     */
-    public function store(Request $request)
-    {
-        $category = Category::find($request->category_id);
-        $merkRule = $category && $category->requires_merk ? 'required|string|max:255' : 'nullable';
-        
-        // PERBAIKAN: Logika untuk tipe disesuaikan dengan form
-        $tipeRule = $category && !$category->requires_merk && $category->code !== 'FURN' ? 'required|string|max:255' : 'nullable';
-        
-        // PERBAIKAN: Logika sub-kategori disesuaikan
-        $subCategoryRequired = $category && in_array($category->code, ['ELEC', 'VEHI']);
-
-        $validatedData = $request->validate([
-            'nama_barang' => 'required|string|max:255',
-            'category_id' => 'required|exists:categories,id',
-            'company_id' => 'required|exists:companies,id',
-            
-            // Aturan sub-kategori sekarang hanya 'required' jika memang dibutuhkan
-            'sub_category_id' => $subCategoryRequired ? 'required|exists:sub_categories,id' : 'nullable',
-
-            'merk' => $merkRule,
-            'tipe' => $tipeRule,
-            'jumlah' => 'required|integer|min:1',
-            'satuan' => 'required|string|max:50',
-            'serial_number' => 'nullable|string|max:255|unique:assets,serial_number',
-            'kondisi' => 'required|string',
-            'lokasi' => 'nullable|string|max:255',
-            'tanggal_pembelian' => 'nullable|date',
-            'harga_total' => 'nullable|numeric|min:0',
-            'po_number' => 'nullable|string|max:255',
-            'nomor' => 'nullable|string|max:255', // BAST
-            'code_aktiva' => 'nullable|string|max:255',
-            'sumber_dana' => 'nullable|string|max:255',
-            'include_items' => 'nullable|string',
-            'peruntukan' => 'nullable|string',
-            'keterangan' => 'nullable|string',
-            'spec' => 'nullable|array',
-        ]);
-        
-        $data = $validatedData;
-        $data['specifications'] = $this->collectSpecificationsFromRequest($request);
-        if ($request->filled('tanggal_pembelian')) {
-            $data['thn_pembelian'] = Carbon::parse($request->tanggal_pembelian)->format('Y');
-        }
-        $data['user_id'] = $this->getUserIdFromRequest($request);
-        unset($data['spec']);
-        
-        $data['code_asset'] = 'PENDING-' . time();
-        $asset = Asset::create($data);
-
-        $subCategory = $request->sub_category_id ? SubCategory::find($request->sub_category_id) : null;
-        
-        $asset->code_asset = $this->generateAssetCode($request, $category, $subCategory, $asset->id);
-        $asset->save();
-
-        if ($data['user_id']) {
-            $asset->history()->create(['user_id' => $data['user_id'], 'tanggal_mulai' => now()]);
-        }
-
-        return redirect()->route('assets.index')->with('success', 'Aset baru berhasil ditambahkan: ' . $asset->code_asset);
-    }
-
-    // ... (method show, edit, update dan lainnya tidak berubah) ...
-    
+    // ... (method-method lain tidak diubah) ...
     private function generateAssetCode(Request $request, Category $category, ?SubCategory $subCategory, int $assetId): string
     {
         $getFourDigits = function ($string) {
@@ -174,7 +107,66 @@ class AssetController extends Controller
             'companies' => Company::all(),
         ]);
     }
-    
+
+    /**
+     * Menyimpan aset baru ke database.
+     */
+    public function store(Request $request)
+    {
+        $category = Category::find($request->category_id);
+        $merkRule = $category && $category->requires_merk ? 'required|string|max:255' : 'nullable';
+        $tipeRule = $category && !$category->requires_merk && $category->code !== 'FURN' ? 'required|string|max:255' : 'nullable';
+        $subCategoryRequired = $category && in_array($category->code, ['ELEC', 'VEHI']);
+
+        $validatedData = $request->validate([
+            'nama_barang' => 'required|string|max:255',
+            'category_id' => 'required|exists:categories,id',
+            'company_id' => 'required|exists:companies,id',
+            'sub_category_id' => $subCategoryRequired ? 'required|exists:sub_categories,id' : 'nullable',
+            'merk' => $merkRule,
+            'tipe' => $tipeRule,
+            'jumlah' => 'required|integer|min:1',
+            'satuan' => 'required|string|max:50',
+            'serial_number' => 'nullable|string|max:255|unique:assets,serial_number',
+            'kondisi' => 'required|string',
+            'lokasi' => 'nullable|string|max:255',
+            'tanggal_pembelian' => 'nullable|date',
+            'harga_total' => 'nullable|numeric|min:0',
+            'po_number' => 'nullable|string|max:255',
+            'nomor' => 'nullable|string|max:255', // BAST
+            'code_aktiva' => 'nullable|string|max:255',
+            'sumber_dana' => 'nullable|string|max:255',
+            'include_items' => 'nullable|string',
+            'peruntukan' => 'nullable|string',
+            'keterangan' => 'nullable|string',
+            'spec' => 'nullable|array',
+        ]);
+        
+        $data = $validatedData;
+        $data['specifications'] = $this->collectSpecificationsFromRequest($request);
+        if ($request->filled('tanggal_pembelian')) {
+            $data['thn_pembelian'] = Carbon::parse($request->tanggal_pembelian)->format('Y');
+        }
+        $data['user_id'] = $this->getUserIdFromRequest($request);
+        unset($data['spec']);
+        
+        $data['code_asset'] = 'PENDING-' . time();
+        $asset = Asset::create($data);
+
+        $subCategory = $request->sub_category_id ? SubCategory::find($request->sub_category_id) : null;
+        
+        $asset->code_asset = $this->generateAssetCode($request, $category, $subCategory, $asset->id);
+        $asset->save();
+
+        if ($data['user_id']) {
+            $asset->history()->create(['user_id' => $data['user_id'], 'tanggal_mulai' => now()]);
+        }
+
+        // --- PERUBAHAN ---
+        // Mengarahkan ke halaman detail aset yang baru dibuat, bukan ke halaman index.
+        return redirect()->route('assets.show', $asset)->with('success', 'Aset baru berhasil ditambahkan: ' . $asset->code_asset);
+    }
+
     public function show(Asset $asset)
     {
         $asset->load(['user', 'category', 'company', 'subCategory', 'history.user']);
