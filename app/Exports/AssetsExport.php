@@ -7,8 +7,8 @@ use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\WithStyles; // <-- Import untuk styling
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet; // <-- Import untuk styling
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize, WithStyles
 {
@@ -51,38 +51,25 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
         return $query->latest();
     }
 
-    /**
-    * PERBAIKAN: Mendefinisikan judul kolom yang tetap (konsisten) untuk semua ekspor.
-    */
     public function headings(): array
     {
         return [
-            // Kolom Dasar
             'Kode Aset', 'Nama Barang', 'Kategori', 'Sub Kategori', 'Perusahaan',
             'Merk', 'Tipe', 'Serial Number', 'Pengguna Saat Ini', 'Jabatan Pengguna',
             'Departemen Pengguna', 'Kondisi', 'Lokasi Fisik', 'Jumlah', 'Satuan',
-
-            // Kolom Spesifikasi (Semua kemungkinan digabung)
             'Processor', 'RAM', 'Storage', 'Graphics', 'Layar',
             'Nomor Polisi', 'Nomor Rangka', 'Nomor Mesin',
             'Spesifikasi/Deskripsi Lainnya',
-
-            // Kolom Akhir
             'Tanggal Pembelian', 'Tahun Pembelian', 'Harga Total (Rp)', 'Nomor PO',
             'Nomor BAST', 'Kode Aktiva', 'Sumber Dana', 'Item Termasuk', 'Peruntukan', 'Keterangan'
         ];
     }
 
-    /**
-    * PERBAIKAN: Memetakan data agar sesuai dengan urutan judul kolom yang konsisten.
-    * @param Asset $asset
-    */
     public function map($asset): array
     {
         $specs = $asset->specifications ?? [];
 
         return [
-            // Data Dasar
             $asset->code_asset,
             $asset->nama_barang,
             optional($asset->category)->name,
@@ -98,8 +85,6 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $asset->lokasi,
             $asset->jumlah,
             $asset->satuan,
-
-            // Data Spesifikasi (diberi nilai null jika tidak ada)
             $specs['processor'] ?? null,
             $specs['ram'] ?? null,
             $specs['storage'] ?? null,
@@ -109,13 +94,11 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $specs['nomor_rangka'] ?? null,
             $specs['nomor_mesin'] ?? null,
             $specs['deskripsi'] ?? $specs['lainnya'] ?? null,
-
-            // Data Akhir
             $asset->tanggal_pembelian ? $asset->tanggal_pembelian->format('d-m-Y') : null,
             $asset->thn_pembelian,
             $asset->harga_total,
             $asset->po_number,
-            $asset->nomor, // Nomor BAST
+            $asset->nomor,
             $asset->code_aktiva,
             $asset->sumber_dana,
             $asset->include_items,
@@ -125,7 +108,7 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
     }
 
     /**
-    * FUNGSI BARU: Memberi warna dan gaya pada baris judul.
+    * Memberi warna dan gaya pada baris judul.
     */
     public function styles(Worksheet $sheet)
     {
@@ -138,8 +121,13 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
                 ],
                 'fill' => [
                     'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                    'startColor' => ['rgb' => '0070C0'], // Warna latar biru tua
-                ]
+                    // PERUBAHAN: Warna latar diubah menjadi hijau
+                    'startColor' => ['rgb' => '28A745'], 
+                ],
+                // PERUBAHAN: Teks judul dibuat rata tengah (center)
+                'alignment' => [
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                ],
             ],
         ];
     }
