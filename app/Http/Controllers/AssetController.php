@@ -6,37 +6,29 @@ use App\Models\Asset;
 use App\Models\User;
 use App\Models\Company;
 use App\Models\Category;
+use App\Models\SubCategory; // Ditambahkan untuk efisiensi
 use App\Imports\AssetsImport;
 use App\Exports\AssetsExport;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AssetController extends Controller
 {
-    /**
-     * Menghasilkan kode aset yang unik dan terstruktur berdasarkan master data.
-     */
     private function generateAssetCode(Request $request, int $assetId): string
     {
         $namaBarang = strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $request->nama_barang), 0, 3));
-        
         $category = Category::find($request->category_id);
         $company = Company::find($request->company_id);
-
         $merkOrTipe = optional($category)->requires_merk ? $request->merk : $request->tipe;
         $merkOrTipeCode = strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $merkOrTipe), 0, 3));
-
         $companyCode = optional($company)->code;
         $paddedId = str_pad($assetId, 3, '0', STR_PAD_LEFT);
-
         return "{$namaBarang}/{$merkOrTipeCode}/{$companyCode}/{$paddedId}";
     }
-    
-    /**
-     * Mengambil ID pengguna yang ada atau membuat pengguna baru.
-     */
+
     private function getUserIdFromRequest(Request $request): ?int
     {
         if ($request->filled('new_user_name')) {
@@ -49,13 +41,24 @@ class AssetController extends Controller
         return $request->user_id;
     }
 
-    /**
-     * Menampilkan daftar semua aset dengan filter.
-     */
+    private function collectSpecificationsFromRequest(Request $request): array
+    {
+        $specs = [];
+        if (!$request->has('spec')) return $specs;
+        
+        $allSpecInputs = $request->input('spec', []);
+        
+        foreach ($allSpecInputs as $field => $value) {
+            if (!empty($value)) {
+                $specs[$field] = $value;
+            }
+        }
+        return $specs;
+    }
+
     public function index(Request $request)
     {
-        $query = Asset::with(['user', 'category', 'company']);
-
+        $query = Asset::with(['user', 'category', 'company', 'subCategory']);
         if ($request->filled('search')) {
             $searchTerm = $request->input('search');
             $query->where(function ($subQuery) use ($searchTerm) {
@@ -67,32 +70,26 @@ class AssetController extends Controller
                          });
             });
         }
-
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->input('category_id'));
         }
-
         $assets = $query->latest()->paginate(15);
         $categories = Category::orderBy('name')->get();
-
-        return view('assets.index', [
-            'assets' => $assets,
-            'categories' => $categories,
-        ]);
+        return view('assets.index', compact('assets', 'categories'));
     }
 
-    /**
-     * Menampilkan form untuk membuat aset baru.
-     */
-   public function create()
+    public function create()
     {
         return view('assets.create', [
             'users' => User::all(),
-            'categories' => Category::with('units')->get(),
+            'categories' => Category::with(['units', 'subCategories'])->get(),
             'companies' => Company::all(),
         ]);
     }
 
+    /**
+     * Menyimpan aset baru ke database.
+     */
     public function store(Request $request)
     {
         $category = Category::find($request->category_id);
@@ -100,103 +97,84 @@ class AssetController extends Controller
         $tipeRule = $category && !$category->requires_merk ? 'required|string|max:255' : 'nullable';
         $subCategoryRequired = $category && in_array($category->code, ['ELEC', 'VEHI']);
 
-        $request->validate([
+        // --- PERBAIKAN UTAMA: Validasi semua field yang ada di form create ---
+        $validatedData = $request->validate([
             'nama_barang' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
             'company_id' => 'required|exists:companies,id',
-            'sub_category' => $subCategoryRequired ? 'required|string' : 'nullable|string',
+            'sub_category_id' => $subCategoryRequired ? 'required|exists:sub_categories,id' : 'nullable',
             'merk' => $merkRule,
             'tipe' => $tipeRule,
             'jumlah' => 'required|integer|min:1',
             'satuan' => 'required|string|max:50',
             'serial_number' => 'nullable|string|max:255|unique:assets,serial_number',
+            'kondisi' => 'required|string',
+            'lokasi' => 'nullable|string|max:255',
+            'tanggal_pembelian' => 'nullable|date',
+            'harga_total' => 'nullable|numeric|min:0',
+            'po_number' => 'nullable|string|max:255',
+            'nomor' => 'nullable|string|max:255', // BAST
+            'code_aktiva' => 'nullable|string|max:255',
+            'sumber_dana' => 'nullable|string|max:255',
+            'include_items' => 'nullable|string',
+            'peruntukan' => 'nullable|string',
+            'keterangan' => 'nullable|string',
+            'spec' => 'nullable|array',
         ]);
+        // --- AKHIR PERBAIKAN VALIDASI ---
 
-        $specifications = $this->collectSpecificationsFromRequest($request, $category);
+        // Gunakan data yang sudah divalidasi sebagai dasar
+        $data = $validatedData;
 
-        $data = $request->except(['_token', 'spec', 'new_user_name', 'jabatan', 'departemen']);
-        $data['specifications'] = $specifications;
-
+        // Tambahkan data yang perlu diproses secara terpisah
+        $data['specifications'] = $this->collectSpecificationsFromRequest($request);
         if ($request->filled('tanggal_pembelian')) {
             $data['thn_pembelian'] = Carbon::parse($request->tanggal_pembelian)->format('Y');
         }
-
-        $userId = $this->getUserIdFromRequest($request);
-        $data['user_id'] = $userId;
+        $data['user_id'] = $this->getUserIdFromRequest($request);
         
+        // Hapus 'spec' dari array utama karena sudah diproses ke 'specifications'
+        unset($data['spec']);
+        
+        // Buat aset baru dengan data yang sudah lengkap
         $data['code_asset'] = 'PENDING';
         $asset = Asset::create($data);
 
+        // Generate dan simpan kode aset
         $asset->code_asset = $this->generateAssetCode($request, $asset->id);
         $asset->save();
 
-        if ($userId) {
-            $asset->history()->create(['user_id' => $userId, 'tanggal_mulai' => now()]);
+        // Buat riwayat jika ada user
+        if ($data['user_id']) {
+            $asset->history()->create(['user_id' => $data['user_id'], 'tanggal_mulai' => now()]);
         }
 
         return redirect()->route('assets.index')->with('success', 'Aset baru berhasil ditambahkan: ' . $asset->code_asset);
     }
 
-    /**
-     * Helper method untuk memfilter spesifikasi dari form request.
-     */
-    private function collectSpecificationsFromRequest(Request $request, ?Category $category): array
-    {
-        $specs = [];
-        if (!$category) return $specs;
-
-        $subCategory = $request->input('sub_category');
-        $allSpecInputs = $request->input('spec', []);
-
-        if ($category->code === 'ELEC') {
-            switch ($subCategory) {
-                case 'Laptop': $specFields = ['processor', 'ram', 'storage', 'graphics', 'layar']; break;
-                case 'Printer': $specFields = ['tipe_printer', 'kecepatan_cetak', 'resolusi_cetak', 'konektivitas']; break;
-                case 'Proyektor': $specFields = ['teknologi', 'kecerahan', 'resolusi']; break;
-                default: $specFields = ['lainnya']; break;
-            }
-        } elseif ($category->code === 'VEHI') {
-            $specFields = ['tipe_mesin', 'cc_mesin', 'bahan_bakar', 'lainnya'];
-        } else {
-            $specFields = ['deskripsi'];
-        }
-
-        foreach ($specFields as $field) {
-            if (!empty($allSpecInputs[$field])) {
-                $specs[$field] = $allSpecInputs[$field];
-            }
-        }
-        return $specs;
-    }
-    
-    /**
-     * Menampilkan detail satu aset.
-     */
     public function show(Asset $asset)
     {
-        $asset->load(['user', 'category', 'company', 'history.user']);
-        $urlToScan = route('assets.public.show', $asset->id);
-        $qrCode = QrCode::size(250)->generate($urlToScan);
-        return view('assets.show', compact('asset', 'qrCode'));
+        $asset->load(['user', 'category', 'company', 'subCategory', 'history.user']);
+        return view('assets.show', compact('asset'));
+    }
+    
+    public function publicShow(Asset $asset)
+    {
+        $asset->load(['user', 'category', 'company', 'subCategory', 'history.user']);
+        return view('assets.public-show', compact('asset'));
     }
 
-    /**
-     * Menampilkan halaman edit aset.
-     */
     public function edit(Asset $asset)
     {
-        $asset->load(['user', 'category', 'company']);
+        $asset->load(['user', 'category', 'company', 'subCategory']);
         return view('assets.edit', [
             'asset' => $asset,
             'users' => User::all(),
-            'categories' => Category::with('units')->get(),
+            'categories' => Category::with(['units', 'subCategories'])->get(),
             'companies' => Company::all(),
         ]);
     }
 
-    /**
-     * Memperbarui data aset di database.
-     */
     public function update(Request $request, Asset $asset)
     {
         $category = $asset->category;
@@ -205,18 +183,28 @@ class AssetController extends Controller
         $subCategoryRequired = $category && in_array($category->code, ['ELEC', 'VEHI']);
 
         $request->validate([
-            'sub_category' => $subCategoryRequired ? 'required|string' : 'nullable|string',
+            'sub_category_id' => $subCategoryRequired ? 'required|exists:sub_categories,id' : 'nullable',
             'merk' => $merkRule,
             'tipe' => $tipeRule,
             'serial_number' => 'nullable|string|max:255|unique:assets,serial_number,' . $asset->id,
             'jumlah' => 'required|integer|min:1',
+            'satuan' => 'required|string|max:50',
+            'kondisi' => 'required|string',
+            'lokasi' => 'nullable|string|max:255',
+            'tanggal_pembelian' => 'nullable|date',
+            'harga_total' => 'nullable|numeric|min:0',
+            'po_number' => 'nullable|string|max:255',
+            'nomor' => 'nullable|string|max:255',
+            'code_aktiva' => 'nullable|string|max:255',
+            'sumber_dana' => 'nullable|string|max:255',
+            'include_items' => 'nullable|string',
+            'peruntukan' => 'nullable|string',
+            'keterangan' => 'nullable|string',
+            'spec' => 'nullable|array',
         ]);
         
-        $specifications = $this->collectSpecificationsFromRequest($request, $category);
-
-        $updateData = $request->except(['_token', '_method', 'spec', 'new_user_name', 'jabatan', 'departemen', 'code_asset', 'category_id', 'company_id', 'nama_barang']);
-        $updateData['specifications'] = $specifications;
-        
+        $updateData = $request->except(['_token', '_method', 'nama_barang', 'category_id', 'company_id']);
+        $updateData['specifications'] = $this->collectSpecificationsFromRequest($request);
         if ($request->filled('tanggal_pembelian')) {
             $updateData['thn_pembelian'] = Carbon::parse($request->tanggal_pembelian)->format('Y');
         } else {
@@ -226,8 +214,8 @@ class AssetController extends Controller
         
         $oldUserId = $asset->user_id;
         $newUserId = $this->getUserIdFromRequest($request);
-        
         $updateData['user_id'] = $newUserId;
+        
         $asset->update($updateData);
 
         if ($oldUserId != $newUserId) {
@@ -239,39 +227,21 @@ class AssetController extends Controller
             }
         }
 
-        return redirect()->route('assets.index')->with('success', 'Data aset berhasil diperbarui.');
+        return redirect()->route('assets.show', $asset->id)->with('success', 'Data aset berhasil diperbarui.');
     }
 
-    /**
-     * Menghapus aset dari database.
-     */
     public function destroy(Asset $asset)
     {
         $asset->history()->delete();
         $asset->delete();
         return redirect()->route('assets.index')->with('success', 'Aset dan semua riwayatnya berhasil dihapus.');
     }
-    
-    /**
-     * Menampilkan halaman publik untuk satu aset.
-     */
-    public function publicShow(Asset $asset)
-    {
-        $asset->load(['user', 'category', 'company', 'history.user']);
-        return view('assets.public-show', compact('asset'));
-    }
 
-    /**
-     * Mengambil satuan (unit) berdasarkan kategori untuk form dinamis.
-     */
     public function getUnits(Category $category)
     {
         return response()->json($category->units);
     }
     
-    /**
-     * Menangani proses impor dari file Excel.
-     */
     public function import(Request $request)
     {
         $request->validate(['file' => 'required|mimes:xlsx,csv']);
@@ -279,45 +249,32 @@ class AssetController extends Controller
         return redirect()->route('assets.index')->with('success', 'Data aset berhasil diimpor.');
     }
 
-    /**
-     * Menangani pencetakan label aset.
-     */
     public function print(Request $request)
     {
         $assetIds = $request->query('ids');
         if ($assetIds && is_array($assetIds) && count($assetIds) > 0) {
             $assets = Asset::with('user')->whereIn('id', $assetIds)->get();
-        } else {
-            return redirect()->route('assets.index')->with('error', 'Tidak ada aset yang dipilih untuk dicetak.');
+            return view('assets.print', compact('assets'));
         }
-        return view('assets.print', compact('assets'));
+        return redirect()->route('assets.index')->with('error', 'Tidak ada aset yang dipilih untuk dicetak.');
     }
     
-    /**
-     * Menangani proses ekspor data ke file Excel.
-     */
     public function export(Request $request)
     {
         $assetIds = $request->query('ids');
-        
-        // Karena fitur "Export Hasil Filter" dihapus, sekarang ekspor HANYA berfungsi untuk item yang dipilih.
         if (empty($assetIds)) {
             return redirect()->route('assets.index')->with('error', 'Tidak ada aset yang dipilih untuk diekspor.');
         }
-
-        $categoryId = $request->query('category_id');
-        $categoryCode = $categoryId ? \App\Models\Category::find($categoryId)?->code : null;
-
-        // Jika tidak ada filter kategori di URL, kita bisa coba tentukan dari item pertama yang dipilih
-        // untuk penamaan file yang lebih baik dan format kolom yang lebih spesifik.
-        if (!$categoryCode) {
-            $firstAsset = Asset::find($assetIds[0]);
-            $categoryCode = optional($firstAsset->category)->code;
-        }
-
+        $firstAsset = Asset::find($assetIds[0]);
+        $categoryCode = optional($firstAsset->category)->code;
         $fileName = 'assets_export_' . ($categoryCode ? strtolower($categoryCode) . '_' : '') . date('Y-m-d_H-i-s') . '.xlsx';
-        
-        // Hanya teruskan parameter yang relevan. Search term sudah tidak digunakan.
         return Excel::download(new AssetsExport(null, $assetIds, $categoryCode), $fileName);
+    }
+
+    public function downloadPDF(Asset $asset)
+    {
+        $asset->load(['user', 'category', 'company', 'subCategory', 'history.user']);
+        $pdf = Pdf::loadView('assets.pdf', ['asset' => $asset]);
+        return $pdf->download('asset-detail-' . $asset->code_asset . '.pdf');
     }
 }

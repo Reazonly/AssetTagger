@@ -4,36 +4,68 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Asset extends Model
 {
     use HasFactory, SoftDeletes;
-    use HasFactory;
-    protected $guarded = ['id'];
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $guarded = ['id']; // Memperbolehkan semua field diisi kecuali ID
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
     protected $casts = [
+        'specifications' => 'array', // Otomatis cast kolom JSON ke array
         'tanggal_pembelian' => 'date',
-        'specifications' => 'array',
     ];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
-
-    public function history()
-    {
-        return $this->hasMany(AssetHistory::class)->orderBy('tanggal_mulai', 'desc');
-    }
-
-    // Relasi Baru
-    public function category()
+    /**
+     * Mendapatkan kategori dari aset.
+     */
+    public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
 
-    public function company()
+    /**
+     * Mendapatkan sub-kategori dari aset.
+     */
+    public function subCategory(): BelongsTo
+    {
+        return $this->belongsTo(SubCategory::class);
+    }
+
+    /**
+     * Mendapatkan perusahaan pemilik aset.
+     */
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
+    }
+
+    /**
+     * Mendapatkan pengguna aset saat ini.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Mendapatkan seluruh riwayat pengguna aset.
+     */
+    public function history(): HasMany
+    {
+        return $this->hasMany(AssetHistory::class)->orderBy('tanggal_mulai', 'desc');
     }
 }

@@ -7,6 +7,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            SubCategorySeeder::class, // Tambahkan seeder baru di sini
             MasterDataSeeder::class,
         ]);
     }

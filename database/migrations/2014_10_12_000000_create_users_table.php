@@ -10,7 +10,15 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('nama_pengguna')->unique();
+            $table->string('nama_pengguna'); // Kolom nama_pengguna dipertahankan
+            
+            // --- PERBAIKAN: Menambahkan kolom penting untuk autentikasi ---
+            $table->string('email')->unique(); // Email harus unik
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password');
+            $table->rememberToken(); // Standar laravel untuk fitur "remember me"
+            // --- AKHIR PERBAIKAN ---
+
             $table->string('jabatan')->nullable();
             $table->string('departemen')->nullable();
             $table->timestamps();

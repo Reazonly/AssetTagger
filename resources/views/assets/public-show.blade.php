@@ -12,7 +12,10 @@
             <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">Informasi Umum</h3>
             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm">
                 <div class="flex flex-col"><dt class="font-medium text-gray-500">Kategori</dt><dd class="text-gray-900 mt-1">{{ optional($asset->category)->name ?? 'N/A' }}</dd></div>
-                <div class="flex flex-col"><dt class="font-medium text-gray-500">Sub Kategori</dt><dd class="text-gray-900 mt-1">{{ $asset->sub_category ?? 'N/A' }}</dd></div>
+                
+                {{-- PERBAIKAN: Menggunakan relasi subCategory untuk menampilkan nama, bukan ID --}}
+                <div class="flex flex-col"><dt class="font-medium text-gray-500">Sub Kategori</dt><dd class="text-gray-900 mt-1">{{ optional($asset->subCategory)->name ?? 'N/A' }}</dd></div>
+                
                 <div class="flex flex-col"><dt class="font-medium text-gray-500">Perusahaan</dt><dd class="text-gray-900 mt-1">{{ optional($asset->company)->name ?? 'N/A' }}</dd></div>
                 
                 @if(optional($asset->category)->requires_merk)
@@ -21,20 +24,27 @@
                     <div class="flex flex-col"><dt class="font-medium text-gray-500">Tipe</dt><dd class="text-gray-900 mt-1">{{ $asset->tipe ?? 'N/A' }}</dd></div>
                 @endif
 
-                <div class="flex flex-col"><dt class="font-medium text-gray-500">Serial Number</dt><dd class="text-gray-900 mt-1">{{ $asset->serial_number ?? 'N/A' }}</dd></div>
-                <div class="flex flex-col"><dt class="font-medium text-gray-500">Kondisi</dt><dd class="text-gray-900 mt-1">{{ $asset->kondisi ?? 'N/A' }}</dd></div>
-                <div class="flex flex-col"><dt class="font-medium text-gray-500">Lokasi Fisik</dt><dd class="text-gray-900 mt-1">{{ $asset->lokasi ?? 'N/A' }}</dd></div>
+                @if($asset->serial_number)
+                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Serial Number</dt><dd class="text-gray-900 mt-1">{{ $asset->serial_number }}</dd></div>
+                @endif
+                @if($asset->kondisi)
+                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Kondisi</dt><dd class="text-gray-900 mt-1">{{ $asset->kondisi }}</dd></div>
+                @endif
+                @if($asset->lokasi)
+                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Lokasi Fisik</dt><dd class="text-gray-900 mt-1">{{ $asset->lokasi }}</dd></div>
+                @endif
                 
                 <div class="sm:col-span-2 mt-4 pt-5 border-t">
                     <h4 class="text-lg font-semibold text-gray-800 mb-4">Informasi Pengguna</h4>
                     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm">
                         <div class="flex flex-col"><dt class="font-medium text-gray-500">Pengguna Saat Ini</dt><dd class="text-gray-900 mt-1">{{ optional($asset->user)->nama_pengguna ?? 'Tidak ada' }}</dd></div>
-                        <div class="flex flex-col"><dt class="font-medium text-gray-500">Jabatan</dt><dd class="text-gray-900 mt-1">{{ optional($asset->user)->jabatan ?? 'N/A' }}</dd></div>
+                        @if(optional($asset->user)->jabatan)
+                            <div class="flex flex-col"><dt class="font-medium text-gray-500">Jabatan</dt><dd class="text-gray-900 mt-1">{{ $asset->user->jabatan }}</dd></div>
+                        @endif
                     </dl>
                 </div>
             </dl>
         </div>
-
         {{-- Spesifikasi Teknis --}}
         <div class="bg-white p-6 rounded-xl border">
             <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">Spesifikasi & Deskripsi</h3>

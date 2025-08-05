@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Models;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -16,5 +18,14 @@ class Category extends Model
     public function assets()
     {
         return $this->hasMany(Asset::class);
+    }
+
+    /**
+     * Pastikan nama method ini adalah 'subCategories'
+     * sama persis seperti yang dipanggil di controller.
+     */
+    public function subCategories()
+    {
+        return $this->hasMany(SubCategory::class);
     }
 }
