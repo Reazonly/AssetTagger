@@ -23,7 +23,6 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
 
     public function __construct()
     {
-        // Kita akan mencari berdasarkan nama, jadi kita siapkan datanya
         $this->companies = Company::all()->keyBy('name');
         $this->categories = Category::all()->keyBy('name');
         $this->subCategories = SubCategory::all()->keyBy('name');
@@ -33,26 +32,20 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
     {
         // Ambil header dari baris pertama untuk mendeteksi format file
         $headers = collect($rows->first())->keys()->map(fn($item) => Str::snake($item));
-
-        // Tentukan peta kolom berdasarkan header yang ditemukan
         $map = $this->getColumnMapping($headers);
 
-        // Jika peta tidak valid, hentikan proses
         if (!$map) {
-            // Di sini Anda bisa menambahkan log atau notifikasi error jika diperlukan
             return; 
         }
 
         foreach ($rows as $row) 
         {
-            // Ubah semua key di baris menjadi snake_case agar konsisten
             $row = collect($row)->keyBy(fn($value, $key) => Str::snake($key));
 
             if (empty($row[$map['nama_barang']])) {
                 continue;
             }
 
-            // Proses data menggunakan peta kolom
             $category = $this->categories[trim($row[$map['kategori']] ?? '')] ?? null;
             $subCategory = $this->subCategories[trim($row[$map['sub_kategori']] ?? '')] ?? null;
             $company = $this->companies[trim($row[$map['perusahaan']] ?? '')] ?? null;
@@ -60,7 +53,7 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
             $user = null;
             if (!empty($row[$map['pengguna']])) {
                 $namaPengguna = trim($row[$map['pengguna']]);
-                $user = User::updateOrCreate( // Gunakan updateOrCreate agar lebih fleksibel
+                $user = User::updateOrCreate(
                     ['nama_pengguna' => $namaPengguna],
                     [
                         'email' => Str::slug($namaPengguna) . '_' . time() . '@jhonlin.local',
@@ -71,19 +64,21 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
                 );
             }
             
+            // PERUBAHAN: Menambahkan 'code_asset' ke dalam data yang disimpan
             $assetData = [
+                'code_asset'        => trim($row[$map['code_asset']] ?? null),
                 'nama_barang'       => trim($row[$map['nama_barang']]),
                 'category_id'       => optional($category)->id,
                 'sub_category_id'   => optional($subCategory)->id,
                 'company_id'        => optional($company)->id,
                 'serial_number'     => trim($row[$map['serial_number']] ?? null),
                 'kondisi'           => trim($row[$map['kondisi']] ?? 'BAIK'),
-                // ... dan seterusnya untuk semua field menggunakan $map
             ];
             
+            // Logika baru: Gunakan updateOrCreate tapi pastikan code_asset ada saat membuat
             $asset = Asset::updateOrCreate(
-                ['serial_number' => $assetData['serial_number']], // Cari berdasarkan Serial Number
-                $assetData // Data untuk diupdate atau dibuat
+                ['serial_number' => $assetData['serial_number']],
+                $assetData
             );
             
             if ($user) {
@@ -92,14 +87,11 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
         }
     }
 
-    /**
-     * Fungsi baru untuk menentukan dan menyediakan peta kolom.
-     * Di sinilah "kecerdasan" pemetaan terjadi.
-     */
     private function getColumnMapping(Collection $headers): ?array
     {
         // Peta untuk format file dari hasil EKSPOR INTERNAL
         $internalExportMap = [
+            'code_asset' => 'kode_aset', // <-- DITAMBAHKAN
             'nama_barang' => 'nama_barang',
             'kategori' => 'kategori',
             'sub_kategori' => 'sub_kategori',
@@ -111,11 +103,11 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
             'kondisi' => 'kondisi',
         ];
 
-        // Peta untuk format file "CONTOH REPORT" (Asumsi nama kolom)
-        // PENTING: Sesuaikan 'nama_item', 'jenis', dll dengan nama kolom di file Anda
+        // Peta untuk format file "CONTOH REPORT" 
         $contohReportMap = [
-            'nama_barang' => 'nama_item', // Misal, di file ini headernya "Nama Item"
-            'kategori' => 'kategori_barang', // Misal, di file ini headernya "Kategori Barang"
+            'code_asset' => 'code_asset', // <-- DITAMBAHKAN (sesuaikan jika perlu)
+            'nama_barang' => 'nama_item',
+            'kategori' => 'kategori_barang',
             'sub_kategori' => 'jenis',
             'perusahaan' => 'milik_perusahaan',
             'pengguna' => 'nama_2',
@@ -125,16 +117,15 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
             'kondisi' => 'kondisi',
         ];
 
-        // Logika Deteksi: Cek apakah header unik dari salah satu format ada
-        if ($headers->contains('pengguna_saat_ini')) {
-            return $internalExportMap; // Gunakan peta internal
+        // Logika Deteksi
+        if ($headers->contains('kode_aset')) { // Mengecek header dari file ekspor
+            return $internalExportMap;
         }
         
-        if ($headers->contains('nama_item')) {
-            return $contohReportMap; // Gunakan peta contoh report
+        if ($headers->contains('nama_item')) { // Mengecek header dari file contoh report
+            return $contohReportMap;
         }
 
-        // Jika tidak ada format yang cocok
         return null;
     }
 
