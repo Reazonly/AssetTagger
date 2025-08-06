@@ -26,21 +26,15 @@ Route::middleware('auth')->group(function () {
     // Dashboard bisa diakses semua role yang sudah login
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Grup untuk role yang bisa MELIHAT data (Admin dan Viewer)
-    Route::middleware(['role:admin,viewer'])->group(function () {
-        Route::get('assets', [AssetController::class, 'index'])->name('assets.index');
-        Route::get('assets/{asset}', [AssetController::class, 'show'])->name('assets.show');
-        Route::get('assets/print', [AssetController::class, 'print'])->name('assets.print');
-        Route::get('assets/export', [AssetController::class, 'export'])->name('assets.export');
-    });
-
-    // Grup KHUSUS untuk role yang bisa MEMODIFIKASI data (Hanya Admin)
+    // =================================================================
+    // PERBAIKAN: Grup KHUSUS Admin dipindahkan ke ATAS
+    // =================================================================
     Route::middleware(['role:admin'])->group(function () {
         // Aset
-        Route::post('assets/import', [AssetController::class, 'import'])->name('assets.import');
-        Route::get('assets/create', [AssetController::class, 'create'])->name('assets.create');
+        Route::get('assets/create', [AssetController::class, 'create'])->name('assets.create'); // Rute spesifik
         Route::post('assets', [AssetController::class, 'store'])->name('assets.store');
-        Route::get('assets/{asset}/edit', [AssetController::class, 'edit'])->name('assets.edit');
+        Route::post('assets/import', [AssetController::class, 'import'])->name('assets.import');
+        Route::get('assets/{asset}/edit', [AssetController::class, 'edit'])->name('assets.edit'); // Rute spesifik dengan parameter
         Route::put('assets/{asset}', [AssetController::class, 'update'])->name('assets.update');
         Route::delete('assets/{asset}', [AssetController::class, 'destroy'])->name('assets.destroy');
 
@@ -51,5 +45,14 @@ Route::middleware('auth')->group(function () {
         // Master Data
         Route::resource('categories', CategoryController::class)->except(['show'])->names('categories');
         Route::resource('companies', CompanyController::class)->except(['show'])->names('companies');
+    });
+
+    // Grup untuk role yang bisa MELIHAT data (Admin dan Viewer)
+    Route::middleware(['role:admin,viewer'])->group(function () {
+        Route::get('assets', [AssetController::class, 'index'])->name('assets.index');
+        Route::get('assets/print', [AssetController::class, 'print'])->name('assets.print');
+        Route::get('assets/export', [AssetController::class, 'export'])->name('assets.export');
+        // Rute paling umum/general diletakkan di paling bawah grupnya
+        Route::get('assets/{asset}', [AssetController::class, 'show'])->name('assets.show'); 
     });
 });
