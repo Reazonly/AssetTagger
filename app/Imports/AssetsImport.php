@@ -72,24 +72,27 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
                 'kondisi'           => trim($row[$map['kondisi']] ?? 'BAIK'),
             ];
             
-            // --- PERBAIKAN TOTAL PADA LOGIKA PENYIMPANAN ---
+            // --- PERBAIKAN FINAL UNTUK SOFT DELETE ---
             $asset = null;
-            // 1. Coba cari berdasarkan Serial Number jika ada
+            // 1. Coba cari berdasarkan Serial Number (termasuk yang terhapus)
             if (!empty($assetData['serial_number'])) {
-                $asset = Asset::where('serial_number', $assetData['serial_number'])->first();
+                $asset = Asset::withTrashed()->where('serial_number', $assetData['serial_number'])->first();
             }
-            // 2. Jika tidak ketemu, coba cari berdasarkan Kode Aset
+            // 2. Jika tidak ketemu, coba cari berdasarkan Kode Aset (termasuk yang terhapus)
             if (!$asset && !empty($assetData['code_asset'])) {
-                $asset = Asset::where('code_asset', $assetData['code_asset'])->first();
+                $asset = Asset::withTrashed()->where('code_asset', $assetData['code_asset'])->first();
             }
 
-            // 3. Jika aset ditemukan (dari salah satu cara di atas), perbarui datanya
+            // 3. Jika aset ditemukan, perbarui datanya
             if ($asset) {
                 $asset->update($assetData);
+                // Jika aset dalam kondisi terhapus, pulihkan (restore)
+                if ($asset->trashed()) {
+                    $asset->restore();
+                }
             } 
             // 4. Jika sama sekali tidak ditemukan, buat aset baru
             else {
-                // Pastikan code_asset tidak kosong saat membuat baru
                 if (!empty($assetData['code_asset'])) {
                     Asset::create($assetData);
                 }
