@@ -9,6 +9,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             SubCategorySeeder::class, // Tambahkan seeder baru di sini
             MasterDataSeeder::class,
+             UserSeeder::class,
         ]);
     }
 }
