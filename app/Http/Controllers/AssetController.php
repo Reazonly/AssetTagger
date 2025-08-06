@@ -45,17 +45,16 @@ class AssetController extends Controller
         return "{$namaBarangCode}/{$kategoriCode}/{$companyCode}/{$paddedId}";
     }
     
-    // =================================================================
-    // INI ADALAH KODE YANG SUDAH DIPERBAIKI
-    // =================================================================
+    // FUNGSI FINAL: Membuat email & password otomatis di latar belakang
     private function getUserIdFromRequest(Request $request): ?int
     {
         if ($request->filled('new_user_name')) {
+            $namaPengguna = trim($request->new_user_name);
             $user = User::firstOrCreate(
-                ['email' => trim($request->new_user_email)], // Cari berdasarkan email
+                ['nama_pengguna' => $namaPengguna],
                 [
-                    'nama_pengguna' => trim($request->new_user_name),
-                    'password' => Hash::make(Str::random(12)), // Buat password acak
+                    'email' => Str::slug($namaPengguna) . '_' . time() . '@jhonlin.local',
+                    'password' => Hash::make(Str::random(12)),
                     'jabatan' => $request->jabatan, 
                     'departemen' => $request->departemen
                 ]
@@ -119,8 +118,7 @@ class AssetController extends Controller
         $merkRule = $category && $category->requires_merk ? 'required|string|max:255' : 'nullable';
         $tipeRule = $category && !$category->requires_merk && $category->code !== 'FURN' ? 'required|string|max:255' : 'nullable';
         $subCategoryRequired = $category && in_array($category->code, ['ELEC', 'VEHI']);
-        
-        // Menambahkan validasi untuk email pengguna baru
+
         $validatedData = $request->validate([
             'nama_barang' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
@@ -136,16 +134,13 @@ class AssetController extends Controller
             'tanggal_pembelian' => 'nullable|date',
             'harga_total' => 'nullable|numeric|min:0',
             'po_number' => 'nullable|string|max:255',
-            'nomor' => 'nullable|string|max:255', // BAST
+            'nomor' => 'nullable|string|max:255',
             'code_aktiva' => 'nullable|string|max:255',
             'sumber_dana' => 'nullable|string|max:255',
             'include_items' => 'nullable|string',
             'peruntukan' => 'nullable|string',
             'keterangan' => 'nullable|string',
             'spec' => 'nullable|array',
-            // Validasi jika pengguna baru diisi
-            'new_user_name' => 'required_with:new_user_email|nullable|string|max:255',
-            'new_user_email' => 'required_with:new_user_name|nullable|email|unique:users,email',
         ]);
 
         $data = $validatedData;
@@ -189,7 +184,7 @@ class AssetController extends Controller
         $merkRule = $category && $category->requires_merk ? 'required|string|max:255' : 'nullable';
         $tipeRule = $category && !$category->requires_merk && $category->code !== 'FURN' ? 'required|string|max:255' : 'nullable';
         $subCategoryRequired = $category && in_array($category->code, ['ELEC', 'VEHI']);
-        
+
         $request->validate([
             'sub_category_id' => $subCategoryRequired ? 'required|exists:sub_categories,id' : 'nullable',
             'merk' => $merkRule,
@@ -209,8 +204,6 @@ class AssetController extends Controller
             'peruntukan' => 'nullable|string',
             'keterangan' => 'nullable|string',
             'spec' => 'nullable|array',
-            'new_user_name' => 'required_with:new_user_email|nullable|string|max:255',
-            'new_user_email' => 'required_with:new_user_name|nullable|email|unique:users,email,'.optional($asset->user)->id,
         ]);
         
         $updateData = $request->except(['_token', '_method', 'nama_barang', 'category_id', 'company_id']);
@@ -277,9 +270,7 @@ class AssetController extends Controller
         if (empty($assetIds)) {
             return redirect()->route('assets.index')->with('error', 'Tidak ada aset yang dipilih untuk diekspor.');
         }
-
         $categoryIds = Asset::whereIn('id', $assetIds)->distinct()->pluck('category_id');
-        
         $fileNamePrefix = 'assets_export';
         if ($categoryIds->count() === 1 && $categoryIds->first() !== null) {
             $category = Category::find($categoryIds->first());
@@ -287,7 +278,6 @@ class AssetController extends Controller
                 $fileNamePrefix = 'assets_export_' . strtolower($category->code);
             }
         }
-        
         $fileName = $fileNamePrefix . '_' . date('Y-m-d_H-i-s') . '.xlsx';
         return Excel::download(new AssetsExport(null, $assetIds, null), $fileName);
     }
