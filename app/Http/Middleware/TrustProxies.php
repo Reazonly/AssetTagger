@@ -12,13 +12,15 @@ class TrustProxies extends Middleware
      *
      * @var array<int, string>|string|null
      */
-    protected $proxies;
+    // PERBAIKAN: Ubah ini untuk mempercayai semua proxy (aman untuk development)
+    protected $proxies = '*';
 
     /**
      * The headers that should be used to detect proxies.
      *
      * @var int
      */
+    // PERBAIKAN: Pastikan header proto dipercaya agar skema HTTPS terdeteksi
     protected $headers =
         Request::HEADER_X_FORWARDED_FOR |
         Request::HEADER_X_FORWARDED_HOST |

@@ -72,6 +72,7 @@ class AssetController extends Controller
     public function index(Request $request)
     {
         $query = Asset::with(['user', 'category', 'company', 'subCategory']);
+        
         if ($request->filled('search')) {
             $searchTerm = $request->input('search');
             $query->where(function ($subQuery) use ($searchTerm) {
@@ -83,11 +84,14 @@ class AssetController extends Controller
                          });
             });
         }
+
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->input('category_id'));
         }
+
         $assets = $query->latest()->paginate(15);
         $categories = Category::orderBy('name')->get();
+
         return view('assets.index', compact('assets', 'categories'));
     }
 
