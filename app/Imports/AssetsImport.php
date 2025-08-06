@@ -35,7 +35,6 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
         $map = $this->getColumnMapping(collect($rows->first())->keys());
 
         if (!$map) {
-            // Jika format file tidak dikenali, hentikan proses.
             return; 
         }
 
@@ -46,12 +45,22 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
             if (empty($row[$map['nama_barang']])) {
                 continue;
             }
-
-            // --- Logika Cerdas yang bisa menangani kedua format ---
-            $category = $this->categories[trim($row[$map['kategori']] ?? '')] ?? null;
-            $subCategory = $this->subCategories[strtoupper(trim($row[$map['sub_kategori']] ?? ''))] ?? null;
             
-            // Cari perusahaan berdasarkan nama (untuk file eksternal) atau kode (dari code_asset)
+            // --- PERBAIKAN LOGIKA PENCARIAN KATEGORI & SUB-KATEGORI ---
+            $category = null;
+            // PERBAIKAN 1: Hapus strtoupper() untuk mencocokkan nama persis
+            $subCategory = $this->subCategories[trim($row[$map['sub_kategori']] ?? '')] ?? null;
+
+            // PERBAIKAN 2: Logika baru untuk menemukan kategori
+            if (isset($map['kategori']) && !empty($row[$map['kategori']])) {
+                // Jika file memiliki kolom kategori, gunakan itu
+                $category = $this->categories[trim($row[$map['kategori']])] ?? null;
+            } elseif ($subCategory) {
+                // Jika tidak, ambil kategori dari relasi sub-kategori yang ditemukan
+                $category = $subCategory->category;
+            }
+            // --- AKHIR PERBAIKAN ---
+
             $company = $this->companiesByName[trim($row[$map['perusahaan']] ?? '')] ?? null;
             if (!$company) {
                  $codeParts = explode('/', trim($row[$map['code_asset']] ?? ''));
@@ -77,7 +86,6 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
             $hargaTotal = trim($row[$map['harga_total']] ?? '');
             $thnPembelian = trim($row[$map['tahun_pembelian']] ?? '');
             
-            // Siapkan data lengkap menggunakan peta
             $assetData = [
                 'code_asset'        => trim($row[$map['code_asset']] ?? null),
                 'nama_barang'       => trim($row[$map['nama_barang']]),
@@ -131,7 +139,6 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
     {
         $headers = $keys->map(fn($item) => Str::snake($item));
 
-        // Peta untuk format file dari HASIL EKSPOR APLIKASI
         $internalExportMap = [
             'code_asset' => 'kode_aset', 'nama_barang' => 'nama_barang', 'kategori' => 'kategori',
             'sub_kategori' => 'sub_kategori', 'perusahaan' => 'perusahaan', 'merk' => 'merk', 'tipe' => 'tipe',
@@ -144,7 +151,7 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
             'item_termasuk' => 'item_termasuk', 'peruntukan' => 'peruntukan', 'keterangan' => 'keterangan',
         ];
 
-        // Peta untuk format file "CONTOH REPORT" (berdasarkan debug Anda)
+        // PERBAIKAN: Hapus 'kategori' dari peta ini karena tidak ada di file excelnya
         $contohReportMap = [
             'code_asset' => 'code_asset', 'nama_barang' => 'nama_item', 'sub_kategori' => 'jenis',
             'perusahaan' => 'perusahaan', 'merk' => 'merk', 'tipe' => 'type', 'serial_number' => 'serial_number',
@@ -156,7 +163,6 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
             'item_termasuk' => 'include', 'peruntukan' => 'peruntukan', 'keterangan' => 'keterangan',
         ];
 
-        // Logika Deteksi Otomatis
         if ($headers->contains('kode_aset')) {
             return $internalExportMap;
         }
@@ -180,16 +186,11 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
     
     private function parseDate(Collection $row, array $map): ?string
     {
-        // Jika formatnya d-m-Y (dari file ekspor internal)
         if (isset($map['tanggal_pembelian']) && !empty($row[$map['tanggal_pembelian']])) {
             try {
                 return Carbon::createFromFormat('d-m-Y', $row[$map['tanggal_pembelian']])->toDateString();
-            } catch (\Exception $e) {
-                return null;
-            }
+            } catch (\Exception $e) { return null; }
         }
-
-        // Jika formatnya terpisah tgl, bulan, tahun (dari contoh report)
         if (isset($map['tgl']) && !empty($row[$map['tgl']])) {
             try {
                 $monthNames = [
@@ -198,9 +199,7 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
                 ];
                 $monthNum = $monthNames[strtolower(trim($row[$map['bulan']]))] ?? Carbon::parse($row[$map['bulan']])->month;
                 return Carbon::createFromDate($row[$map['tahun']], $monthNum, $row[$map['tgl']])->toDateString();
-            } catch (\Exception $e) {
-                return null;
-            }
+            } catch (\Exception $e) { return null; }
         }
         return null;
     }
