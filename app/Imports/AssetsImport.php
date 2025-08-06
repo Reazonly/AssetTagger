@@ -46,20 +46,14 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
                 continue;
             }
             
-            // --- PERBAIKAN LOGIKA PENCARIAN KATEGORI & SUB-KATEGORI ---
             $category = null;
-            // PERBAIKAN 1: Hapus strtoupper() untuk mencocokkan nama persis
             $subCategory = $this->subCategories[trim($row[$map['sub_kategori']] ?? '')] ?? null;
 
-            // PERBAIKAN 2: Logika baru untuk menemukan kategori
             if (isset($map['kategori']) && !empty($row[$map['kategori']])) {
-                // Jika file memiliki kolom kategori, gunakan itu
                 $category = $this->categories[trim($row[$map['kategori']])] ?? null;
             } elseif ($subCategory) {
-                // Jika tidak, ambil kategori dari relasi sub-kategori yang ditemukan
                 $category = $subCategory->category;
             }
-            // --- AKHIR PERBAIKAN ---
 
             $company = $this->companiesByName[trim($row[$map['perusahaan']] ?? '')] ?? null;
             if (!$company) {
@@ -151,13 +145,14 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
             'item_termasuk' => 'item_termasuk', 'peruntukan' => 'peruntukan', 'keterangan' => 'keterangan',
         ];
 
-        // PERBAIKAN: Hapus 'kategori' dari peta ini karena tidak ada di file excelnya
+        // PERBAIKAN: Menambahkan 'tahun_pembelian' ke peta ini
         $contohReportMap = [
             'code_asset' => 'code_asset', 'nama_barang' => 'nama_item', 'sub_kategori' => 'jenis',
             'perusahaan' => 'perusahaan', 'merk' => 'merk', 'tipe' => 'type', 'serial_number' => 'serial_number',
             'pengguna' => 'nama_2', 'jabatan' => 'jabatan_2', 'departemen' => 'departemen_2',
             'kondisi' => 'kondisi', 'lokasi' => 'lokasi', 'processor' => 'processor', 'ram' => 'memory_ram',
             'storage' => 'hddssd', 'graphics' => 'graphics', 'layar' => 'lcd',
+            'tahun_pembelian' => 'tahun', // <-- BARIS INI YANG DIPERBAIKI
             'tgl' => 'tgl', 'bulan' => 'bulan', 'tahun' => 'tahun', 'harga_total' => 'harga_total',
             'po_number' => 'po', 'nomor_bast' => 'nomor', 'code_aktiva' => 'code_aktiva',
             'item_termasuk' => 'include', 'peruntukan' => 'peruntukan', 'keterangan' => 'keterangan',
