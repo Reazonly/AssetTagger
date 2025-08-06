@@ -5,6 +5,7 @@ use App\Http\Controllers\AssetController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\UserController;
 
 // Authentication Routes (Tidak ada perubahan)
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -31,6 +32,9 @@ Route::middleware('auth')->group(function () {
         Route::get('assets/print', [AssetController::class, 'print'])->name('assets.print');
         Route::get('assets/export', [AssetController::class, 'export'])->name('assets.export');
     });
+        // Rute baru untuk manajemen pengguna
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::post('/users/{user}/update-role', [UserController::class, 'updateRole'])->name('users.updateRole');
 
     // Grup KHUSUS untuk role yang bisa MEMODIFIKASI data (Hanya Admin)
     Route::middleware(['role:admin'])->group(function () {
