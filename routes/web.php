@@ -6,15 +6,17 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CompanyController;
 
-// Authentication Routes (Tidak ada perubahan)
+// Authentication Routes
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('login', [LoginController::class, 'login']);
 Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');
 Route::post('register', [RegisterController::class, 'register']);
 Route::post('logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
-// Public Routes (Tidak ada perubahan)
+// Public Routes
 Route::get('assets/{asset}/public', [AssetController::class, 'publicShow'])->name('assets.public.show');
 Route::get('assets/{asset}/pdf', [AssetController::class, 'downloadPDF'])->name('assets.pdf');
 Route::get('/assets/get-units/{category}', [AssetController::class, 'getUnits'])->name('assets.getUnits');
@@ -34,6 +36,7 @@ Route::middleware('auth')->group(function () {
 
     // Grup KHUSUS untuk role yang bisa MEMODIFIKASI data (Hanya Admin)
     Route::middleware(['role:admin'])->group(function () {
+        // Aset
         Route::post('assets/import', [AssetController::class, 'import'])->name('assets.import');
         Route::get('assets/create', [AssetController::class, 'create'])->name('assets.create');
         Route::post('assets', [AssetController::class, 'store'])->name('assets.store');
@@ -41,8 +44,12 @@ Route::middleware('auth')->group(function () {
         Route::put('assets/{asset}', [AssetController::class, 'update'])->name('assets.update');
         Route::delete('assets/{asset}', [AssetController::class, 'destroy'])->name('assets.destroy');
 
-        // Rute manajemen pengguna DIPINDAHKAN KE SINI
+        // Pengguna
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::post('/users/{user}/update-role', [UserController::class, 'updateRole'])->name('users.updateRole');
+        
+        // Master Data
+        Route::resource('categories', CategoryController::class)->except(['show'])->names('categories');
+        Route::resource('companies', CompanyController::class)->except(['show'])->names('companies');
     });
 });
