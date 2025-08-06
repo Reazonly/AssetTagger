@@ -62,44 +62,59 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
                 );
             }
             
+            // PERUBAHAN: Memanggil spesifikasi menggunakan map
+            $specifications = $this->collectSpecifications($row, $map);
+            $hargaTotal = trim($row[$map['harga_total']] ?? '');
+            $thnPembelian = trim($row[$map['tahun_pembelian']] ?? '');
+
+            // PERUBAHAN: Melengkapi semua field menggunakan map
             $assetData = [
                 'code_asset'        => trim($row[$map['code_asset']] ?? null),
                 'nama_barang'       => trim($row[$map['nama_barang']]),
                 'category_id'       => optional($category)->id,
                 'sub_category_id'   => optional($subCategory)->id,
                 'company_id'        => optional($company)->id,
+                'merk'              => trim($row[$map['merk']] ?? null),
+                'tipe'              => trim($row[$map['tipe']] ?? null),
                 'serial_number'     => trim($row[$map['serial_number']] ?? null),
                 'kondisi'           => trim($row[$map['kondisi']] ?? 'BAIK'),
+                'lokasi'            => trim($row[$map['lokasi']] ?? null),
+                'jumlah'            => is_numeric($row[$map['jumlah']] ?? null) ? $row[$map['jumlah']] : 1,
+                'satuan'            => trim($row[$map['satuan']] ?? 'Unit'),
+                'user_id'           => optional($user)->id,
+                'specifications'    => $specifications,
+                'tanggal_pembelian' => !empty($row[$map['tanggal_pembelian']]) ? Carbon::parse($row[$map['tanggal_pembelian']])->toDateString() : null,
+                'thn_pembelian'     => !empty($thnPembelian) && is_numeric($thnPembelian) ? $thnPembelian : null,
+                'harga_total'       => !empty($hargaTotal) && is_numeric($hargaTotal) ? $hargaTotal : null,
+                'po_number'         => trim($row[$map['po_number']] ?? null),
+                'nomor'             => trim($row[$map['nomor_bast']] ?? null),
+                'code_aktiva'       => trim($row[$map['code_aktiva']] ?? null),
+                'sumber_dana'       => trim($row[$map['sumber_dana']] ?? null),
+                'include_items'     => trim($row[$map['item_termasuk']] ?? null),
+                'peruntukan'        => trim($row[$map['peruntukan']] ?? null),
+                'keterangan'        => trim($row[$map['keterangan']] ?? null),
             ];
             
-            // --- PERBAIKAN FINAL UNTUK SOFT DELETE ---
             $asset = null;
-            // 1. Coba cari berdasarkan Serial Number (termasuk yang terhapus)
             if (!empty($assetData['serial_number'])) {
                 $asset = Asset::withTrashed()->where('serial_number', $assetData['serial_number'])->first();
             }
-            // 2. Jika tidak ketemu, coba cari berdasarkan Kode Aset (termasuk yang terhapus)
             if (!$asset && !empty($assetData['code_asset'])) {
                 $asset = Asset::withTrashed()->where('code_asset', $assetData['code_asset'])->first();
             }
 
-            // 3. Jika aset ditemukan, perbarui datanya
             if ($asset) {
                 $asset->update($assetData);
-                // Jika aset dalam kondisi terhapus, pulihkan (restore)
                 if ($asset->trashed()) {
                     $asset->restore();
                 }
-            } 
-            // 4. Jika sama sekali tidak ditemukan, buat aset baru
-            else {
+            } else {
                 if (!empty($assetData['code_asset'])) {
                     Asset::create($assetData);
                 }
             }
-            // --- AKHIR PERBAIKAN ---
             
-            if ($user && $asset) {
+            if ($user && isset($asset)) {
                 $this->updateUserHistory($asset, $user->id);
             }
         }
@@ -109,30 +124,34 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
     {
         $headers = $keys->map(fn($item) => Str::snake($item));
 
+        // Peta untuk format file dari hasil EKSPOR INTERNAL (SUDAH LENGKAP)
         $internalExportMap = [
-            'code_asset' => 'kode_aset',
-            'nama_barang' => 'nama_barang',
-            'kategori' => 'kategori',
-            'sub_kategori' => 'sub_kategori',
-            'perusahaan' => 'perusahaan',
-            'pengguna' => 'pengguna_saat_ini',
-            'jabatan' => 'jabatan_pengguna',
-            'departemen' => 'departemen_pengguna',
-            'serial_number' => 'serial_number',
-            'kondisi' => 'kondisi',
+            'code_asset' => 'kode_aset', 'nama_barang' => 'nama_barang', 'kategori' => 'kategori',
+            'sub_kategori' => 'sub_kategori', 'perusahaan' => 'perusahaan', 'merk' => 'merk', 'tipe' => 'tipe',
+            'serial_number' => 'serial_number', 'pengguna' => 'pengguna_saat_ini', 'jabatan' => 'jabatan_pengguna',
+            'departemen' => 'departemen_pengguna', 'kondisi' => 'kondisi', 'lokasi' => 'lokasi_fisik',
+            'jumlah' => 'jumlah', 'satuan' => 'satuan', 'processor' => 'processor', 'ram' => 'ram',
+            'storage' => 'storage', 'graphics' => 'graphics', 'layar' => 'layar',
+            'nomor_polisi' => 'nomor_polisi', 'nomor_rangka' => 'nomor_rangka', 'nomor_mesin' => 'nomor_mesin',
+            'deskripsi' => 'spesifikasi_deskripsi_lainnya', 'tanggal_pembelian' => 'tanggal_pembelian',
+            'tahun_pembelian' => 'tahun_pembelian', 'harga_total' => 'harga_total_rp', 'po_number' => 'nomor_po',
+            'nomor_bast' => 'nomor_bast', 'code_aktiva' => 'kode_aktiva', 'sumber_dana' => 'sumber_dana',
+            'item_termasuk' => 'item_termasuk', 'peruntukan' => 'peruntukan', 'keterangan' => 'keterangan',
         ];
 
+        // Peta untuk format file "CONTOH REPORT" (PERLU PENYESUAIAN)
         $contohReportMap = [
-            'code_asset' => 'code_asset',
-            'nama_barang' => 'nama_item',
-            'kategori' => 'kategori_barang',
-            'sub_kategori' => 'jenis',
-            'perusahaan' => 'milik_perusahaan',
-            'pengguna' => 'nama_2',
-            'jabatan' => 'jabatan_2',
-            'departemen' => 'departemen_2',
-            'serial_number' => 'serial_number',
-            'kondisi' => 'kondisi',
+            'code_asset' => 'code_asset', 'nama_barang' => 'nama_item', 'kategori' => 'kategori_barang',
+            'sub_kategori' => 'jenis', 'perusahaan' => 'milik_perusahaan', 'merk' => 'merk', 'tipe' => 'tipe',
+            'serial_number' => 'serial_number', 'pengguna' => 'nama_2', 'jabatan' => 'jabatan_2',
+            'departemen' => 'departemen_2', 'kondisi' => 'kondisi', 'lokasi' => 'lokasi',
+            'jumlah' => 'jumlah', 'satuan' => 'satuan', 'processor' => 'processor', 'ram' => 'ram',
+            'storage' => 'hddssd', 'graphics' => 'vga', 'layar' => 'lcd',
+            'nomor_polisi' => 'nopol', 'nomor_rangka' => 'nomor_rangka', 'nomor_mesin' => 'nomor_mesin',
+            'deskripsi' => 'keterangan_spesifikasi', 'tanggal_pembelian' => 'tanggal',
+            'tahun_pembelian' => 'tahun', 'harga_total' => 'harga', 'po_number' => 'no_po',
+            'nomor_bast' => 'no_bast', 'code_aktiva' => 'kode_aktiva', 'sumber_dana' => 'sumber_dana',
+            'item_termasuk' => 'kelengkapan', 'peruntukan' => 'peruntukan', 'keterangan' => 'keterangan',
         ];
 
         if ($headers->contains('kode_aset')) {
@@ -142,6 +161,24 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
             return $contohReportMap;
         }
         return null;
+    }
+
+    private function collectSpecifications(Collection $row, array $map): array
+    {
+        $specs = [];
+        // Daftar semua kemungkinan kunci spesifikasi dari kedua peta
+        $specKeys = [
+            'processor', 'ram', 'storage', 'graphics', 'layar', 'nomor_polisi', 
+            'nomor_rangka', 'nomor_mesin', 'deskripsi'
+        ];
+
+        foreach ($specKeys as $key) {
+            // Cek apakah kunci ada di peta dan ada nilainya di baris excel
+            if (isset($map[$key]) && !empty($row[$map[$key]])) {
+                $specs[$key] = trim($row[$map[$key]]);
+            }
+        }
+        return $specs;
     }
 
     private function updateUserHistory(Asset $asset, ?int $newUserId): void
