@@ -65,13 +65,15 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
             $user = null;
             if (!empty($row[$map['pengguna']])) {
                 $namaPengguna = trim($row[$map['pengguna']]);
-                $user = User::updateOrCreate(
-                    ['nama_pengguna' => $namaPengguna],
+                $emailDummy = Str::slug($namaPengguna) . '_' . time() . '@jhonlin.local';
+                $user = User::firstOrCreate(
+                    ['email' => $emailDummy],
                     [
-                        'email' => Str::slug($namaPengguna) . '_' . time() . '@jhonlin.local',
+                        'nama_pengguna' => $namaPengguna,
                         'password' => Hash::make(Str::random(12)),
                         'jabatan' => trim($row[$map['jabatan']] ?? null), 
-                        'departemen' => trim($row[$map['departemen']] ?? null)
+                        'departemen' => trim($row[$map['departemen']] ?? null),
+                        'role' => 'user', // <-- PERUBAHAN: Tetapkan role sebagai 'user'
                     ]
                 );
             }
@@ -145,14 +147,13 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
             'item_termasuk' => 'item_termasuk', 'peruntukan' => 'peruntukan', 'keterangan' => 'keterangan',
         ];
 
-        // PERBAIKAN: Menambahkan 'tahun_pembelian' ke peta ini
         $contohReportMap = [
             'code_asset' => 'code_asset', 'nama_barang' => 'nama_item', 'sub_kategori' => 'jenis',
             'perusahaan' => 'perusahaan', 'merk' => 'merk', 'tipe' => 'type', 'serial_number' => 'serial_number',
             'pengguna' => 'nama_2', 'jabatan' => 'jabatan_2', 'departemen' => 'departemen_2',
             'kondisi' => 'kondisi', 'lokasi' => 'lokasi', 'processor' => 'processor', 'ram' => 'memory_ram',
             'storage' => 'hddssd', 'graphics' => 'graphics', 'layar' => 'lcd',
-            'tahun_pembelian' => 'tahun', // <-- BARIS INI YANG DIPERBAIKI
+            'tahun_pembelian' => 'tahun',
             'tgl' => 'tgl', 'bulan' => 'bulan', 'tahun' => 'tahun', 'harga_total' => 'harga_total',
             'po_number' => 'po', 'nomor_bast' => 'nomor', 'code_aktiva' => 'code_aktiva',
             'item_termasuk' => 'include', 'peruntukan' => 'peruntukan', 'keterangan' => 'keterangan',

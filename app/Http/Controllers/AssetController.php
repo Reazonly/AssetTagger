@@ -44,22 +44,21 @@ class AssetController extends Controller
         $namaBarangCode = $getFourDigits($request->nama_barang);
         return "{$namaBarangCode}/{$kategoriCode}/{$companyCode}/{$paddedId}";
     }
-    
-    // PERUBAHAN FINAL: Menggunakan updateOrCreate
+
     private function getUserIdFromRequest(Request $request): ?int
     {
         if ($request->filled('new_user_name')) {
             $namaPengguna = trim($request->new_user_name);
-            
-            // Ganti firstOrCreate dengan updateOrCreate
-            $user = User::updateOrCreate(
-                ['nama_pengguna' => $namaPengguna], // Kunci untuk mencari pengguna
+            $emailDummy = Str::slug($namaPengguna) . '_' . time() . '@jhonlin.local';
+
+            $user = User::firstOrCreate(
+                ['email' => $emailDummy], 
                 [
-                    // Data yang akan diisi saat membuat atau diperbarui
-                    'email' => Str::slug($namaPengguna) . '_' . time() . '@jhonlin.local',
+                    'nama_pengguna' => $namaPengguna,
                     'password' => Hash::make(Str::random(12)),
-                    'jabatan' => $request->jabatan, 
-                    'departemen' => $request->departemen
+                    'jabatan' => $request->jabatan,
+                    'departemen' => $request->departemen,
+                    'role' => 'user', // <-- PERUBAHAN: Tetapkan role sebagai 'user'
                 ]
             );
             return $user->id;
@@ -67,6 +66,8 @@ class AssetController extends Controller
         return $request->user_id;
     }
 
+    // ... (sisa method lainnya tetap sama, tidak perlu diubah)
+    // Anda bisa menyalin seluruh isi file ini untuk memastikan tidak ada yang terlewat
     private function collectSpecificationsFromRequest(Request $request): array
     {
         $specs = [];
@@ -83,7 +84,6 @@ class AssetController extends Controller
     public function index(Request $request)
     {
         $query = Asset::with(['user', 'category', 'company', 'subCategory']);
-        
         if ($request->filled('search')) {
             $searchTerm = $request->input('search');
             $query->where(function ($subQuery) use ($searchTerm) {
@@ -95,14 +95,11 @@ class AssetController extends Controller
                          });
             });
         }
-
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->input('category_id'));
         }
-
         $assets = $query->latest()->paginate(15);
         $categories = Category::orderBy('name')->get();
-
         return view('assets.index', compact('assets', 'categories'));
     }
 
@@ -114,14 +111,13 @@ class AssetController extends Controller
             'companies' => Company::all(),
         ]);
     }
-    
+
     public function store(Request $request)
     {
         $category = Category::find($request->category_id);
         $merkRule = $category && $category->requires_merk ? 'required|string|max:255' : 'nullable';
         $tipeRule = $category && !$category->requires_merk && $category->code !== 'FURN' ? 'required|string|max:255' : 'nullable';
         $subCategoryRequired = $category && in_array($category->code, ['ELEC', 'VEHI']);
-
         $validatedData = $request->validate([
             'nama_barang' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
@@ -145,7 +141,6 @@ class AssetController extends Controller
             'keterangan' => 'nullable|string',
             'spec' => 'nullable|array',
         ]);
-
         $data = $validatedData;
         $data['specifications'] = $this->collectSpecificationsFromRequest($request);
         if ($request->filled('tanggal_pembelian')) {
@@ -187,7 +182,6 @@ class AssetController extends Controller
         $merkRule = $category && $category->requires_merk ? 'required|string|max:255' : 'nullable';
         $tipeRule = $category && !$category->requires_merk && $category->code !== 'FURN' ? 'required|string|max:255' : 'nullable';
         $subCategoryRequired = $category && in_array($category->code, ['ELEC', 'VEHI']);
-
         $request->validate([
             'sub_category_id' => $subCategoryRequired ? 'required|exists:sub_categories,id' : 'nullable',
             'merk' => $merkRule,
@@ -208,7 +202,6 @@ class AssetController extends Controller
             'keterangan' => 'nullable|string',
             'spec' => 'nullable|array',
         ]);
-        
         $updateData = $request->except(['_token', '_method', 'nama_barang', 'category_id', 'company_id']);
         $updateData['specifications'] = $this->collectSpecificationsFromRequest($request);
         if ($request->filled('tanggal_pembelian')) {
@@ -238,7 +231,7 @@ class AssetController extends Controller
         $asset->delete();
         return redirect()->route('assets.index')->with('success', 'Aset dan semua riwayatnya berhasil dihapus.');
     }
-    
+
     public function publicShow(Asset $asset)
     {
         $asset->load(['user', 'category', 'company', 'subCategory', 'history.user']);
@@ -249,10 +242,10 @@ class AssetController extends Controller
     {
         return response()->json($category->units);
     }
-    
+
     public function import(Request $request)
     {
-        $request->validate(['file' => 'required|mimes:xlsx,csv']);
+        $request->validate(['file' => 'required|mimes:xls,xlsx,csv']);
         Excel::import(new AssetsImport, $request->file('file'));
         return redirect()->route('assets.index')->with('success', 'Data aset berhasil diimpor.');
     }
@@ -266,7 +259,7 @@ class AssetController extends Controller
         }
         return redirect()->route('assets.index')->with('error', 'Tidak ada aset yang dipilih untuk dicetak.');
     }
-    
+
     public function export(Request $request)
     {
         $assetIds = $request->query('ids');
