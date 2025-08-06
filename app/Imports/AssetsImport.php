@@ -12,6 +12,7 @@ use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Hash; // <-- PERUBAHAN: Ditambahkan
 
 class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
 {
@@ -51,13 +52,18 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
             // 3. Cari atau buat User berdasarkan kolom 'nama_2'
             $user = null;
             if (!empty($row['nama_2'])) {
+                $namaPengguna = trim($row['nama_2']);
+                // --- PERBAIKAN TOTAL PADA LOGIKA INI ---
                 $user = User::firstOrCreate(
-                    ['nama_pengguna' => trim($row['nama_2'])],
+                    ['nama_pengguna' => $namaPengguna],
                     [
+                        'email' => Str::slug($namaPengguna) . '_' . time() . '@jhonlin.local',
+                        'password' => Hash::make(Str::random(12)),
                         'jabatan' => trim($row['jabatan_2'] ?? null), 
                         'departemen' => trim($row['departemen_2'] ?? null)
                     ]
                 );
+                // --- AKHIR PERBAIKAN ---
             }
             
             // 4. Kumpulkan data spesifikasi dinamis
@@ -68,9 +74,9 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
                 'nama_barang'       => trim($row['nama_item']),
                 'category_id'       => $category ? $category->id : null,
                 'company_id'        => $company ? $company->id : null,
-                'sub_category'      => trim($row['jenis'] ?? null),
-                'merk'              => trim($row['type'] ?? null), // Menggunakan 'type' sebagai 'merk'
-                'tipe'              => trim($row['type'] ?? null), // Juga menggunakan 'type' sebagai 'tipe'
+                'sub_category_id'      => null, // Diperbarui nanti jika ada sub-kategori
+                'merk'              => trim($row['type'] ?? null),
+                'tipe'              => trim($row['type'] ?? null),
                 'serial_number'     => trim($row['serial_number'] ?? null),
                 'kondisi'           => trim($row['kondisi'] ?? 'BAIK'),
                 'lokasi'            => trim($row['lokasi'] ?? null),
@@ -107,81 +113,60 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
             }
             
             // 7. Tangani pencatatan riwayat pengguna
-            $this->updateUserHistory($asset, $user ? $user->id : null);
+            if ($user) {
+                $this->updateUserHistory($asset, $user->id);
+            }
         }
     }
 
     private function collectSpecifications(Collection $row, ?Category $category): array
-{
-    $specs = [];
-    if (!$category) {
+    {
+        $specs = [];
+        if (!$category) {
+            return $specs;
+        }
+
+        $specMap = [];
+        $subCategoryName = strtolower(trim($row['jenis'] ?? ''));
+
+        if ($category->name === 'Elektronik') {
+            $specMap = [
+                'processor'  => 'processor',
+                'memory_ram' => 'ram',
+                'hddssd'     => 'storage',
+                'graphics'   => 'graphics',
+                'lcd'        => 'layar',
+            ];
+        } elseif ($category->name === 'Kendaraan') {
+            $specMap = [
+                'nomor_polisi' => 'nomor_polisi',
+                'nomor_rangka' => 'nomor_rangka',
+                'nomor_mesin'  => 'nomor_mesin',
+            ];
+        } else {
+            $specMap = ['deskripsi' => 'deskripsi'];
+        }
+
+       foreach ($specMap as $rowKey => $specKey) {
+            if (isset($row[$rowKey]) && !empty($row[$rowKey])) {
+                $specs[$specKey] = trim($row[$rowKey]);
+            }
+        }
+
         return $specs;
     }
 
-    $specMap = [];
-    // Kita gunakan 'jenis' yang ada di hasil debug Anda
-    $subCategory = strtolower(trim($row['jenis'] ?? ''));
-
-    if ($category->name === 'Elektronik') {
-        switch ($subCategory) {
-            case 'laptop':
-            case 'pc':
-                $specMap = [
-                    'processor'  => 'processor', // Menggunakan kunci 'processor'
-                    'memory_ram' => 'ram',       // Menggunakan kunci 'memory_ram'
-                    'hddssd'     => 'storage',   // PERBAIKAN: Menggunakan kunci 'hddssd' yang kita temukan
-                    'graphics'   => 'graphics',  // Menggunakan kunci 'graphics'
-                    'lcd'        => 'layar',     // Menggunakan kunci 'lcd'
-                ];
-                break;
-            case 'printer':
-                $specMap = [
-                    'tipe_printer'      => 'tipe_printer',
-                    'kecepatan_cetak'   => 'kecepatan_cetak',
-                    'resolusi_cetak'    => 'resolusi_cetak',
-                    'konektivitas'      => 'konektivitas',
-                ];
-                break;
-            case 'proyektor':
-                $specMap = [
-                    'teknologi' => 'teknologi',
-                    'kecerahan' => 'kecerahan',
-                    'resolusi'  => 'resolusi',
-                ];
-                break;
-            default:
-                $specMap = ['lainnya' => 'lainnya'];
-                break;
-        }
-    } elseif ($category->name === 'Kendaraan') {
-        $specMap = [
-            'tipe_mesin'   => 'tipe_mesin',
-            'cc_mesin'     => 'cc_mesin',
-            'bahan_bakar'  => 'bahan_bakar',
-            'lainnya'      => 'lainnya',
-        ];
-    } else {
-        $specMap = ['deskripsi' => 'deskripsi'];
-    }
-
-    // --- LOGIKA UTAMA PERBAIKAN ---
-   foreach ($specMap as $rowKey => $specKey) {
-        if (!empty($row[$rowKey])) {
-            $specs[$specKey] = trim($row[$rowKey]);
-        }
-    }
-
-    return $specs;
-}
-
     private function updateUserHistory(Asset $asset, ?int $newUserId): void
     {
+        if(!$newUserId) return;
+
         $latestHistory = $asset->history()->latest()->first();
+
         if (!$latestHistory || $latestHistory->user_id != $newUserId) {
+            // Hentikan riwayat sebelumnya jika ada
             $asset->history()->whereNull('tanggal_selesai')->update(['tanggal_selesai' => now()]);
-            if ($newUserId) {
-                $asset->history()->create(['user_id' => $newUserId, 'tanggal_mulai' => now()]);
-            }
+            // Buat riwayat baru
+            $asset->history()->create(['user_id' => $newUserId, 'tanggal_mulai' => now()]);
         }
     }
 
