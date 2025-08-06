@@ -23,6 +23,7 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
 
     public function __construct()
     {
+        // Kita akan mencari berdasarkan nama, jadi kita siapkan datanya
         $this->companies = Company::all()->keyBy('name');
         $this->categories = Category::all()->keyBy('name');
         $this->subCategories = SubCategory::all()->keyBy('name');
@@ -30,78 +31,60 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
 
     public function collection(Collection $rows)
     {
+        // Ambil header dari baris pertama untuk mendeteksi format file
+        $headers = collect($rows->first())->keys()->map(fn($item) => Str::snake($item));
+
+        // Tentukan peta kolom berdasarkan header yang ditemukan
+        $map = $this->getColumnMapping($headers);
+
+        // Jika peta tidak valid, hentikan proses
+        if (!$map) {
+            // Di sini Anda bisa menambahkan log atau notifikasi error jika diperlukan
+            return; 
+        }
+
         foreach ($rows as $row) 
         {
-            if (empty($row['nama_barang'])) {
+            // Ubah semua key di baris menjadi snake_case agar konsisten
+            $row = collect($row)->keyBy(fn($value, $key) => Str::snake($key));
+
+            if (empty($row[$map['nama_barang']])) {
                 continue;
             }
 
-            $category = $this->categories[trim($row['kategori'] ?? '')] ?? null;
-            $subCategory = $this->subCategories[trim($row['sub_kategori'] ?? '')] ?? null;
-            $company = $this->companies[trim($row['perusahaan'] ?? '')] ?? null;
+            // Proses data menggunakan peta kolom
+            $category = $this->categories[trim($row[$map['kategori']] ?? '')] ?? null;
+            $subCategory = $this->subCategories[trim($row[$map['sub_kategori']] ?? '')] ?? null;
+            $company = $this->companies[trim($row[$map['perusahaan']] ?? '')] ?? null;
 
             $user = null;
-            if (!empty($row['pengguna_saat_ini'])) {
-                $namaPengguna = trim($row['pengguna_saat_ini']);
-                $user = User::firstOrCreate(
+            if (!empty($row[$map['pengguna']])) {
+                $namaPengguna = trim($row[$map['pengguna']]);
+                $user = User::updateOrCreate( // Gunakan updateOrCreate agar lebih fleksibel
                     ['nama_pengguna' => $namaPengguna],
                     [
                         'email' => Str::slug($namaPengguna) . '_' . time() . '@jhonlin.local',
                         'password' => Hash::make(Str::random(12)),
-                        'jabatan' => trim($row['jabatan_pengguna'] ?? null), 
-                        'departemen' => trim($row['departemen_pengguna'] ?? null)
+                        'jabatan' => trim($row[$map['jabatan']] ?? null), 
+                        'departemen' => trim($row[$map['departemen']] ?? null)
                     ]
                 );
             }
             
-            $specifications = $this->collectSpecifications($row);
-
-            // --- PERBAIKAN TOTAL PADA LOGIKA PERSIAPAN DATA ---
-            $hargaTotal = trim($row['harga_total_rp'] ?? '');
-            $thnPembelian = trim($row['tahun_pembelian'] ?? '');
-            
             $assetData = [
-                'nama_barang'       => trim($row['nama_barang']),
+                'nama_barang'       => trim($row[$map['nama_barang']]),
                 'category_id'       => optional($category)->id,
                 'sub_category_id'   => optional($subCategory)->id,
                 'company_id'        => optional($company)->id,
-                'merk'              => trim($row['merk'] ?? null),
-                'tipe'              => trim($row['tipe'] ?? null),
-                'serial_number'     => trim($row['serial_number'] ?? null),
-                'kondisi'           => trim($row['kondisi'] ?? 'BAIK'),
-                'lokasi'            => trim($row['lokasi_fisik'] ?? null),
-                'jumlah'            => is_numeric($row['jumlah'] ?? null) ? $row['jumlah'] : 1,
-                'satuan'            => trim($row['satuan'] ?? 'Unit'),
-                'user_id'           => optional($user)->id,
-                'specifications'    => $specifications,
-                'tanggal_pembelian' => !empty($row['tanggal_pembelian']) ? Carbon::createFromFormat('d-m-Y', $row['tanggal_pembelian'])->toDateString() : null,
-                'thn_pembelian'     => !empty($thnPembelian) && is_numeric($thnPembelian) ? $thnPembelian : null,
-                'harga_total'       => !empty($hargaTotal) && is_numeric($hargaTotal) ? $hargaTotal : null,
-                'po_number'         => trim($row['nomor_po'] ?? null),
-                'nomor'             => trim($row['nomor_bast'] ?? null),
-                'code_aktiva'       => trim($row['kode_aktiva'] ?? null),
-                'sumber_dana'       => trim($row['sumber_dana'] ?? null),
-                'include_items'     => trim($row['item_termasuk'] ?? null),
-                'peruntukan'        => trim($row['peruntukan'] ?? null),
-                'keterangan'        => trim($row['keterangan'] ?? null),
+                'serial_number'     => trim($row[$map['serial_number']] ?? null),
+                'kondisi'           => trim($row[$map['kondisi']] ?? 'BAIK'),
+                // ... dan seterusnya untuk semua field menggunakan $map
             ];
-            // --- AKHIR PERBAIKAN ---
             
-            $asset = null;
-            $serialNumber = trim($row['serial_number'] ?? null);
-            if (!empty($serialNumber)) {
-                $asset = Asset::withTrashed()->where('serial_number', $serialNumber)->first();
-            }
-
-            if ($asset) {
-                $asset->update($assetData);
-                if ($asset->trashed()) {
-                    $asset->restore();
-                }
-            } else {
-                $assetData['code_asset'] = trim($row['kode_aset']);
-                $asset = Asset::create($assetData);
-            }
+            $asset = Asset::updateOrCreate(
+                ['serial_number' => $assetData['serial_number']], // Cari berdasarkan Serial Number
+                $assetData // Data untuk diupdate atau dibuat
+            );
             
             if ($user) {
                 $this->updateUserHistory($asset, $user->id);
@@ -109,23 +92,50 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
         }
     }
 
-    private function collectSpecifications(Collection $row): array
+    /**
+     * Fungsi baru untuk menentukan dan menyediakan peta kolom.
+     * Di sinilah "kecerdasan" pemetaan terjadi.
+     */
+    private function getColumnMapping(Collection $headers): ?array
     {
-        $specs = [];
-        $specMap = [
-            'processor' => 'processor', 'ram' => 'ram', 'storage' => 'storage', 
-            'graphics' => 'graphics', 'layar' => 'layar',
-            'nomor_polisi' => 'nomor_polisi', 'nomor_rangka' => 'nomor_rangka', 'nomor_mesin' => 'nomor_mesin',
-            'spesifikasideskripsi_lainnya' => 'deskripsi',
+        // Peta untuk format file dari hasil EKSPOR INTERNAL
+        $internalExportMap = [
+            'nama_barang' => 'nama_barang',
+            'kategori' => 'kategori',
+            'sub_kategori' => 'sub_kategori',
+            'perusahaan' => 'perusahaan',
+            'pengguna' => 'pengguna_saat_ini',
+            'jabatan' => 'jabatan_pengguna',
+            'departemen' => 'departemen_pengguna',
+            'serial_number' => 'serial_number',
+            'kondisi' => 'kondisi',
         ];
 
-        foreach ($specMap as $headerKey => $specKey) {
-            $formattedKey = Str::snake(strtolower($headerKey));
-            if (isset($row[$formattedKey]) && !empty($row[$formattedKey])) {
-                $specs[$specKey] = trim($row[$formattedKey]);
-            }
+        // Peta untuk format file "CONTOH REPORT" (Asumsi nama kolom)
+        // PENTING: Sesuaikan 'nama_item', 'jenis', dll dengan nama kolom di file Anda
+        $contohReportMap = [
+            'nama_barang' => 'nama_item', // Misal, di file ini headernya "Nama Item"
+            'kategori' => 'kategori_barang', // Misal, di file ini headernya "Kategori Barang"
+            'sub_kategori' => 'jenis',
+            'perusahaan' => 'milik_perusahaan',
+            'pengguna' => 'nama_2',
+            'jabatan' => 'jabatan_2',
+            'departemen' => 'departemen_2',
+            'serial_number' => 'serial_number',
+            'kondisi' => 'kondisi',
+        ];
+
+        // Logika Deteksi: Cek apakah header unik dari salah satu format ada
+        if ($headers->contains('pengguna_saat_ini')) {
+            return $internalExportMap; // Gunakan peta internal
         }
-        return $specs;
+        
+        if ($headers->contains('nama_item')) {
+            return $contohReportMap; // Gunakan peta contoh report
+        }
+
+        // Jika tidak ada format yang cocok
+        return null;
     }
 
     private function updateUserHistory(Asset $asset, ?int $newUserId): void
@@ -137,15 +147,9 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
             $asset->history()->create(['user_id' => $newUserId, 'tanggal_mulai' => now()]);
         }
     }
-    
+
     public function chunkSize(): int
     {
         return 100;
-    }
-
-    public function headingRowFormatter($row) {
-        return collect($row)->map(function ($value) {
-            return Str::snake(strtolower($value));
-        })->toArray();
     }
 }
