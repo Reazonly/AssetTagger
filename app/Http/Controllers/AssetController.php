@@ -13,10 +13,11 @@ use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
 
 class AssetController extends Controller
 {
-    // ... (Metode generateAssetCode, getUserIdFromRequest, collectSpecificationsFromRequest tetap sama) ...
     private function generateAssetCode(Request $request, Category $category, ?SubCategory $subCategory, int $assetId): string
     {
         $getFourDigits = function ($string) {
@@ -44,12 +45,20 @@ class AssetController extends Controller
         return "{$namaBarangCode}/{$kategoriCode}/{$companyCode}/{$paddedId}";
     }
     
+    // =================================================================
+    // INI ADALAH KODE YANG SUDAH DIPERBAIKI
+    // =================================================================
     private function getUserIdFromRequest(Request $request): ?int
     {
         if ($request->filled('new_user_name')) {
             $user = User::firstOrCreate(
-                ['nama_pengguna' => trim($request->new_user_name)],
-                ['jabatan' => $request->jabatan, 'departemen' => $request->departemen]
+                ['email' => trim($request->new_user_email)], // Cari berdasarkan email
+                [
+                    'nama_pengguna' => trim($request->new_user_name),
+                    'password' => Hash::make(Str::random(12)), // Buat password acak
+                    'jabatan' => $request->jabatan, 
+                    'departemen' => $request->departemen
+                ]
             );
             return $user->id;
         }
@@ -110,6 +119,8 @@ class AssetController extends Controller
         $merkRule = $category && $category->requires_merk ? 'required|string|max:255' : 'nullable';
         $tipeRule = $category && !$category->requires_merk && $category->code !== 'FURN' ? 'required|string|max:255' : 'nullable';
         $subCategoryRequired = $category && in_array($category->code, ['ELEC', 'VEHI']);
+        
+        // Menambahkan validasi untuk email pengguna baru
         $validatedData = $request->validate([
             'nama_barang' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
@@ -132,7 +143,11 @@ class AssetController extends Controller
             'peruntukan' => 'nullable|string',
             'keterangan' => 'nullable|string',
             'spec' => 'nullable|array',
+            // Validasi jika pengguna baru diisi
+            'new_user_name' => 'required_with:new_user_email|nullable|string|max:255',
+            'new_user_email' => 'required_with:new_user_name|nullable|email|unique:users,email',
         ]);
+
         $data = $validatedData;
         $data['specifications'] = $this->collectSpecificationsFromRequest($request);
         if ($request->filled('tanggal_pembelian')) {
@@ -174,6 +189,7 @@ class AssetController extends Controller
         $merkRule = $category && $category->requires_merk ? 'required|string|max:255' : 'nullable';
         $tipeRule = $category && !$category->requires_merk && $category->code !== 'FURN' ? 'required|string|max:255' : 'nullable';
         $subCategoryRequired = $category && in_array($category->code, ['ELEC', 'VEHI']);
+        
         $request->validate([
             'sub_category_id' => $subCategoryRequired ? 'required|exists:sub_categories,id' : 'nullable',
             'merk' => $merkRule,
@@ -193,7 +209,10 @@ class AssetController extends Controller
             'peruntukan' => 'nullable|string',
             'keterangan' => 'nullable|string',
             'spec' => 'nullable|array',
+            'new_user_name' => 'required_with:new_user_email|nullable|string|max:255',
+            'new_user_email' => 'required_with:new_user_name|nullable|email|unique:users,email,'.optional($asset->user)->id,
         ]);
+        
         $updateData = $request->except(['_token', '_method', 'nama_barang', 'category_id', 'company_id']);
         $updateData['specifications'] = $this->collectSpecificationsFromRequest($request);
         if ($request->filled('tanggal_pembelian')) {
@@ -259,11 +278,9 @@ class AssetController extends Controller
             return redirect()->route('assets.index')->with('error', 'Tidak ada aset yang dipilih untuk diekspor.');
         }
 
-        // Ambil semua kategori unik dari aset yang dipilih
         $categoryIds = Asset::whereIn('id', $assetIds)->distinct()->pluck('category_id');
         
         $fileNamePrefix = 'assets_export';
-        // Jika hanya ada satu kategori, gunakan kodenya
         if ($categoryIds->count() === 1 && $categoryIds->first() !== null) {
             $category = Category::find($categoryIds->first());
             if ($category) {
