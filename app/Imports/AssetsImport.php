@@ -6,7 +6,7 @@ use App\Models\Asset;
 use App\Models\User;
 use App\Models\Category;
 use App\Models\Company;
-use App\Models\SubCategory; // <-- Ditambahkan
+use App\Models\SubCategory;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\ToCollection;
@@ -19,36 +19,28 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
 {
     private $companies;
     private $categories;
-    private $subCategories; // <-- Ditambahkan
+    private $subCategories;
 
     public function __construct()
     {
-        $this->companies = Company::all()->keyBy('name'); // Cari berdasarkan nama, bukan kode
+        $this->companies = Company::all()->keyBy('name');
         $this->categories = Category::all()->keyBy('name');
-        $this->subCategories = SubCategory::all()->keyBy('name'); // Pre-load sub-kategori
+        $this->subCategories = SubCategory::all()->keyBy('name');
     }
 
     public function collection(Collection $rows)
     {
         foreach ($rows as $row) 
         {
-            // PERUBAHAN: Mencari berdasarkan 'nama_barang' dari file ekspor
             if (empty($row['nama_barang'])) {
                 continue;
             }
 
-            // 1. Menentukan Kategori berdasarkan nama dari file ekspor
             $category = $this->categories[trim($row['kategori'] ?? '')] ?? null;
-            
-            // PERUBAHAN: Menentukan Sub Kategori berdasarkan nama
             $subCategory = $this->subCategories[trim($row['sub_kategori'] ?? '')] ?? null;
-
-            // 2. Menentukan Perusahaan berdasarkan nama dari file ekspor
             $company = $this->companies[trim($row['perusahaan'] ?? '')] ?? null;
 
-            // 3. Cari atau buat User berdasarkan nama dari file ekspor
             $user = null;
-            // PERUBAHAN: Mencari berdasarkan 'pengguna_saat_ini'
             if (!empty($row['pengguna_saat_ini'])) {
                 $namaPengguna = trim($row['pengguna_saat_ini']);
                 $user = User::firstOrCreate(
@@ -62,10 +54,12 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
                 );
             }
             
-            // 4. Kumpulkan data spesifikasi dinamis
             $specifications = $this->collectSpecifications($row);
 
-            // 5. Siapkan data utama untuk aset
+            // --- PERBAIKAN TOTAL PADA LOGIKA PERSIAPAN DATA ---
+            $hargaTotal = trim($row['harga_total_rp'] ?? '');
+            $thnPembelian = trim($row['tahun_pembelian'] ?? '');
+            
             $assetData = [
                 'nama_barang'       => trim($row['nama_barang']),
                 'category_id'       => optional($category)->id,
@@ -80,9 +74,9 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
                 'satuan'            => trim($row['satuan'] ?? 'Unit'),
                 'user_id'           => optional($user)->id,
                 'specifications'    => $specifications,
-                'tanggal_pembelian' => isset($row['tanggal_pembelian']) ? Carbon::createFromFormat('d-m-Y', $row['tanggal_pembelian'])->toDateString() : null,
-                'thn_pembelian'     => trim($row['tahun_pembelian'] ?? null),
-                'harga_total'       => is_numeric($row['harga_total_rp'] ?? null) ? $row['harga_total_rp'] : null,
+                'tanggal_pembelian' => !empty($row['tanggal_pembelian']) ? Carbon::createFromFormat('d-m-Y', $row['tanggal_pembelian'])->toDateString() : null,
+                'thn_pembelian'     => !empty($thnPembelian) && is_numeric($thnPembelian) ? $thnPembelian : null,
+                'harga_total'       => !empty($hargaTotal) && is_numeric($hargaTotal) ? $hargaTotal : null,
                 'po_number'         => trim($row['nomor_po'] ?? null),
                 'nomor'             => trim($row['nomor_bast'] ?? null),
                 'code_aktiva'       => trim($row['kode_aktiva'] ?? null),
@@ -91,8 +85,8 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
                 'peruntukan'        => trim($row['peruntukan'] ?? null),
                 'keterangan'        => trim($row['keterangan'] ?? null),
             ];
+            // --- AKHIR PERBAIKAN ---
             
-            // 6. Gunakan 'serial_number' sebagai kunci unik untuk update/create
             $asset = null;
             $serialNumber = trim($row['serial_number'] ?? null);
             if (!empty($serialNumber)) {
@@ -122,12 +116,13 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
             'processor' => 'processor', 'ram' => 'ram', 'storage' => 'storage', 
             'graphics' => 'graphics', 'layar' => 'layar',
             'nomor_polisi' => 'nomor_polisi', 'nomor_rangka' => 'nomor_rangka', 'nomor_mesin' => 'nomor_mesin',
-            'spesifikasideskripsi_lainnya' => 'deskripsi', // Kunci dari header digabung dan lowercase
+            'spesifikasideskripsi_lainnya' => 'deskripsi',
         ];
 
         foreach ($specMap as $headerKey => $specKey) {
-            if (isset($row[$headerKey]) && !empty($row[$headerKey])) {
-                $specs[$specKey] = trim($row[$headerKey]);
+            $formattedKey = Str::snake(strtolower($headerKey));
+            if (isset($row[$formattedKey]) && !empty($row[$formattedKey])) {
+                $specs[$specKey] = trim($row[$formattedKey]);
             }
         }
         return $specs;
@@ -143,17 +138,13 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
         }
     }
     
-    // Fungsi parseDate tidak lagi dibutuhkan karena Carbon bisa membaca format 'd-m-Y'
-    
     public function chunkSize(): int
     {
         return 100;
     }
 
-    // PERUBAHAN: Menambahkan formatter untuk nama header
     public function headingRowFormatter($row) {
         return collect($row)->map(function ($value) {
-            // Mengubah "Nama Barang" menjadi "nama_barang"
             return Str::snake(strtolower($value));
         })->toArray();
     }
