@@ -18,85 +18,77 @@ use Illuminate\Support\Facades\Hash;
 class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
 {
     private $companies;
-    private $categories;
     private $subCategories;
 
     public function __construct()
     {
-        $this->companies = Company::all()->keyBy('name');
-        $this->categories = Category::all()->keyBy('name');
+        // Siapkan data master untuk pencarian cepat
+        $this->companies = Company::all()->keyBy('code');
         $this->subCategories = SubCategory::all()->keyBy('name');
     }
 
     public function collection(Collection $rows)
     {
-        $map = $this->getColumnMapping(collect($rows->first())->keys());
-
-        if (!$map) {
-            return; 
-        }
-
         foreach ($rows as $row) 
         {
-            dd($row);
-        
-            $row = collect($row)->keyBy(fn($value, $key) => Str::snake($key));
-
-            if (empty($row[$map['nama_barang']])) {
+            if (empty($row['nama_item'])) {
                 continue;
             }
 
-            $category = $this->categories[trim($row[$map['kategori']] ?? '')] ?? null;
-            $subCategory = $this->subCategories[trim($row[$map['sub_kategori']] ?? '')] ?? null;
-            $company = $this->companies[trim($row[$map['perusahaan']] ?? '')] ?? null;
+            // --- Logika Cerdas Berdasarkan Data Anda ---
+            // 1. Cari Sub-Kategori & Kategori Induknya
+            $subCategory = $this->subCategories[strtoupper(trim($row['jenis'] ?? ''))] ?? null;
+            $category = $subCategory ? $subCategory->category : null;
 
+            // 2. Cari Perusahaan dari Kode Aset (e.g., LAPT/LENO/JG/379 -> JG)
+            $codeParts = explode('/', trim($row['code_asset'] ?? ''));
+            $companyCode = $codeParts[2] ?? null;
+            $company = $this->companies[$companyCode] ?? null;
+
+            // 3. Cari atau buat Pengguna
             $user = null;
-            if (!empty($row[$map['pengguna']])) {
-                $namaPengguna = trim($row[$map['pengguna']]);
+            if (!empty($row['nama_2'])) {
+                $namaPengguna = trim($row['nama_2']);
                 $user = User::updateOrCreate(
                     ['nama_pengguna' => $namaPengguna],
                     [
                         'email' => Str::slug($namaPengguna) . '_' . time() . '@jhonlin.local',
                         'password' => Hash::make(Str::random(12)),
-                        'jabatan' => trim($row[$map['jabatan']] ?? null), 
-                        'departemen' => trim($row[$map['departemen']] ?? null)
+                        'jabatan' => trim($row['jabatan_2'] ?? null), 
+                        'departemen' => trim($row['departemen_2'] ?? null)
                     ]
                 );
             }
             
-            // PERUBAHAN: Memanggil spesifikasi menggunakan map
-            $specifications = $this->collectSpecifications($row, $map);
-            $hargaTotal = trim($row[$map['harga_total']] ?? '');
-            $thnPembelian = trim($row[$map['tahun_pembelian']] ?? '');
-
-            // PERUBAHAN: Melengkapi semua field menggunakan map
+            // 4. Siapkan semua data aset berdasarkan header file Anda
             $assetData = [
-                'code_asset'        => trim($row[$map['code_asset']] ?? null),
-                'nama_barang'       => trim($row[$map['nama_barang']]),
+                'code_asset'        => trim($row['code_asset'] ?? null),
+                'nama_barang'       => trim($row['nama_item'] ?? null),
                 'category_id'       => optional($category)->id,
                 'sub_category_id'   => optional($subCategory)->id,
                 'company_id'        => optional($company)->id,
-                'merk'              => trim($row[$map['merk']] ?? null),
-                'tipe'              => trim($row[$map['tipe']] ?? null),
-                'serial_number'     => trim($row[$map['serial_number']] ?? null),
-                'kondisi'           => trim($row[$map['kondisi']] ?? 'BAIK'),
-                'lokasi'            => trim($row[$map['lokasi']] ?? null),
-                'jumlah'            => is_numeric($row[$map['jumlah']] ?? null) ? $row[$map['jumlah']] : 1,
-                'satuan'            => trim($row[$map['satuan']] ?? 'Unit'),
+                'merk'              => explode(' ', trim($row['nama_item'] ?? ''))[1] ?? null, // Ambil merk dari nama_item
+                'tipe'              => trim($row['type'] ?? null),
+                'serial_number'     => trim($row['serial_number'] ?? null),
+                'kondisi'           => trim($row['kondisi'] ?? 'BAIK'),
+                'lokasi'            => trim($row['lokasi'] ?? null),
+                'jumlah'            => is_numeric($row['jumlah'] ?? null) ? $row['jumlah'] : 1,
+                'satuan'            => trim($row['satuan'] ?? 'Unit'),
                 'user_id'           => optional($user)->id,
-                'specifications'    => $specifications,
-                'tanggal_pembelian' => !empty($row[$map['tanggal_pembelian']]) ? Carbon::parse($row[$map['tanggal_pembelian']])->toDateString() : null,
-                'thn_pembelian'     => !empty($thnPembelian) && is_numeric($thnPembelian) ? $thnPembelian : null,
-                'harga_total'       => !empty($hargaTotal) && is_numeric($hargaTotal) ? $hargaTotal : null,
-                'po_number'         => trim($row[$map['po_number']] ?? null),
-                'nomor'             => trim($row[$map['nomor_bast']] ?? null),
-                'code_aktiva'       => trim($row[$map['code_aktiva']] ?? null),
-                'sumber_dana'       => trim($row[$map['sumber_dana']] ?? null),
-                'include_items'     => trim($row[$map['item_termasuk']] ?? null),
-                'peruntukan'        => trim($row[$map['peruntukan']] ?? null),
-                'keterangan'        => trim($row[$map['keterangan']] ?? null),
+                'specifications'    => $this->collectSpecifications($row),
+                'tanggal_pembelian' => $this->parseDate($row['tgl'], $row['bulan'], $row['tahun']),
+                'thn_pembelian'     => trim($row['tahun'] ?? null),
+                'harga_total'       => is_numeric($row['harga_total'] ?? null) ? $row['harga_total'] : null,
+                'po_number'         => trim($row['po'] ?? null),
+                'nomor'             => trim($row['nomor'] ?? null), // Nomor BAST
+                'code_aktiva'       => trim($row['code_aktiva'] ?? null),
+                'sumber_dana'       => null, // Tidak ada di file Anda
+                'include_items'     => trim($row['include'] ?? null),
+                'peruntukan'        => trim($row['peruntukan'] ?? null),
+                'keterangan'        => trim($row['keterangan'] ?? null),
             ];
             
+            // 5. Simpan atau perbarui data
             $asset = null;
             if (!empty($assetData['serial_number'])) {
                 $asset = Asset::withTrashed()->where('serial_number', $assetData['serial_number'])->first();
@@ -112,75 +104,45 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
                 }
             } else {
                 if (!empty($assetData['code_asset'])) {
-                    Asset::create($assetData);
+                    $asset = Asset::create($assetData);
                 }
             }
             
-            if ($user && isset($asset)) {
+            if ($user && $asset) {
                 $this->updateUserHistory($asset, $user->id);
             }
         }
     }
 
-    private function getColumnMapping(Collection $keys): ?array
-    {
-        $headers = $keys->map(fn($item) => Str::snake($item));
-
-        // Peta untuk format file dari hasil EKSPOR INTERNAL (SUDAH LENGKAP)
-        $internalExportMap = [
-            'code_asset' => 'kode_aset', 'nama_barang' => 'nama_barang', 'kategori' => 'kategori',
-            'sub_kategori' => 'sub_kategori', 'perusahaan' => 'perusahaan', 'merk' => 'merk', 'tipe' => 'tipe',
-            'serial_number' => 'serial_number', 'pengguna' => 'pengguna_saat_ini', 'jabatan' => 'jabatan_pengguna',
-            'departemen' => 'departemen_pengguna', 'kondisi' => 'kondisi', 'lokasi' => 'lokasi_fisik',
-            'jumlah' => 'jumlah', 'satuan' => 'satuan', 'processor' => 'processor', 'ram' => 'ram',
-            'storage' => 'storage', 'graphics' => 'graphics', 'layar' => 'layar',
-            'nomor_polisi' => 'nomor_polisi', 'nomor_rangka' => 'nomor_rangka', 'nomor_mesin' => 'nomor_mesin',
-            'deskripsi' => 'spesifikasi_deskripsi_lainnya', 'tanggal_pembelian' => 'tanggal_pembelian',
-            'tahun_pembelian' => 'tahun_pembelian', 'harga_total' => 'harga_total_rp', 'po_number' => 'nomor_po',
-            'nomor_bast' => 'nomor_bast', 'code_aktiva' => 'kode_aktiva', 'sumber_dana' => 'sumber_dana',
-            'item_termasuk' => 'item_termasuk', 'peruntukan' => 'peruntukan', 'keterangan' => 'keterangan',
-        ];
-
-        // Peta untuk format file "CONTOH REPORT" (PERLU PENYESUAIAN)
-        $contohReportMap = [
-            'code_asset' => 'code_asset', 'nama_barang' => 'nama_item', 'kategori' => 'kategori_barang',
-            'sub_kategori' => 'jenis', 'perusahaan' => 'milik_perusahaan', 'merk' => 'merk', 'tipe' => 'tipe',
-            'serial_number' => 'serial_number', 'pengguna' => 'nama_2', 'jabatan' => 'jabatan_2',
-            'departemen' => 'departemen_2', 'kondisi' => 'kondisi', 'lokasi' => 'lokasi',
-            'jumlah' => 'jumlah', 'satuan' => 'satuan', 'processor' => 'processor', 'ram' => 'ram',
-            'storage' => 'hddssd', 'graphics' => 'vga', 'layar' => 'lcd',
-            'nomor_polisi' => 'nopol', 'nomor_rangka' => 'nomor_rangka', 'nomor_mesin' => 'nomor_mesin',
-            'deskripsi' => 'keterangan_spesifikasi', 'tanggal_pembelian' => 'tanggal',
-            'tahun_pembelian' => 'tahun', 'harga_total' => 'harga', 'po_number' => 'no_po',
-            'nomor_bast' => 'no_bast', 'code_aktiva' => 'kode_aktiva', 'sumber_dana' => 'sumber_dana',
-            'item_termasuk' => 'kelengkapan', 'peruntukan' => 'peruntukan', 'keterangan' => 'keterangan',
-        ];
-
-        if ($headers->contains('kode_aset')) {
-            return $internalExportMap;
-        }
-        if ($headers->contains('nama_item')) {
-            return $contohReportMap;
-        }
-        return null;
-    }
-
-    private function collectSpecifications(Collection $row, array $map): array
+    private function collectSpecifications(Collection $row): array
     {
         $specs = [];
-        // Daftar semua kemungkinan kunci spesifikasi dari kedua peta
-        $specKeys = [
-            'processor', 'ram', 'storage', 'graphics', 'layar', 'nomor_polisi', 
-            'nomor_rangka', 'nomor_mesin', 'deskripsi'
+        $specMap = [
+            'processor' => 'processor', 'memory_ram' => 'ram', 'hddssd' => 'storage',
+            'graphics' => 'graphics', 'lcd' => 'layar',
         ];
 
-        foreach ($specKeys as $key) {
-            // Cek apakah kunci ada di peta dan ada nilainya di baris excel
-            if (isset($map[$key]) && !empty($row[$map[$key]])) {
-                $specs[$key] = trim($row[$map[$key]]);
+        foreach ($specMap as $key => $specName) {
+            if (!empty($row[$key])) {
+                $specs[$specName] = trim($row[$key]);
             }
         }
         return $specs;
+    }
+
+    private function parseDate($day, $month, $year)
+    {
+        if (empty($day) || empty($month) || empty($year)) return null;
+        try {
+            $monthNames = [
+                'januari' => '01', 'februari' => '02', 'maret' => '03', 'april' => '04', 'mei' => '05', 'juni' => '06',
+                'juli' => '07', 'agustus' => '08', 'september' => '09', 'oktober' => '10', 'november' => '11', 'desember' => '12',
+            ];
+            $monthNum = $monthNames[strtolower(trim($month))] ?? Carbon::parse($month)->month;
+            return Carbon::createFromDate($year, $monthNum, $day)->toDateString();
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     private function updateUserHistory(Asset $asset, ?int $newUserId): void
