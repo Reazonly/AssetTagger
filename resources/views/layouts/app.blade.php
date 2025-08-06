@@ -39,8 +39,24 @@
             </header>
             <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">
                 <div class="container mx-auto px-6 py-8">
+                     {{-- Menampilkan notifikasi sukses atau error --}}
+                    @if (session('success'))
+                        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-5 rounded-md shadow" role="alert">
+                            <p class="font-bold">Sukses</p>
+                            <p>{{ session('success') }}</p>
+                        </div>
+                    @endif
+
+                    @if (session('error'))
+                        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-5 rounded-md shadow" role="alert">
+                            <p class="font-bold">Error</p>
+                            <p>{{ session('error') }}</p>
+                        </div>
+                    @endif
+
                     {{-- Baris ini akan menampilkan konten dari Livewire ($slot) dan halaman Blade biasa (@yield) --}}
-                    {!! $slot ?? $__env->yieldContent('content') !!}
+                    {{ $slot ?? '' }}
+                    @yield('content')
                 </div>
             </main>
         </div>
