@@ -7,12 +7,10 @@
         x-transition:leave-end="-translate-x-full"
         class="w-64 bg-sky-600 text-white flex-shrink-0 flex flex-col z-40 md:relative absolute h-full border-r border-gray-300">
     
-    {{-- Logo --}}
     <div class="flex items-center justify-center h-20 bg-white border-b border-gray-200">
         <img src="{{ asset('images/jhonlin_logo.png') }}" alt="Jhonlin Group Logo" class="h-20">
     </div>
 
-    {{-- Navigation Menu --}}
     <nav class="mt-6 flex-grow px-4">
         <a href="{{ route('dashboard') }}" class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 
             {{ request()->routeIs('dashboard') ? 'bg-sky-700' : 'text-white hover:bg-sky-700' }}">
@@ -25,22 +23,30 @@
             <span class="mx-4 font-medium">Manajemen Aset</span>
         </a>
 
-        {{-- MENU BARU: MANAJEMEN PENGGUNA (HANYA UNTUK ADMIN) --}}
         @if(auth()->user()->role == 'admin')
             <div class="mt-6 pt-4 border-t border-sky-700">
                 <p class="px-4 text-xs text-sky-200 uppercase tracking-wider font-semibold">Admin Area</p>
                 <a href="{{ route('users.index') }}" class="mt-2 flex items-center px-4 py-3 rounded-lg transition-colors duration-200 
-                   {{ request()->routeIs('users.*') ? 'bg-sky-700' : 'text-white hover:bg-sky-700' }}">
+                   {{ request()->routeIs('users.index') ? 'bg-sky-700' : 'text-white hover:bg-sky-700' }}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21a6 6 0 00-9-5.197M15 21a6 6 0 006-6v-1a3 3 0 00-3-3H6a3 3 0 00-3 3v1a6 6 0 006 6z" />
                     </svg>
-                    <span class="mx-4 font-medium">Manajemen Pengguna</span>
+                    <span class="mx-4 font-medium">Pengguna</span>
+                </a>
+                <a href="{{ route('categories.index') }}" class="mt-2 flex items-center px-4 py-3 rounded-lg transition-colors duration-200 
+                   {{ request()->routeIs('categories.index') ? 'bg-sky-700' : 'text-white hover:bg-sky-700' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" /></svg>
+                    <span class="mx-4 font-medium">Kategori</span>
+                </a>
+                <a href="{{ route('companies.index') }}" class="mt-2 flex items-center px-4 py-3 rounded-lg transition-colors duration-200 
+                   {{ request()->routeIs('companies.index') ? 'bg-sky-700' : 'text-white hover:bg-sky-700' }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h6M9 12h6m-6 5.25h6M5.25 6h.008v.008H5.25V6zm.75 0h.008v.008H6V6zm.75 0h.008v.008H6.75V6zm.75 0h.008v.008H7.5V6zm.75 0h.008v.008H8.25V6zm.75 0h.008v.008H9V6zm.75 0h.008v.008H9.75V6zm.75 0h.008v.008H10.5V6zm.75 0h.008v.008H11.25V6zm.75 0h.008v.008H12V6zm.75 0h.008v.008H12.75V6zm.75 0h.008v.008H13.5V6zm.75 0h.008v.008H14.25V6zm.75 0h.008v.008H15V6zm.75 0h.008v.008H15.75V6zm.75 0h.008v.008H16.5V6zm.75 0h.008v.008H17.25V6zm.75 0h.008v.008H18V6zm.75 0h.008v.008H18.75V6z" /></svg>
+                    <span class="mx-4 font-medium">Perusahaan</span>
                 </a>
             </div>
         @endif
     </nav>
 
-    {{-- User Info & Logout --}}
     @auth
     <div class="px-6 py-4 border-t border-white/20">
         <div class="flex items-center mb-2">

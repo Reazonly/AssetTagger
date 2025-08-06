@@ -5,13 +5,11 @@
 @section('content')
 <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
 
-    {{-- Header Halaman --}}
     <div class="border-b border-gray-200 pb-6 mb-6">
         <h1 class="text-3xl font-bold text-gray-900">Manajemen Pengguna</h1>
         <p class="text-sm text-gray-500 mt-1">Ubah hak akses (role) untuk setiap pengguna terdaftar.</p>
     </div>
 
-    {{-- Tabel Pengguna --}}
     <div class="overflow-x-auto border border-gray-200 rounded-lg">
         <table class="w-full text-sm text-left text-gray-600">
             <thead class="text-xs text-gray-700 uppercase bg-gray-100">
@@ -55,6 +53,9 @@
             </tbody>
         </table>
     </div>
-
+    
+    @if ($users->hasPages())
+        <div class="mt-6">{{ $users->links() }}</div>
+    @endif
 </div>
 @endsection

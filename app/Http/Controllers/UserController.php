@@ -1,5 +1,4 @@
 <?php
-// File: app/Http/Controllers/UserController.php
 
 namespace App\Http\Controllers;
 
@@ -9,27 +8,22 @@ use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
-    /**
-     * Menampilkan daftar semua pengguna.
-     */
     public function index()
     {
-        // Ambil semua pengguna kecuali admin yang sedang login
-        $users = User::where('id', '!=', auth()->id())->get();
+        $users = User::where('id', '!=', auth()->id())->latest()->paginate(15);
         return view('users.index', compact('users'));
     }
 
-    /**
-     * Memperbarui role seorang pengguna.
-     */
     public function updateRole(Request $request, User $user)
     {
-        // Validasi input agar role yang dimasukkan harus salah satu dari pilihan yang ada
+        if ($user->id === auth()->id()) {
+            return back()->with('error', 'Anda tidak dapat mengubah role diri sendiri.');
+        }
+
         $validated = $request->validate([
             'role' => ['required', Rule::in(['admin', 'viewer', 'user'])],
         ]);
 
-        // Update role pengguna dan simpan
         $user->role = $validated['role'];
         $user->save();
 

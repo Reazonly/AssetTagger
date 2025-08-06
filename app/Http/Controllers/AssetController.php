@@ -11,12 +11,12 @@ use App\Imports\AssetsImport;
 use App\Exports\AssetsExport;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class AssetController extends Controller
 {
+    // ... (Metode generateAssetCode, getUserIdFromRequest, collectSpecificationsFromRequest tetap sama) ...
     private function generateAssetCode(Request $request, Category $category, ?SubCategory $subCategory, int $assetId): string
     {
         $getFourDigits = function ($string) {
@@ -68,7 +68,7 @@ class AssetController extends Controller
         }
         return $specs;
     }
-    
+
     public function index(Request $request)
     {
         $query = Asset::with(['user', 'category', 'company', 'subCategory']);
@@ -95,7 +95,7 @@ class AssetController extends Controller
         return view('assets.index', compact('assets', 'categories'));
     }
 
-   public function create()
+    public function create()
     {
         return view('assets.create', [
             'users' => User::all(),
@@ -258,24 +258,28 @@ class AssetController extends Controller
         if (empty($assetIds)) {
             return redirect()->route('assets.index')->with('error', 'Tidak ada aset yang dipilih untuk diekspor.');
         }
-        $firstAsset = Asset::find($assetIds[0]);
-        $categoryCode = optional($firstAsset->category)->code;
-        $fileName = 'assets_export_' . ($categoryCode ? strtolower($categoryCode) . '_' : '') . date('Y-m-d_H-i-s') . '.xlsx';
-        return Excel::download(new AssetsExport(null, $assetIds, $categoryCode), $fileName);
+
+        // Ambil semua kategori unik dari aset yang dipilih
+        $categoryIds = Asset::whereIn('id', $assetIds)->distinct()->pluck('category_id');
+        
+        $fileNamePrefix = 'assets_export';
+        // Jika hanya ada satu kategori, gunakan kodenya
+        if ($categoryIds->count() === 1 && $categoryIds->first() !== null) {
+            $category = Category::find($categoryIds->first());
+            if ($category) {
+                $fileNamePrefix = 'assets_export_' . strtolower($category->code);
+            }
+        }
+        
+        $fileName = $fileNamePrefix . '_' . date('Y-m-d_H-i-s') . '.xlsx';
+        return Excel::download(new AssetsExport(null, $assetIds, null), $fileName);
     }
 
     public function downloadPDF(Asset $asset)
     {
         $asset->load(['user', 'category', 'company', 'subCategory', 'history.user']);
         $pdf = Pdf::loadView('assets.pdf', ['asset' => $asset]);
-
-        // --- PERBAIKAN ---
-        // Ambil kode aset asli
-        $assetCode = $asset->code_asset;
-        // Ganti karakter '/' dengan '-' agar menjadi nama file yang valid
-        $safeFileName = str_replace('/', '-', $assetCode);
-
-        // Gunakan nama file yang sudah aman
+        $safeFileName = str_replace('/', '-', $asset->code_asset);
         return $pdf->download('asset-detail-' . $safeFileName . '.pdf');
     }
 }
