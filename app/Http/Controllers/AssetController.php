@@ -45,14 +45,17 @@ class AssetController extends Controller
         return "{$namaBarangCode}/{$kategoriCode}/{$companyCode}/{$paddedId}";
     }
     
-    // FUNGSI FINAL: Membuat email & password otomatis di latar belakang
+    // PERUBAHAN FINAL: Menggunakan updateOrCreate
     private function getUserIdFromRequest(Request $request): ?int
     {
         if ($request->filled('new_user_name')) {
             $namaPengguna = trim($request->new_user_name);
-            $user = User::firstOrCreate(
-                ['nama_pengguna' => $namaPengguna],
+            
+            // Ganti firstOrCreate dengan updateOrCreate
+            $user = User::updateOrCreate(
+                ['nama_pengguna' => $namaPengguna], // Kunci untuk mencari pengguna
                 [
+                    // Data yang akan diisi saat membuat atau diperbarui
                     'email' => Str::slug($namaPengguna) . '_' . time() . '@jhonlin.local',
                     'password' => Hash::make(Str::random(12)),
                     'jabatan' => $request->jabatan, 
