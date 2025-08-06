@@ -30,9 +30,7 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
 
     public function collection(Collection $rows)
     {
-        // Ambil header dari baris pertama untuk mendeteksi format file
-        $headers = collect($rows->first())->keys()->map(fn($item) => Str::snake($item));
-        $map = $this->getColumnMapping($headers);
+        $map = $this->getColumnMapping(collect($rows->first())->keys());
 
         if (!$map) {
             return; 
@@ -64,7 +62,6 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
                 );
             }
             
-            // PERUBAHAN: Menambahkan 'code_asset' ke dalam data yang disimpan
             $assetData = [
                 'code_asset'        => trim($row[$map['code_asset']] ?? null),
                 'nama_barang'       => trim($row[$map['nama_barang']]),
@@ -75,23 +72,42 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
                 'kondisi'           => trim($row[$map['kondisi']] ?? 'BAIK'),
             ];
             
-            // Logika baru: Gunakan updateOrCreate tapi pastikan code_asset ada saat membuat
-            $asset = Asset::updateOrCreate(
-                ['serial_number' => $assetData['serial_number']],
-                $assetData
-            );
+            // --- PERBAIKAN TOTAL PADA LOGIKA PENYIMPANAN ---
+            $asset = null;
+            // 1. Coba cari berdasarkan Serial Number jika ada
+            if (!empty($assetData['serial_number'])) {
+                $asset = Asset::where('serial_number', $assetData['serial_number'])->first();
+            }
+            // 2. Jika tidak ketemu, coba cari berdasarkan Kode Aset
+            if (!$asset && !empty($assetData['code_asset'])) {
+                $asset = Asset::where('code_asset', $assetData['code_asset'])->first();
+            }
+
+            // 3. Jika aset ditemukan (dari salah satu cara di atas), perbarui datanya
+            if ($asset) {
+                $asset->update($assetData);
+            } 
+            // 4. Jika sama sekali tidak ditemukan, buat aset baru
+            else {
+                // Pastikan code_asset tidak kosong saat membuat baru
+                if (!empty($assetData['code_asset'])) {
+                    Asset::create($assetData);
+                }
+            }
+            // --- AKHIR PERBAIKAN ---
             
-            if ($user) {
+            if ($user && $asset) {
                 $this->updateUserHistory($asset, $user->id);
             }
         }
     }
 
-    private function getColumnMapping(Collection $headers): ?array
+    private function getColumnMapping(Collection $keys): ?array
     {
-        // Peta untuk format file dari hasil EKSPOR INTERNAL
+        $headers = $keys->map(fn($item) => Str::snake($item));
+
         $internalExportMap = [
-            'code_asset' => 'kode_aset', // <-- DITAMBAHKAN
+            'code_asset' => 'kode_aset',
             'nama_barang' => 'nama_barang',
             'kategori' => 'kategori',
             'sub_kategori' => 'sub_kategori',
@@ -103,9 +119,8 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
             'kondisi' => 'kondisi',
         ];
 
-        // Peta untuk format file "CONTOH REPORT" 
         $contohReportMap = [
-            'code_asset' => 'code_asset', // <-- DITAMBAHKAN (sesuaikan jika perlu)
+            'code_asset' => 'code_asset',
             'nama_barang' => 'nama_item',
             'kategori' => 'kategori_barang',
             'sub_kategori' => 'jenis',
@@ -117,15 +132,12 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
             'kondisi' => 'kondisi',
         ];
 
-        // Logika Deteksi
-        if ($headers->contains('kode_aset')) { // Mengecek header dari file ekspor
+        if ($headers->contains('kode_aset')) {
             return $internalExportMap;
         }
-        
-        if ($headers->contains('nama_item')) { // Mengecek header dari file contoh report
+        if ($headers->contains('nama_item')) {
             return $contohReportMap;
         }
-
         return null;
     }
 
