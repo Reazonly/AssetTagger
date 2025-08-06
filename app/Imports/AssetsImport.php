@@ -202,6 +202,7 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
 
     private function updateUserHistory(Asset $asset, ?int $newUserId): void
     {
+        
         if(!$newUserId) return;
         $latestHistory = $asset->history()->latest()->first();
         if (!$latestHistory || $latestHistory->user_id != $newUserId) {

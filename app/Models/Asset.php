@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+
 class Asset extends Model
 {
     use HasFactory, SoftDeletes;
@@ -17,7 +18,7 @@ class Asset extends Model
      *
      * @var array<int, string>
      */
-    protected $guarded = ['id']; // Memperbolehkan semua field diisi kecuali ID
+      protected $guarded = []; // Memperbolehkan semua field diisi kecuali ID
 
     /**
      * The attributes that should be cast.

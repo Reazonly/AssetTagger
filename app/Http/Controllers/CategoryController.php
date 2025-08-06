@@ -32,7 +32,7 @@ class CategoryController extends Controller
             'requires_merk' => 'required|boolean',
         ]);
         Category::create($validated);
-        return redirect()->route('categories.index')->with('success', 'Kategori baru berhasil ditambahkan.');
+        return redirect()->route('master-data.categories.index')->with('success', 'Kategori baru berhasil ditambahkan.');
     }
 
     public function edit(Category $category)
@@ -48,7 +48,7 @@ class CategoryController extends Controller
             'requires_merk' => 'required|boolean',
         ]);
         $category->update($validated);
-        return redirect()->route('categories.index')->with('success', 'Data kategori berhasil diperbarui.');
+        return redirect()->route('master-data.categories.index')->with('success', 'Data kategori berhasil diperbarui.');
     }
 
     public function destroy(Category $category)
@@ -57,6 +57,6 @@ class CategoryController extends Controller
             return back()->with('error', 'Kategori tidak dapat dihapus karena masih digunakan oleh data aset.');
         }
         $category->delete();
-        return redirect()->route('categories.index')->with('success', 'Data kategori berhasil dihapus.');
+        return redirect()->route('master-data.categories.index')->with('success', 'Data kategori berhasil dihapus.');
     }
 }

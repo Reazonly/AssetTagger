@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const categoryId = document.getElementById('category_filter').value;
             let exportUrl = "{{ route('assets.export') }}?" + selectedIds;
             if (categoryId) {
-                exportUrl += `&category_id=${categoryId}`;
+                exportUrl += &category_id=${categoryId};
             }
             window.location.href = exportUrl;
         }

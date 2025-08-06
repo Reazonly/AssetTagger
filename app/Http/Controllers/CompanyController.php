@@ -31,7 +31,7 @@ class CompanyController extends Controller
             'code' => 'required|string|max:10|unique:companies,code',
         ]);
         Company::create($validated);
-        return redirect()->route('companies.index')->with('success', 'Perusahaan baru berhasil ditambahkan.');
+        return redirect()->route('master-data.companies.index')->with('success', 'Perusahaan baru berhasil ditambahkan.');
     }
 
     public function edit(Company $company)
@@ -46,7 +46,7 @@ class CompanyController extends Controller
             'code' => 'required|string|max:10|unique:companies,code,' . $company->id,
         ]);
         $company->update($validated);
-        return redirect()->route('companies.index')->with('success', 'Data perusahaan berhasil diperbarui.');
+        return redirect()->route('master-data.companies.index')->with('success', 'Data perusahaan berhasil diperbarui.');
     }
 
     public function destroy(Company $company)
@@ -55,6 +55,6 @@ class CompanyController extends Controller
             return back()->with('error', 'Perusahaan tidak dapat dihapus karena masih terhubung dengan data aset.');
         }
         $company->delete();
-        return redirect()->route('companies.index')->with('success', 'Data perusahaan berhasil dihapus.');
+        return redirect()->route('master-data.companies.index')->with('success', 'Data perusahaan berhasil dihapus.');
     }
 }
