@@ -19,7 +19,6 @@ Route::get('assets/{asset}/public', [AssetController::class, 'publicShow'])->nam
 Route::get('assets/{asset}/pdf', [AssetController::class, 'downloadPDF'])->name('assets.pdf');
 Route::get('/assets/get-units/{category}', [AssetController::class, 'getUnits'])->name('assets.getUnits');
 
-// --- PERUBAHAN UTAMA DIMULAI DI SINI ---
 // Main application routes (protected by auth middleware)
 Route::middleware('auth')->group(function () {
     // Dashboard bisa diakses semua role yang sudah login
@@ -32,9 +31,6 @@ Route::middleware('auth')->group(function () {
         Route::get('assets/print', [AssetController::class, 'print'])->name('assets.print');
         Route::get('assets/export', [AssetController::class, 'export'])->name('assets.export');
     });
-        // Rute baru untuk manajemen pengguna
-    Route::get('/users', [UserController::class, 'index'])->name('users.index');
-    Route::post('/users/{user}/update-role', [UserController::class, 'updateRole'])->name('users.updateRole');
 
     // Grup KHUSUS untuk role yang bisa MEMODIFIKASI data (Hanya Admin)
     Route::middleware(['role:admin'])->group(function () {
@@ -44,5 +40,9 @@ Route::middleware('auth')->group(function () {
         Route::get('assets/{asset}/edit', [AssetController::class, 'edit'])->name('assets.edit');
         Route::put('assets/{asset}', [AssetController::class, 'update'])->name('assets.update');
         Route::delete('assets/{asset}', [AssetController::class, 'destroy'])->name('assets.destroy');
+
+        // Rute manajemen pengguna DIPINDAHKAN KE SINI
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::post('/users/{user}/update-role', [UserController::class, 'updateRole'])->name('users.updateRole');
     });
 });
