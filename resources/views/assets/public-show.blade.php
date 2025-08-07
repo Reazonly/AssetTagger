@@ -7,6 +7,7 @@
     </div>
 
     <div class="space-y-6">
+        {{-- Informasi Umum --}}
         <div class="bg-white p-6 rounded-xl border">
             <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">Informasi Umum</h3>
             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm">
@@ -56,6 +57,7 @@
             </dl>
         </div>
 
+        {{-- Spesifikasi --}}
         @if($asset->specifications)
             <div class="bg-white p-6 rounded-xl border">
                 <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">Spesifikasi & Deskripsi</h3>
@@ -70,6 +72,52 @@
             </div>
         @endif
         
+        {{-- ====================================================== --}}
+        {{-- PERUBAHAN: MENAMBAHKAN BAGIAN PEMBELIAN & DOKUMEN --}}
+        {{-- ====================================================== --}}
+        <div class="bg-white p-6 rounded-xl border">
+            <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">Informasi Pembelian & Dokumen</h3>
+            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm">
+                @if($asset->tanggal_pembelian)
+                <div class="flex flex-col"><dt class="font-medium text-gray-500">Tanggal Beli</dt><dd class="text-gray-900 mt-1">{{ $asset->tanggal_pembelian->isoFormat('D MMMM YYYY') }}</dd></div>
+                @endif
+                @if($asset->harga_total > 0)
+                <div class="flex flex-col"><dt class="font-medium text-gray-500">Harga</dt><dd class="text-gray-900 mt-1">Rp {{ number_format($asset->harga_total, 0, ',', '.') }}</dd></div>
+                @endif
+                @if($asset->po_number)
+                <div class="flex flex-col"><dt class="font-medium text-gray-500">Nomor PO</dt><dd class="text-gray-900 mt-1">{{ $asset->po_number }}</dd></div>
+                @endif
+                @if($asset->nomor)
+                <div class="flex flex-col"><dt class="font-medium text-gray-500">Nomor BAST</dt><dd class="text-gray-900 mt-1">{{ $asset->nomor }}</dd></div>
+                @endif
+                @if($asset->code_aktiva)
+                <div class="flex flex-col"><dt class="font-medium text-gray-500">Kode Aktiva</dt><dd class="text-gray-900 mt-1">{{ $asset->code_aktiva }}</dd></div>
+                @endif
+                @if($asset->sumber_dana)
+                <div class="flex flex-col"><dt class="font-medium text-gray-500">Sumber Dana</dt><dd class="text-gray-900 mt-1">{{ $asset->sumber_dana }}</dd></div>
+                @endif
+            </dl>
+        </div>
+
+        {{-- ====================================================== --}}
+        {{-- PERUBAHAN: MENAMBAHKAN BAGIAN INFORMASI TAMBAHAN --}}
+        {{-- ====================================================== --}}
+        <div class="bg-white p-6 rounded-xl border">
+            <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">Informasi Tambahan</h3>
+            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm">
+                @if($asset->include_items)
+                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Item Termasuk</dt><dd class="text-gray-700 mt-1">{{ $asset->include_items }}</dd></div>
+                @endif
+                @if($asset->peruntukan)
+                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Peruntukan</dt><dd class="text-gray-700 mt-1">{{ $asset->peruntukan }}</dd></div>
+                @endif
+                @if($asset->keterangan)
+                    <div class="flex flex-col sm:col-span-2"><dt class="font-medium text-gray-500">Keterangan</dt><dd class="text-gray-700 mt-1">{{ $asset->keterangan }}</dd></div>
+                @endif
+            </dl>
+        </div>
+        
+        {{-- Histori Pengguna --}}
         <div class="bg-white p-6 rounded-xl border">
             <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">Histori Pengguna</h3>
             <ul class="space-y-4 text-sm">
