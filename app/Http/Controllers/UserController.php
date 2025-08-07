@@ -10,8 +10,8 @@ class UserController extends Controller
 {
     public function index()
     {
-        // Filter: Hanya tampilkan pengguna dengan role 'admin' atau 'viewer'
-        $users = User::whereIn('role', ['admin', 'viewer', 'editor']) // Tambahkan editor agar bisa ditampilkan juga
+        // Menampilkan pengguna dengan role admin, editor, dan viewer
+        $users = User::whereIn('role', ['admin', 'editor', 'viewer'])
                      ->where('id', '!=', auth()->id())
                      ->latest()
                      ->paginate(15);
@@ -21,11 +21,18 @@ class UserController extends Controller
 
     public function updateRole(Request $request, User $user)
     {
+        // Pengecekan 1: Mencegah admin mengubah rolenya sendiri.
         if ($user->id === auth()->id()) {
             return back()->with('error', 'Anda tidak dapat mengubah role diri sendiri.');
         }
 
-        // PERBAIKAN: Tambahkan 'editor' ke dalam aturan validasi
+        // --- PERBAIKAN FINAL UNTUK SUPER ADMIN ---
+        // Pengecekan 2: Kunci role untuk pengguna dengan ID 1 (Super Admin).
+        if ($user->id === 1) {
+            return back()->with('error', 'Role untuk Super Admin tidak dapat diubah.');
+        }
+        // --- AKHIR PERBAIKAN ---
+
         $validated = $request->validate([
             'role' => ['required', Rule::in(['admin', 'viewer', 'user', 'editor'])],
         ]);
