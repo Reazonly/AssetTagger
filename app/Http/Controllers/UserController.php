@@ -10,8 +10,8 @@ class UserController extends Controller
 {
     public function index()
     {
-        // PERUBAHAN: Tambahkan ->whereIn('role', ['admin', 'viewer'])
-        $users = User::whereIn('role', ['admin', 'viewer'])
+        // Filter: Hanya tampilkan pengguna dengan role 'admin' atau 'viewer'
+        $users = User::whereIn('role', ['admin', 'viewer', 'editor']) // Tambahkan editor agar bisa ditampilkan juga
                      ->where('id', '!=', auth()->id())
                      ->latest()
                      ->paginate(15);
@@ -25,8 +25,9 @@ class UserController extends Controller
             return back()->with('error', 'Anda tidak dapat mengubah role diri sendiri.');
         }
 
+        // PERBAIKAN: Tambahkan 'editor' ke dalam aturan validasi
         $validated = $request->validate([
-            'role' => ['required', Rule::in(['admin', 'viewer', 'user'])],
+            'role' => ['required', Rule::in(['admin', 'viewer', 'user', 'editor'])],
         ]);
 
         $user->role = $validated['role'];
