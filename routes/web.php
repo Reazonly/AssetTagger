@@ -26,29 +26,30 @@ Route::middleware('auth')->group(function () {
     // Dashboard bisa diakses semua role yang sudah login
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Grup KHUSUS Admin
-    Route::middleware(['role:admin'])->group(function () {
+    // Grup untuk role yang bisa MEMODIFIKASI ASET (Admin dan Editor)
+    Route::middleware(['role:admin,editor'])->group(function () {
         // Aset
+        Route::post('assets/import', [AssetController::class, 'import'])->name('assets.import');
         Route::get('assets/create', [AssetController::class, 'create'])->name('assets.create');
         Route::post('assets', [AssetController::class, 'store'])->name('assets.store');
-        Route::post('assets/import', [AssetController::class, 'import'])->name('assets.import');
         Route::get('assets/{asset}/edit', [AssetController::class, 'edit'])->name('assets.edit');
         Route::put('assets/{asset}', [AssetController::class, 'update'])->name('assets.update');
         Route::delete('assets/{asset}', [AssetController::class, 'destroy'])->name('assets.destroy');
+    });
 
-        // Pengguna
+    // Grup KHUSUS untuk ADMIN AREA (Manajemen Pengguna & Master Data)
+    Route::middleware(['role:admin'])->group(function() {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::post('/users/{user}/update-role', [UserController::class, 'updateRole'])->name('users.updateRole');
         
-        // Master Data dibungkus dalam grup agar nama rutenya benar
         Route::prefix('master-data')->name('master-data.')->group(function () {
             Route::resource('categories', CategoryController::class)->except(['show']);
             Route::resource('companies', CompanyController::class)->except(['show']);
         });
     });
 
-    // Grup untuk role yang bisa MELIHAT data (Admin dan Viewer)
-    Route::middleware(['role:admin,viewer'])->group(function () {
+    // Grup untuk role yang bisa MELIHAT data (Semua role login)
+    Route::middleware(['role:admin,viewer,editor,user'])->group(function () {
         Route::get('assets', [AssetController::class, 'index'])->name('assets.index');
         Route::get('assets/print', [AssetController::class, 'print'])->name('assets.print');
         Route::get('assets/export', [AssetController::class, 'export'])->name('assets.export');

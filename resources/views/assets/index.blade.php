@@ -11,8 +11,8 @@
             <h1 class="text-3xl font-bold text-gray-900">Daftar Aset</h1>
             <p class="text-sm text-gray-500 mt-1">Kelola, cari, dan filter semua aset perusahaan.</p>
         </div>
-        {{-- Tombol hanya akan muncul untuk Admin --}}
-        @if(auth()->user()->role == 'admin')
+        {{-- PERUBAHAN: Tombol untuk Admin dan Editor --}}
+        @if(in_array(auth()->user()->role, ['admin', 'editor']))
         <div class="flex items-center gap-3 mt-4 md:mt-0">
             <button onclick="document.getElementById('importModal').classList.remove('hidden')" class="inline-flex items-center gap-2 bg-white text-gray-700 font-semibold px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -72,8 +72,8 @@
                     <th scope="col" class="px-6 py-3">Sub-Kategori</th>
                     <th scope="col" class="px-6 py-3">Pengguna</th>
                     <th scope="col" class="px-6 py-3">Kondisi</th>
-                    {{-- Kolom Aksi hanya untuk Admin --}}
-                    @if(auth()->user()->role == 'admin')
+                    {{-- PERUBAHAN: Kolom Aksi untuk Admin dan Editor --}}
+                    @if(in_array(auth()->user()->role, ['admin', 'editor']))
                         <th scope="col" class="px-6 py-3 text-right">Aksi</th>
                     @endif
                 </tr>
@@ -96,8 +96,8 @@
                                 <span class="px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded-full">PERBAIKAN</span>
                             @endif
                         </td>
-                        {{-- Kolom Aksi hanya untuk Admin --}}
-                        @if(auth()->user()->role == 'admin')
+                        {{-- PERUBAHAN: Kolom Aksi untuk Admin dan Editor --}}
+                        @if(in_array(auth()->user()->role, ['admin', 'editor']))
                         <td class="px-6 py-4 text-right whitespace-nowrap">
                             <a href="{{ route('assets.show', $asset->id) }}" class="font-medium text-emerald-600 hover:text-emerald-800">Lihat</a>
                             <a href="{{ route('assets.edit', $asset->id) }}" class="font-medium text-blue-600 hover:text-blue-800 ml-4">Edit</a>
@@ -111,7 +111,8 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="{{ auth()->user()->role == 'admin' ? '8' : '7' }}" class="text-center py-10 text-gray-500">
+                        {{-- PERUBAHAN: colspan disesuaikan untuk Admin dan Editor --}}
+                        <td colspan="{{ in_array(auth()->user()->role, ['admin', 'editor']) ? '8' : '7' }}" class="text-center py-10 text-gray-500">
                             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                             <h3 class="mt-2 text-sm font-medium text-gray-900">Aset tidak ditemukan</h3>
                             <p class="mt-1 text-sm text-gray-500">Coba ubah filter atau kata kunci pencarian Anda.</p>
@@ -126,8 +127,8 @@
     <div class="mt-6">{{ $assets->appends(request()->query())->links() }}</div>
 </div>
 
-{{-- Modal Impor (hanya untuk Admin) --}}
-@if(auth()->user()->role == 'admin')
+{{-- Modal Impor (hanya untuk Admin dan Editor) --}}
+@if(in_array(auth()->user()->role, ['admin', 'editor']))
 <div id="importModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 overflow-y-auto h-full w-full hidden z-50 transition-opacity">
     <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-xl bg-white">
         <div class="flex justify-between items-center pb-3 border-b">
@@ -138,8 +139,8 @@
         </div>
         <form action="{{ route('assets.import') }}" method="POST" enctype="multipart/form-data" class="mt-4">
             @csrf
-            <p class="text-sm text-gray-600 mb-4">Pilih file Excel (.xlsx) atau CSV (.csv) untuk mengimpor data aset secara massal.</p>
-            <input type="file" name="file" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" required>
+            <p class="text-sm text-gray-600 mb-4">Pilih file Excel (.xlsx, .xls) atau CSV (.csv) untuk mengimpor data aset secara massal.</p>
+            <input type="file" name="file" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" required accept=".xls,.xlsx,.csv">
             <div class="mt-6 flex justify-end space-x-3">
                 <button type="button" onclick="document.getElementById('importModal').classList.add('hidden')" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">Batal</button>
                 <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">Upload & Import</button>
@@ -205,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const categoryId = document.getElementById('category_filter').value;
             let exportUrl = "{{ route('assets.export') }}?" + selectedIds;
             if (categoryId) {
-                exportUrl += &category_id=${categoryId};
+                exportUrl += `&category_id=${categoryId}`; // Perbaikan kecil pada bug javascript
             }
             window.location.href = exportUrl;
         }

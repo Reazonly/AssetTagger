@@ -13,7 +13,8 @@ return new class extends Migration
             // Menambahkan kolom 'role' setelah kolom 'password'
             // Tipe enum membatasi nilai hanya pada yang kita tentukan.
             // Default role adalah 'viewer'.
-            $table->enum('role', ['admin', 'viewer', 'user'])->default('viewer')->after('password');
+            // PERUBAHAN: Menambahkan 'editor' ke dalam daftar.
+            $table->enum('role', ['admin', 'viewer', 'user', 'editor'])->default('viewer')->after('password');
         });
     }
 

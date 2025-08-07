@@ -12,8 +12,8 @@
                 Kembali
             </a>
             
-            {{-- Tombol Edit hanya akan ditampilkan untuk Admin --}}
-            @if(auth()->user()->role == 'admin')
+            {{-- PERUBAHAN: Tombol Edit untuk Admin dan Editor --}}
+            @if(in_array(auth()->user()->role, ['admin', 'editor']))
             <a href="{{ route('assets.edit', $asset->id) }}" class="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 shadow-md transition-colors inline-flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
                 Edit Aset
