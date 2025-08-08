@@ -63,9 +63,9 @@
     {{-- Info Pengguna & Logout --}}
     @auth
     <div class="px-6 py-4 mt-auto border-t border-sky-700">
+        {{-- BAGIAN INI DIPERBAIKI --}}
         <div class="flex items-center">
             <div class="h-10 w-10 rounded-full bg-sky-900 flex items-center justify-center mr-3 border-2 border-sky-500 text-lg font-semibold text-white uppercase">
-                <a href="{{ route('profile.edit') }}" class="flex w-full items-center text-sm font-medium text-sky-200 hover:text-white transition-colors duration-200">
                 @php
                     $nameParts = explode(' ', Auth::user()->nama_pengguna);
                     $initials = count($nameParts) > 1 ? strtoupper(substr($nameParts[0], 0, 1) . substr(end($nameParts), 0, 1)) : strtoupper(substr($nameParts[0], 0, 1));
@@ -73,17 +73,21 @@
                 {{ $initials }}
             </div>
             <div>
-               
                 <p class="text-sm font-semibold text-white">{{ Auth::user()->nama_pengguna }}</p>
                 <p class="text-xs text-sky-200 font-medium bg-sky-700 px-2 py-0.5 rounded-full inline-block mt-1">
                     {{ ucfirst(Auth::user()->role) }}
                 </p>
-                
             </div>
         </div>
         
-        {{-- PERUBAHAN: Menambahkan link Profil di sini --}}
-        
+        <div class="mt-4 space-y-2">
+            <a href="{{ route('profile.edit') }}" class="flex w-full items-center text-sm font-medium text-sky-200 hover:text-white transition-colors duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0012 11z" clip-rule="evenodd" />
+                </svg>
+                Profil Saya
+            </a>
+            <form method="POST" action="{{ route('logout') }}">
                 @csrf
                 <button type="submit" class="flex w-full items-center text-sm font-medium text-red-400 hover:text-red-200 transition-colors duration-200 focus:outline-none">
                     <svg class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
