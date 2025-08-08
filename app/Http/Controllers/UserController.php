@@ -6,13 +6,13 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str; // <-- PERBAIKAN: Baris ini ditambahkan
+use Illuminate\Support\Str; 
 
 class UserController extends Controller
 {
     public function index()
     {
-        // Menampilkan pengguna dengan role admin, editor, dan viewer
+        
         $users = User::whereIn('role', ['admin', 'editor', 'viewer'])
                      ->where('id', '!=', auth()->id())
                      ->latest()
