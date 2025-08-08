@@ -73,10 +73,7 @@
             </div>
             <div>
                
-                <p class="text-sm font-semibold text-white">{{ Auth::user()->nama_pengguna }}</p>
-                <p class="text-xs text-sky-200 font-medium bg-sky-700 px-2 py-0.5 rounded-full inline-block mt-1">
-                    {{ ucfirst(Auth::user()->role) }}
-                </p>
+                
                 
             </div>
         </div>
