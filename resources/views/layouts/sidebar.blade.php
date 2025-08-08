@@ -65,11 +65,7 @@
     <div class="px-6 py-4 mt-auto border-t border-sky-700">
         <div class="flex items-center">
             <div class="h-10 w-10 rounded-full bg-sky-900 flex items-center justify-center mr-3 border-2 border-sky-500 text-lg font-semibold text-white uppercase">
-                @php
-                    $nameParts = explode(' ', Auth::user()->nama_pengguna);
-                    $initials = count($nameParts) > 1 ? strtoupper(substr($nameParts[0], 0, 1) . substr(end($nameParts), 0, 1)) : strtoupper(substr($nameParts[0], 0, 1));
-                @endphp
-                {{ $initials }}
+               
             </div>
             <div>
                
