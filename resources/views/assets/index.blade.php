@@ -11,7 +11,7 @@
             <h1 class="text-3xl font-bold text-gray-900">Daftar Aset</h1>
             <p class="text-sm text-gray-500 mt-1">Kelola, cari, dan filter semua aset perusahaan.</p>
         </div>
-        {{--  Tombol untuk Admin dan Editor --}}
+        {{-- PERUBAHAN: Tombol untuk Admin dan Editor --}}
         @if(in_array(auth()->user()->role, ['admin', 'editor']))
         <div class="flex items-center gap-3 mt-4 md:mt-0">
             <button onclick="document.getElementById('importModal').classList.remove('hidden')" class="inline-flex items-center gap-2 bg-white text-gray-700 font-semibold px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">

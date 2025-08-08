@@ -12,7 +12,7 @@ class UserController extends Controller
 {
     public function index()
     {
-        
+        // Menampilkan pengguna dengan role admin, editor, dan viewer
         $users = User::whereIn('role', ['admin', 'editor', 'viewer'])
                      ->where('id', '!=', auth()->id())
                      ->latest()
