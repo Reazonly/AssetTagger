@@ -8,6 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\ProfileController; // Ditambahkan
 
 // Authentication Routes
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -26,6 +27,11 @@ Route::middleware('auth')->group(function () {
     // Dashboard bisa diakses semua role yang sudah login
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
+    // --- FITUR PROFIL DITAMBAHKAN DI SINI ---
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    // --- AKHIR PENAMBAHAN ---
+
     // Grup untuk role yang bisa MEMODIFIKASI ASET (Admin dan Editor)
     Route::middleware(['role:admin,editor'])->group(function () {
         // Aset
@@ -41,6 +47,11 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['role:admin'])->group(function() {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::post('/users/{user}/update-role', [UserController::class, 'updateRole'])->name('users.updateRole');
+        
+        // --- FITUR HAPUS & RESET PASSWORD DITAMBAHKAN DI SINI ---
+        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+        Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.resetPassword');
+        // --- AKHIR PENAMBAHAN ---
         
         Route::prefix('master-data')->name('master-data.')->group(function () {
             Route::resource('categories', CategoryController::class)->except(['show']);

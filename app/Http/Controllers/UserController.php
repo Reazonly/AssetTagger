@@ -42,4 +42,37 @@ class UserController extends Controller
 
         return redirect()->route('users.index')->with('success', 'Role untuk pengguna ' . $user->nama_pengguna . ' berhasil diperbarui.');
     }
+     // --- FUNGSI BARU UNTUK RESET PASSWORD ---
+    public function resetPassword(User $user)
+    {
+        // Hanya Super Admin (ID=1) yang bisa mereset
+        if (auth()->id() !== 1) {
+            return back()->with('error', 'Anda tidak memiliki hak akses untuk mereset password.');
+        }
+        // Super Admin tidak bisa direset dari sini
+        if ($user->id === 1) {
+            return back()->with('error', 'Password Super Admin hanya bisa diubah melalui halaman profil.');
+        }
+
+        $newPassword = Str::random(10);
+        $user->password = Hash::make($newPassword);
+        $user->save();
+
+        return back()->with('success', 'Password untuk ' . $user->nama_pengguna . ' telah direset. Password baru: ' . $newPassword);
+}
+ // --- FUNGSI BARU UNTUK HAPUS PENGGUNA ---
+    public function destroy(User $user)
+    {
+        // Hanya Super Admin (ID=1) yang bisa menghapus
+        if (auth()->id() !== 1) {
+            return back()->with('error', 'Anda tidak memiliki hak akses untuk menghapus pengguna.');
+        }
+        // Super Admin tidak bisa dihapus
+        if ($user->id === 1) {
+            return back()->with('error', 'Super Admin tidak dapat dihapus.');
+        }
+
+        $user->delete();
+        return redirect()->route('users.index')->with('success', 'Pengguna berhasil dihapus.');
+    }
 }

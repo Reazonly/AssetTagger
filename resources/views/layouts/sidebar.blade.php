@@ -40,7 +40,7 @@
                 </a>
 
                 {{-- MENU MASTER DATA DROPDOWN --}}
-                <div x-data="{ open: {{ request()->routeIs('master-data.categories.*') || request()->routeIs('master-data.companies.*') ? 'true' : 'false' }} }" class="mt-2">
+                <div x-data="{ open: {{ request()->routeIs('master-data.*') ? 'true' : 'false' }} }" class="mt-2">
                     <button @click="open = !open" class="w-full flex justify-between items-center px-4 py-3 rounded-lg transition-colors duration-200 text-sky-100 hover:bg-sky-700">
                         <div class="flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -49,10 +49,9 @@
                             <span class="mx-4 font-medium">Master Data</span>
                         </div>
                         <svg x-show="!open" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-                        <svg x-show="open" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        <svg x-show="open" class="h-5 w-5 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                     </button>
                     <div x-show="open" x-transition class="mt-2 space-y-2 pl-8">
-                        {{-- PERBAIKAN: Nama rute disesuaikan agar konsisten --}}
                         <a href="{{ route('master-data.categories.index') }}" class="block px-4 py-2 text-sm rounded-md {{ request()->routeIs('master-data.categories.*') ? 'text-white font-bold' : 'text-sky-200 hover:text-white' }}">Kategori</a>
                         <a href="{{ route('master-data.companies.index') }}" class="block px-4 py-2 text-sm rounded-md {{ request()->routeIs('master-data.companies.*') ? 'text-white font-bold' : 'text-sky-200 hover:text-white' }}">Perusahaan</a>
                     </div>
@@ -80,13 +79,22 @@
             </div>
         </div>
         
-        <form method="POST" action="{{ route('logout') }}" class="mt-4">
-            @csrf
-            <button type="submit" class="flex w-full items-center text-sm font-medium text-red-400 hover:text-red-200 transition-colors duration-200 focus:outline-none">
-                <svg class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                Logout
-            </button>
-        </form>
+        {{-- PERUBAHAN: Menambahkan link Profil di sini --}}
+        <div class="mt-4 space-y-2">
+            <a href="{{ route('profile.edit') }}" class="flex w-full items-center text-sm font-medium text-sky-200 hover:text-white transition-colors duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0012 11z" clip-rule="evenodd" />
+                </svg>
+                Profil Saya
+            </a>
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="flex w-full items-center text-sm font-medium text-red-400 hover:text-red-200 transition-colors duration-200 focus:outline-none">
+                    <svg class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                    Logout
+                </button>
+            </form>
+        </div>
     </div>
     @endauth
 </aside>
