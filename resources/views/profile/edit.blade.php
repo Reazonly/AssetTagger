@@ -3,60 +3,69 @@
 @section('title', 'Profil Saya')
 
 @section('content')
-<div class="bg-white rounded-xl shadow-lg p-6 md:p-8 max-w-2xl mx-auto">
-
-    <div class="border-b border-gray-200 pb-6 mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">Profil Saya</h1>
-        <p class="text-sm text-gray-500 mt-1">Perbarui informasi dan password akun Anda.</p>
+<div class="max-w-4xl mx-auto">
+    
+    {{-- Header Profil --}}
+    <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 flex items-center">
+        <div class="h-20 w-20 rounded-full bg-sky-800 flex-shrink-0 flex items-center justify-center border-4 border-sky-200">
+            <span class="text-3xl font-bold text-white uppercase">
+                @php
+                    $nameParts = explode(' ', Auth::user()->nama_pengguna);
+                    $initials = count($nameParts) > 1 ? strtoupper(substr($nameParts[0], 0, 1) . substr(end($nameParts), 0, 1)) : strtoupper(substr($nameParts[0], 0, 1));
+                @endphp
+                {{ $initials }}
+            </span>
+        </div>
+        <div class="ml-6">
+            <h1 class="text-3xl font-bold text-gray-900">{{ auth()->user()->nama_pengguna }}</h1>
+            <p class="text-sm font-semibold uppercase tracking-wider text-white bg-sky-600 px-3 py-1 rounded-full inline-block mt-2">
+                {{ auth()->user()->role }}
+            </p>
+        </div>
     </div>
 
-    @if ($errors->any())
-        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-md" role="alert">
-            <ul class="list-disc list-inside">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+    {{-- Form Ubah Password --}}
+    <div class="mt-8 bg-white rounded-xl shadow-lg">
+        <form action="{{ route('profile.update') }}" method="POST">
+            @csrf
+            @method('PUT')
 
-    <form action="{{ route('profile.update') }}" method="POST">
-        @csrf
-        @method('PUT')
+            <div class="p-6 md:p-8">
+                <h2 class="text-2xl font-bold text-gray-800">Ubah Password</h2>
+                <p class="text-sm text-gray-500 mt-1">Pastikan Anda menggunakan password yang kuat dan mudah diingat.</p>
 
-        <div class="space-y-6">
-            <div>
-                <label for="nama_pengguna" class="block text-sm font-medium text-gray-700">Nama Pengguna</label>
-                <input type="text" id="nama_pengguna" value="{{ auth()->user()->nama_pengguna }}" class="mt-1 block w-full bg-gray-100 border-gray-300 rounded-md shadow-sm cursor-not-allowed" readonly>
-            </div>
-
-            <div>
-                <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                <input type="email" id="email" value="{{ auth()->user()->email }}" class="mt-1 block w-full bg-gray-100 border-gray-300 rounded-md shadow-sm cursor-not-allowed" readonly>
-            </div>
-
-            <div class="border-t pt-6">
-                <h2 class="text-xl font-semibold text-gray-800">Ubah Password</h2>
-                <div class="mt-4 space-y-4">
+                @if ($errors->any())
+                    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-6 rounded-md" role="alert">
+                        <ul class="list-disc list-inside">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+                
+                <div class="mt-6 space-y-4">
                     <div>
                         <label for="current_password" class="block text-sm font-medium text-gray-700">Password Saat Ini</label>
-                        <input type="password" name="current_password" id="current_password" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
+                        <input type="password" name="current_password" id="current_password" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500" required>
                     </div>
                     <div>
                         <label for="password" class="block text-sm font-medium text-gray-700">Password Baru</label>
-                        <input type="password" name="password" id="password" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
+                        <input type="password" name="password" id="password" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500" required>
                     </div>
                     <div>
                         <label for="password_confirmation" class="block text-sm font-medium text-gray-700">Konfirmasi Password Baru</label>
-                        <input type="password" name="password_confirmation" id="password_confirmation" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" required>
+                        <input type="password" name="password_confirmation" id="password_confirmation" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500" required>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="mt-8 flex justify-end">
-            <button type="submit" class="bg-sky-600 text-white font-semibold px-5 py-2 rounded-lg hover:bg-sky-700 shadow-sm">Simpan Perubahan</button>
-        </div>
-    </form>
+            <div class="bg-gray-50 px-6 py-4 rounded-b-xl flex justify-end">
+                <button type="submit" class="bg-sky-600 text-white font-semibold px-5 py-2 rounded-lg hover:bg-sky-700 shadow-sm transition-colors">
+                    Simpan Perubahan
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 @endsection
