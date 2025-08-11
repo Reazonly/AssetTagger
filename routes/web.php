@@ -9,9 +9,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\UserMasterController;
 use App\Http\Controllers\AssetUserController;
- // Ditambahkan
 
 // Authentication Routes
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -49,6 +47,8 @@ Route::middleware('auth')->group(function () {
     // Grup KHUSUS untuk ADMIN AREA (Manajemen Pengguna & Master Data)
     Route::middleware(['role:admin'])->group(function() {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::get('/users/create', [UserController::class, 'create'])->name('users.create'); // Rute baru
+        Route::post('/users', [UserController::class, 'store'])->name('users.store'); // Rute baru
         Route::post('/users/{user}/update-role', [UserController::class, 'updateRole'])->name('users.updateRole');
         
         // --- FITUR HAPUS & RESET PASSWORD DITAMBAHKAN DI SINI ---
