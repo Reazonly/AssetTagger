@@ -11,7 +11,7 @@
         <img src="{{ asset('images/jhonlin_logo.png') }}" alt="Jhonlin Group Logo" class="h-16">
     </div>
 
-    {{-- PERBAIKAN: x-data dipindahkan ke sini untuk mengelola semua state --}}
+    
     <nav class="mt-6 flex-grow px-4" 
          x-data="{ 
             activeMenu: '{{ 

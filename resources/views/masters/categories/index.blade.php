@@ -5,7 +5,7 @@
 @section('content')
 <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
 
-    {{-- Header Halaman --}}
+   
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-200 pb-6 mb-6">
         <div>
             <h1 class="text-3xl font-bold text-gray-900">Master Kategori</h1>
@@ -19,7 +19,7 @@
         </div>
     </div>
 
-    <!-- Form Pencarian -->
+    
     <div class="mb-6">
         <form action="{{ route('master-data.categories.index') }}" method="GET">
             <div class="flex">
@@ -29,7 +29,7 @@
         </form>
     </div>
 
-    {{-- Tabel Data --}}
+   
     <div class="overflow-x-auto border border-gray-200 rounded-lg">
         <table class="w-full text-sm text-left text-gray-600">
             <thead class="text-xs text-gray-700 uppercase bg-gray-100">

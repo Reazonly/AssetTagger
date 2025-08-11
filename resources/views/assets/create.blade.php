@@ -72,7 +72,6 @@
                                 <div><label class="block text-sm">RAM</label><input type="text" name="spec[ram]" class="mt-1 w-full border-2 border-gray-400 rounded-md text-sm py-2 px-3"></div>
                                 <div><label class="block text-sm">Storage</label><input type="text" name="spec[storage]" class="mt-1 w-full border-2 border-gray-400 rounded-md text-sm py-2 px-3"></div>
                                 <div><label class="block text-sm">Graphics</label><input type="text" name="spec[graphics]" class="mt-1 w-full border-2 border-gray-400 rounded-md text-sm py-2 px-3"></div>
-                                {{-- PENAMBAHAN FIELD LAYAR --}}
                                 <div><label class="block text-sm">Layar</label><input type="text" name="spec[layar]" class="mt-1 w-full border-2 border-gray-400 rounded-md text-sm py-2 px-3"></div>
                             </div>
                         </template>
