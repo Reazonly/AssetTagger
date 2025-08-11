@@ -9,6 +9,7 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Carbon\Carbon;
 
 class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize, WithStyles
 {
@@ -25,8 +26,8 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
 
     public function query()
     {
-        // DIUBAH: Menggunakan relasi 'assetUser' bukan 'user'
-        $query = Asset::with(['assetUser', 'category', 'company', 'subCategory']);
+        // PERBAIKAN: Eager load relasi history.assetUser untuk efisiensi
+        $query = Asset::with(['assetUser', 'category', 'company', 'subCategory', 'history.assetUser']);
 
         if (!empty($this->ids)) {
             return $query->whereIn('id', $this->ids)->latest();
@@ -43,7 +44,6 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
                 $q->where('code_asset', 'like', "%{$this->search}%")
                   ->orWhere('nama_barang', 'like', "%{$this->search}%")
                   ->orWhere('serial_number', 'like', "%{$this->search}%")
-                  // DIUBAH: Mencari di relasi 'assetUser' dengan kolom 'nama'
                   ->orWhereHas('assetUser', function ($subQuery) {
                       $subQuery->where('nama', 'like', "%{$this->search}%");
                   });
@@ -55,7 +55,6 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
 
     public function headings(): array
     {
-        // Bagian headings tidak perlu diubah
         return [
             'Kode Aset', 'Nama Barang', 'Kategori', 'Sub Kategori', 'Perusahaan',
             'Merk', 'Tipe', 'Serial Number', 'Pengguna Saat Ini', 'Jabatan Pengguna',
@@ -64,13 +63,22 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             'Nomor Polisi', 'Nomor Rangka', 'Nomor Mesin',
             'Spesifikasi/Deskripsi Lainnya',
             'Tanggal Pembelian', 'Tahun Pembelian', 'Harga Total (Rp)', 'Nomor PO',
-            'Nomor BAST', 'Kode Aktiva', 'Sumber Dana', 'Item Termasuk', 'Peruntukan', 'Keterangan'
+            'Nomor BAST', 'Kode Aktiva', 'Sumber Dana', 'Item Termasuk', 'Peruntukan', 'Keterangan',
+            'Riwayat Pengguna' // <-- KOLOM BARU DITAMBAHKAN
         ];
     }
 
     public function map($asset): array
     {
         $specs = $asset->specifications ?? [];
+
+        // --- PERBAIKAN: Logika untuk memformat riwayat pengguna ---
+        $historyString = $asset->history->map(function ($h) {
+            $startDate = Carbon::parse($h->tanggal_mulai)->format('d M Y');
+            $endDate = $h->tanggal_selesai ? Carbon::parse($h->tanggal_selesai)->format('d M Y') : 'Sekarang';
+            return optional($h->assetUser)->nama . " ({$startDate} - {$endDate})";
+        })->implode('; ');
+        // --- AKHIR PERBAIKAN ---
 
         return [
             $asset->code_asset,
@@ -81,15 +89,9 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $asset->merk,
             $asset->tipe,
             $asset->serial_number,
-            
-            // ======================================================
-            // PERUBAHAN UTAMA DI BAGIAN INI
-            // ======================================================
-            optional($asset->assetUser)->nama, // Menggunakan relasi assetUser dan kolom nama
+            optional($asset->assetUser)->nama,
             optional($asset->assetUser)->jabatan,
             optional($asset->assetUser)->departemen,
-            // ======================================================
-
             $asset->kondisi,
             $asset->lokasi,
             $asset->jumlah,
@@ -113,12 +115,12 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $asset->include_items,
             $asset->peruntukan,
             $asset->keterangan,
+            $historyString, // <-- DATA BARU DITAMBAHKAN
         ];
     }
-    
+
     public function styles(Worksheet $sheet)
     {
-        // Bagian styles tidak perlu diubah
         $columnCount = count($this->headings());
         $lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($columnCount);
 

@@ -13,7 +13,6 @@ use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Hash;
 
 class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
 {
@@ -33,18 +32,12 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
     public function collection(Collection $rows)
     {
         $map = $this->getColumnMapping(collect($rows->first())->keys());
+        if (!$map) return;
 
-        if (!$map) {
-            return; 
-        }
-
-        foreach ($rows as $row) 
-        {
+        foreach ($rows as $row) {
             $row = collect($row)->keyBy(fn($value, $key) => Str::snake($key));
 
-            if (empty($row[$map['nama_barang']])) {
-                continue;
-            }
+            if (empty($row[$map['nama_barang']])) continue;
             
             $category = null;
             $subCategory = $this->subCategories[trim($row[$map['sub_kategori']] ?? '')] ?? null;
@@ -65,7 +58,6 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
             $assetUser = null;
             if (!empty($row[$map['pengguna']])) {
                 $namaPengguna = trim($row[$map['pengguna']]);
-                // Mencari atau membuat di tabel asset_users, bukan users
                 $assetUser = AssetUser::firstOrCreate(
                     ['nama' => $namaPengguna],
                     [
@@ -85,12 +77,14 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
                 'category_id'       => optional($category)->id,
                 'sub_category_id'   => optional($subCategory)->id,
                 'company_id'        => optional($company)->id,
+                'asset_user_id'     => optional($assetUser)->id,
                 'merk'              => trim($row[$map['merk']] ?? null),
                 'tipe'              => trim($row[$map['tipe']] ?? null),
                 'serial_number'     => trim($row[$map['serial_number']] ?? null),
-                'kondisi'           => trim($row[$map['kondisi']] ?? 'BAIK'),
+                'kondisi'           => trim($row[$map['kondisi']] ?? 'Baik'),
                 'lokasi'            => trim($row[$map['lokasi']] ?? null),
-                'asset_user_id'     => optional($assetUser)->id,
+                'jumlah'            => trim($row[$map['jumlah']] ?? 1),
+                'satuan'            => trim($row[$map['satuan']] ?? 'Unit'),
                 'specifications'    => $specifications,
                 'tanggal_pembelian' => $this->parseDate($row, $map),
                 'thn_pembelian'     => !empty($thnPembelian) && is_numeric($thnPembelian) ? $thnPembelian : null,
@@ -113,15 +107,36 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
 
             if ($asset) {
                 $asset->update($assetData);
-                if ($asset->trashed()) {
-                    $asset->restore();
-                }
+                if ($asset->trashed()) $asset->restore();
             } else {
                 if (!empty($assetData['code_asset'])) {
                    $asset = Asset::create($assetData);
                 }
             }
-            
+
+            // --- PERBAIKAN: Menambahkan pembuatan history saat import ---
+            if ($asset && $assetUser) {
+                // Cek riwayat terakhir untuk aset ini
+                $latestHistory = $asset->history()->latest('tanggal_mulai')->first();
+
+                // Hanya buat history baru jika:
+                // 1. Belum ada history sama sekali, ATAU
+                // 2. Pengguna di file Excel berbeda dengan pengguna di history terakhir
+                if (!$latestHistory || $latestHistory->asset_user_id != $assetUser->id) {
+                    
+                    // Jika ada history sebelumnya, tutup tanggalnya (opsional, tergantung kebutuhan)
+                    if ($latestHistory) {
+                        $latestHistory->update(['tanggal_selesai' => now()]);
+                    }
+                    
+                    // Buat catatan history baru untuk pengguna dari file Excel
+                    $asset->history()->create([
+                        'asset_user_id' => $assetUser->id,
+                        'tanggal_mulai' => now(), // Diasumsikan serah terima terjadi saat import
+                    ]);
+                }
+            }
+            // --- AKHIR PERBAIKAN ---
         }
     }
 
@@ -134,6 +149,7 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
             'sub_kategori' => 'sub_kategori', 'perusahaan' => 'perusahaan', 'merk' => 'merk', 'tipe' => 'tipe',
             'serial_number' => 'serial_number', 'pengguna' => 'pengguna_saat_ini', 'jabatan' => 'jabatan_pengguna',
             'departemen' => 'departemen_pengguna', 'kondisi' => 'kondisi', 'lokasi' => 'lokasi_fisik',
+            'jumlah' => 'jumlah', 'satuan' => 'satuan',
             'processor' => 'processor', 'ram' => 'ram', 'storage' => 'storage', 'graphics' => 'graphics', 'layar' => 'layar',
             'deskripsi' => 'spesifikasi_deskripsi_lainnya', 'tanggal_pembelian' => 'tanggal_pembelian',
             'tahun_pembelian' => 'tahun_pembelian', 'harga_total' => 'harga_total_rp', 'po_number' => 'nomor_po',
@@ -145,7 +161,8 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
             'code_asset' => 'code_asset', 'nama_barang' => 'nama_item', 'sub_kategori' => 'jenis',
             'perusahaan' => 'perusahaan', 'merk' => 'merk', 'tipe' => 'type', 'serial_number' => 'serial_number',
             'pengguna' => 'nama_2', 'jabatan' => 'jabatan_2', 'departemen' => 'departemen_2',
-            'kondisi' => 'kondisi', 'lokasi' => 'lokasi', 'processor' => 'processor', 'ram' => 'memory_ram',
+            'kondisi' => 'kondisi', 'lokasi' => 'lokasi', 'jumlah' => 'qty', 'satuan' => 'unit',
+            'processor' => 'processor', 'ram' => 'memory_ram',
             'storage' => 'hddssd', 'graphics' => 'graphics', 'layar' => 'lcd',
             'tahun_pembelian' => 'tahun',
             'tgl' => 'tgl', 'bulan' => 'bulan', 'tahun' => 'tahun', 'harga_total' => 'harga_total',
@@ -192,17 +209,6 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
             } catch (\Exception $e) { return null; }
         }
         return null;
-    }
-
-    private function updateUserHistory(Asset $asset, ?int $newUserId): void
-    {
-        
-        if(!$newUserId) return;
-        $latestHistory = $asset->history()->latest()->first();
-        if (!$latestHistory || $latestHistory->user_id != $newUserId) {
-            $asset->history()->whereNull('tanggal_selesai')->update(['tanggal_selesai' => now()]);
-            $asset->history()->create(['user_id' => $newUserId, 'tanggal_mulai' => now()]);
-        }
     }
 
     public function chunkSize(): int
