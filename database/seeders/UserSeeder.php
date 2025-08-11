@@ -1,5 +1,5 @@
 <?php
-// File: database/seeders/UserSeeder.php
+
 
 namespace Database\Seeders;
 
@@ -18,11 +18,6 @@ class UserSeeder extends Seeder
             'role' => 'admin',
         ]);
 
-        User::create([
-            'nama_pengguna' => 'Viewer Jhonlin',
-            'email' => 'viewer@jhonlin.co',
-            'password' => Hash::make('password'),
-            'role' => 'viewer',
-        ]);
+        
     }
 }
