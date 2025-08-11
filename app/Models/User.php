@@ -9,9 +9,4 @@ class User extends Authenticatable
 {
     use HasFactory;
     protected $guarded = ['id'];
-
-    public function assets()
-    {
-        return $this->hasMany(Asset::class, 'user_id');
-    }
 }

@@ -25,7 +25,7 @@
                 <tr><td class="label">Kategori</td><td>: {{ optional($asset->category)->name ?? 'N/A' }}</td></tr>
                 <tr><td class="label">Sub Kategori</td><td>: {{ optional($asset->subCategory)->name ?? 'N/A' }}</td></tr>
                 <tr><td class="label">Perusahaan</td><td>: {{ optional($asset->company)->name ?? 'N/A' }}</td></tr>
-                <tr><td class="label">Pengguna</td><td>: {{ optional($asset->user)->nama_pengguna ?? 'N/A' }}</td></tr>
+                <tr><td class="label">Pengguna</td><td>: {{ optional($asset->assetUser)->nama ?? 'N/A' }}</td></tr>
                 @if(optional($asset->category)->requires_merk)
                 <tr><td class="label">Merk</td><td>: {{ $asset->merk ?? 'N/A' }}</td></tr>
                 @else

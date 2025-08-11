@@ -16,16 +16,12 @@ class AssetHistory extends Model
     }
 
     /**
-     * Get the user associated with the history record.
-     *
-     * DIPERBARUI: Menambahkan withDefault() untuk mencegah error jika user tidak ditemukan.
-     * Ini akan secara otomatis memberikan nilai default jika user_id di riwayat
-     * merujuk ke pengguna yang sudah tidak ada lagi.
+     * Relasi ke pengguna aset (bukan pengguna login)
      */
-    public function user()
+    public function assetUser()
     {
-        return $this->belongsTo(User::class, 'user_id')->withDefault([
-            'nama_pengguna' => 'Pengguna Dihapus',
+        return $this->belongsTo(AssetUser::class, 'asset_user_id')->withDefault([
+            'nama' => 'Pengguna Dihapus',
             'jabatan' => 'N/A',
             'departemen' => 'N/A',
         ]);

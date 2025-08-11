@@ -3,7 +3,7 @@
 namespace App\Imports;
 
 use App\Models\Asset;
-use App\Models\User;
+use App\Models\AssetUser;
 use App\Models\Category;
 use App\Models\Company;
 use App\Models\SubCategory;
@@ -62,18 +62,15 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
                  $company = $this->companiesByCode[$companyCode] ?? null;
             }
 
-            $user = null;
+            $assetUser = null;
             if (!empty($row[$map['pengguna']])) {
                 $namaPengguna = trim($row[$map['pengguna']]);
-                $emailDummy = Str::slug($namaPengguna) . '_' . time() . '@jhonlin.local';
-                $user = User::firstOrCreate(
-                    ['email' => $emailDummy],
+                // Mencari atau membuat di tabel asset_users, bukan users
+                $assetUser = AssetUser::firstOrCreate(
+                    ['nama' => $namaPengguna],
                     [
-                        'nama_pengguna' => $namaPengguna,
-                        'password' => Hash::make(Str::random(12)),
                         'jabatan' => trim($row[$map['jabatan']] ?? null), 
                         'departemen' => trim($row[$map['departemen']] ?? null),
-                        'role' => 'user', // <-- PERUBAHAN: Tetapkan role sebagai 'user'
                     ]
                 );
             }
@@ -93,7 +90,7 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
                 'serial_number'     => trim($row[$map['serial_number']] ?? null),
                 'kondisi'           => trim($row[$map['kondisi']] ?? 'BAIK'),
                 'lokasi'            => trim($row[$map['lokasi']] ?? null),
-                'user_id'           => optional($user)->id,
+                'asset_user_id'     => optional($assetUser)->id,
                 'specifications'    => $specifications,
                 'tanggal_pembelian' => $this->parseDate($row, $map),
                 'thn_pembelian'     => !empty($thnPembelian) && is_numeric($thnPembelian) ? $thnPembelian : null,
@@ -125,9 +122,6 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithChunkReading
                 }
             }
             
-            if ($user && $asset) {
-                $this->updateUserHistory($asset, $user->id);
-            }
         }
     }
 

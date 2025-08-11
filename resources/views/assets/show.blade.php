@@ -78,9 +78,9 @@
                     <div class="sm:col-span-2 md:col-span-3 mt-4 pt-5 border-t">
                         <h4 class="text-lg font-semibold text-gray-800 mb-4">Informasi Pengguna</h4>
                         <dl class="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-5 text-sm">
-                            <div class="flex flex-col"><dt class="font-medium text-gray-500">Pengguna Saat Ini</dt><dd class="text-gray-900 mt-1">{{ optional($asset->user)->nama_pengguna ?? 'Tidak ada' }}</dd></div>
-                            <div class="flex flex-col"><dt class="font-medium text-gray-500">Jabatan</dt><dd class="text-gray-900 mt-1">{{ optional($asset->user)->jabatan ?? 'N/A' }}</dd></div>
-                            <div class="flex flex-col"><dt class="font-medium text-gray-500">Departemen</dt><dd class="text-gray-900 mt-1">{{ optional($asset->user)->departemen ?? 'N/A' }}</dd></div>
+                            <div class="flex flex-col"><dt class="font-medium text-gray-500">Pengguna Saat Ini</dt><dd class="text-gray-900 mt-1">{{ optional($asset->assetUser)->nama ?? 'Tidak ada' }}</dd></div>
+                            <div class="flex flex-col"><dt class="font-medium text-gray-500">Jabatan</dt><dd class="text-gray-900 mt-1">{{ optional($asset->assetUser)->jabatan ?? 'N/A' }}</dd></div>
+                            <div class="flex flex-col"><dt class="font-medium text-gray-500">Departemen</dt><dd class="text-gray-900 mt-1">{{ optional($asset->assetUser)->departemen ?? 'N/A' }}</dd></div>
                         </dl>
                     </div>
                 </dl>
@@ -158,13 +158,13 @@
                     @forelse ($asset->history as $h)
                         <li class="border-b border-gray-200 pb-3 last:border-b-0">
                             <div class="flex justify-between items-center">
-                                <p class="font-semibold text-gray-800">{{ optional($h->user)->nama_pengguna ?? 'Pengguna Dihapus' }}</p>
+                                <p class="font-semibold text-gray-800">{{ optional($h->assetUser)->nama ?? 'Pengguna Dihapus' }}</p>
                                 @if(is_null($h->tanggal_selesai) && $asset->user_id == $h->user_id)
                                     <span class="flex-shrink-0 text-xs bg-green-100 text-green-800 font-semibold px-2 py-1 rounded-full">Saat Ini</span>
                                 @endif
                             </div>
                             <div class="mt-1">
-                                <p class="text-xs text-gray-500">{{ optional($h->user)->jabatan ?? 'Jabatan tidak diketahui' }}</p>
+                                <p class="text-xs text-gray-500">{{ optional($h->assetUser)->jabatan ?? 'Jabatan tidak diketahui' }}</p>
                                 <p class="text-xs text-gray-400 mt-1">
                                     <span>Mulai: {{ \Carbon\Carbon::parse($h->tanggal_mulai)->format('d M Y') }}</span>
                                     @if($h->tanggal_selesai)

@@ -45,18 +45,24 @@
                     <div class="flex flex-col"><dt class="font-medium text-gray-500">Lokasi Fisik</dt><dd class="text-gray-900 mt-1">{{ $asset->lokasi }}</dd></div>
                 @endif
                 
-                <div class="sm:col-span-2 mt-4 pt-5 border-t">
-                    <h4 class="text-lg font-semibold text-gray-800 mb-4">Informasi Pengguna</h4>
-                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm">
-                        <div class="flex flex-col"><dt class="font-medium text-gray-500">Pengguna Saat Ini</dt><dd class="text-gray-900 mt-1">{{ optional($asset->user)->nama_pengguna ?? 'Tidak ada' }}</dd></div>
-                        @if(optional($asset->user)->jabatan)
-                            <div class="flex flex-col"><dt class="font-medium text-gray-500">Jabatan</dt><dd class="text-gray-900 mt-1">{{ $asset->user->jabatan }}</dd></div>
-                        @endif
-                    </dl>
-                </div>
-            </dl>
-        </div>
+                {{-- Informasi Pengguna --}}
+        <div>
+            <h3 class="text-lg font-semibold text-gray-800 mb-3">Informasi Pengguna</h3>
+            <div class="grid grid-cols-2 gap-4 text-sm border p-4 rounded-md">
+                <div class="font-medium text-gray-500">Pengguna Saat Ini</div>
+                {{-- PERBAIKAN DI SINI --}}
+                <div>{{ optional($asset->assetUser)->nama ?? 'Tidak Ditetapkan' }}</div>
+                
+                <div class="font-medium text-gray-500">Jabatan</div>
+                 {{-- PERBAIKAN DI SINI --}}
+                <div>{{ optional($asset->assetUser)->jabatan ?? 'N/A' }}</div>
 
+                <div class="font-medium text-gray-500">Departemen</div>
+                 {{-- PERBAIKAN DI SINI --}}
+                <div>{{ optional($asset->assetUser)->departemen ?? 'N/A' }}</div>
+            </div>
+        </div>
+        
         {{-- Spesifikasi --}}
         @if($asset->specifications)
             <div class="bg-white p-6 rounded-xl border">
@@ -124,7 +130,7 @@
                 @forelse ($asset->history as $h)
                     <li class="border-b border-gray-200 pb-3 last:border-b-0">
                         <div class="flex justify-between items-center">
-                            <p class="font-semibold text-gray-800">{{ optional($h->user)->nama_pengguna ?? 'Pengguna Dihapus' }}</p>
+                            <p class="font-semibold text-gray-800">{{ optional($h->assetUser)->nama ?? 'Pengguna Dihapus' }}</p>
                             @if(is_null($h->tanggal_selesai) && $asset->user_id == $h->user_id)
                                 <span class="flex-shrink-0 text-xs bg-green-100 text-green-800 font-semibold px-2 py-1 rounded-full">Saat Ini</span>
                             @endif

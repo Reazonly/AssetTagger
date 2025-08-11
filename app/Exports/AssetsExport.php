@@ -25,7 +25,8 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
 
     public function query()
     {
-        $query = Asset::with(['user', 'category', 'company', 'subCategory']);
+        // DIUBAH: Menggunakan relasi 'assetUser' bukan 'user'
+        $query = Asset::with(['assetUser', 'category', 'company', 'subCategory']);
 
         if (!empty($this->ids)) {
             return $query->whereIn('id', $this->ids)->latest();
@@ -42,8 +43,9 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
                 $q->where('code_asset', 'like', "%{$this->search}%")
                   ->orWhere('nama_barang', 'like', "%{$this->search}%")
                   ->orWhere('serial_number', 'like', "%{$this->search}%")
-                  ->orWhereHas('user', function ($subQuery) {
-                      $subQuery->where('nama_pengguna', 'like', "%{$this->search}%");
+                  // DIUBAH: Mencari di relasi 'assetUser' dengan kolom 'nama'
+                  ->orWhereHas('assetUser', function ($subQuery) {
+                      $subQuery->where('nama', 'like', "%{$this->search}%");
                   });
             });
         }
@@ -53,6 +55,7 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
 
     public function headings(): array
     {
+        // Bagian headings tidak perlu diubah
         return [
             'Kode Aset', 'Nama Barang', 'Kategori', 'Sub Kategori', 'Perusahaan',
             'Merk', 'Tipe', 'Serial Number', 'Pengguna Saat Ini', 'Jabatan Pengguna',
@@ -78,9 +81,15 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $asset->merk,
             $asset->tipe,
             $asset->serial_number,
-            optional($asset->user)->nama_pengguna,
-            optional($asset->user)->jabatan,
-            optional($asset->user)->departemen,
+            
+            // ======================================================
+            // PERUBAHAN UTAMA DI BAGIAN INI
+            // ======================================================
+            optional($asset->assetUser)->nama, // Menggunakan relasi assetUser dan kolom nama
+            optional($asset->assetUser)->jabatan,
+            optional($asset->assetUser)->departemen,
+            // ======================================================
+
             $asset->kondisi,
             $asset->lokasi,
             $asset->jumlah,
@@ -106,39 +115,21 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $asset->keterangan,
         ];
     }
-
-    /**
-    * Memberi warna dan gaya pada sheet Excel.
-    */
+    
     public function styles(Worksheet $sheet)
     {
-        // Menghitung jumlah kolom secara dinamis dari headings()
+        // Bagian styles tidak perlu diubah
         $columnCount = count($this->headings());
-        // Mengubah jumlah kolom menjadi range kolom Excel (misal: 34 -> 'AH')
         $lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($columnCount);
 
         return [
-            // Aturan untuk baris pertama (Judul/Header)
             1 => [
-                'font' => [
-                    'bold' => true,
-                    'color' => ['rgb' => 'FFFFFF'],
-                ],
-                'fill' => [
-                    'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                    'startColor' => ['rgb' => '28A745'], // Warna hijau
-                ],
-                'alignment' => [
-                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
-                ],
+                'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+                'fill' => ['fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => '28A745']],
+                'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
             ],
-
-            // PERUBAHAN: Aturan untuk semua kolom dari A hingga kolom terakhir
             'A:' . $lastColumn => [
-                'alignment' => [
-                    // Membuat semua tulisan di kolom ini menjadi rata tengah
-                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
-                ],
+                'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
             ],
         ];
     }

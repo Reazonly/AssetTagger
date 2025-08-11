@@ -8,7 +8,10 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CompanyController;
-use App\Http\Controllers\ProfileController; // Ditambahkan
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserMasterController;
+use App\Http\Controllers\AssetUserController;
+ // Ditambahkan
 
 // Authentication Routes
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -56,6 +59,7 @@ Route::middleware('auth')->group(function () {
         Route::prefix('master-data')->name('master-data.')->group(function () {
             Route::resource('categories', CategoryController::class)->except(['show']);
             Route::resource('companies', CompanyController::class)->except(['show']);
+            Route::resource('asset-users', AssetUserController::class)->except(['show']);
         });
     });
 

@@ -7,11 +7,9 @@
         @csrf
 
         {{-- Page Header --}}
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-800">Tambah Aset Baru</h1>
-                <p class="text-sm text-gray-500 mt-1">Isi detail aset yang akan ditambahkan.</p>
-            </div>
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">Tambah Aset Baru</h1>
+            <p class="text-sm text-gray-500 mt-1">Isi detail aset yang akan ditambahkan.</p>
         </div>
 
         @if ($errors->any())
@@ -28,201 +26,168 @@
         {{-- Main Form Content with Alpine.js --}}
         <div class="space-y-8" 
              x-data="{ 
+                categoriesData: {{ Js::from($categories->keyBy('id')) }},
+                assetUsersData: {{ Js::from($users->keyBy('id')) }},
                 selectedCategoryId: {{ old('category_id', $categories->first()->id ?? 0) }},
                 selectedSubCategoryId: {{ old('sub_category_id') ?? 'null' }},
-                
-                categories: {{ $categories->keyBy('id')->map(function($c) {
-                    return [
-                        'id' => $c->id, 
-                        'code' => $c->code, 
-                        'requires_merk' => $c->requires_merk, 
-                        'units' => $c->units,
-                        'subCategories' => $c->subCategories
-                    ];
-                }) }},
-                
-                availableUnits: [],
-                availableSubCategories: [],
-                
-                init() {
-                    this.updateDynamicFields();
-                },
+                selectedAssetUserId: {{ old('asset_user_id') ?? 'null' }},
 
-                updateDynamicFields() {
-                    const category = this.categories[this.selectedCategoryId];
-                    if (category) {
-                        this.availableUnits = category.units;
-                        this.availableSubCategories = category.subCategories;
-                    } else {
-                        this.availableUnits = [];
-                        this.availableSubCategories = [];
-                    }
+                get currentCategory() {
+                    return this.categoriesData[this.selectedCategoryId] || { sub_categories: [], units: [] };
+                },
+                get currentSubCategory() {
+                    const subCategories = Array.isArray(this.currentCategory.sub_categories) ? this.currentCategory.sub_categories : Object.values(this.currentCategory.sub_categories);
+                    return subCategories.find(sc => sc.id == this.selectedSubCategoryId) || {};
+                },
+                get currentAssetUser() {
+                    return this.assetUsersData[this.selectedAssetUserId] || {};
+                },
+                resetSubCategory() {
                     this.selectedSubCategoryId = null;
-                },
-
-                getCurrentCategoryCode() {
-                    return this.categories[this.selectedCategoryId]?.code || '';
-                },
-
-                getSelectedSubCategoryName() {
-                    if (!this.selectedSubCategoryId) return '';
-                    const subCategory = this.availableSubCategories.find(sc => sc.id == this.selectedSubCategoryId);
-                    return subCategory ? subCategory.name : '';
                 }
              }">
 
-            {{-- Informasi Utama Section --}}
-            <div class="bg-white p-6 rounded-lg border shadow-sm">
-                <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Utama</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8">
+            <div class="bg-white p-8 rounded-lg shadow-md border">
+                <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-700">Informasi Utama</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <div class="md:col-span-2">
+                        <label for="nama_barang" class="block text-sm font-medium text-gray-600">Nama Barang / Tipe</label>
+                        <input type="text" name="nama_barang" id="nama_barang" value="{{ old('nama_barang') }}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
+                    </div>
+
                     <div>
-                        <label for="category_id" class="block text-sm font-medium text-gray-600">Kategori Barang</label>
-                        <select name="category_id" id="category_id" x-model="selectedCategoryId" @change="updateDynamicFields()" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
+                        <label for="category_id" class="block text-sm font-medium text-gray-600">Kategori</label>
+                        <select name="category_id" id="category_id" x-model="selectedCategoryId" @change="resetSubCategory()" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
                             @foreach($categories as $category)
                                 <option value="{{ $category->id }}">{{ $category->name }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <div>
-                        <label for="nama_barang" class="block text-sm font-medium text-gray-600">
-                            <span x-text="['ELEC', 'VEHI'].includes(getCurrentCategoryCode()) ? 'Nama Tipe' : 'Nama Barang'">Nama Barang</span>
-                            <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text" name="nama_barang" id="nama_barang" value="{{ old('nama_barang') }}" placeholder="Contoh: Thinkpad T480, Meja Direksi" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3" required>
-                    </div>
-                    <div>
-                        <label for="company_id" class="block text-sm font-medium text-gray-600">Kode Perusahaan</label>
-                        <select name="company_id" id="company_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
-                            @foreach($companies as $company)
-                                <option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>{{ $company->code }} - {{ $company->name }}</option>
-                            @endforeach
+
+                    <div x-show="Object.keys(currentCategory.sub_categories).length > 0">
+                        <label for="sub_category_id" class="block text-sm font-medium text-gray-600">Sub Kategori</label>
+                        <select name="sub_category_id" id="sub_category_id" x-model="selectedSubCategoryId" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
+                            <option value="">-- Pilih Sub Kategori --</option>
+                            <template x-for="subCategory in currentCategory.sub_categories" :key="subCategory.id">
+                                <option :value="subCategory.id" x-text="subCategory.name"></option>
+                            </template>
                         </select>
                     </div>
                     
-                    <div x-show="categories[selectedCategoryId]?.requires_merk">
+                    <div x-show="currentCategory.requires_merk">
                         <label for="merk" class="block text-sm font-medium text-gray-600">Merk</label>
                         <input type="text" name="merk" id="merk" value="{{ old('merk') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
                     </div>
 
-                    <div x-show="!categories[selectedCategoryId]?.requires_merk && getCurrentCategoryCode() !== 'FURN'">
+                    <div x-show="!currentCategory.requires_merk && currentCategory.code !== 'FURN'">
                         <label for="tipe" class="block text-sm font-medium text-gray-600">Tipe</label>
                         <input type="text" name="tipe" id="tipe" value="{{ old('tipe') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
                     </div>
 
                     <div>
-                        <label for="serial_number" class="block text-sm font-medium text-gray-600">Serial Number</label>
-                        <input type="text" name="serial_number" id="serial_number" value="{{ old('serial_number') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
-                    </div>
-                    <div>
-                        <label for="kondisi" class="block text-sm font-medium text-gray-600">Kondisi</label>
-                        <select name="kondisi" id="kondisi" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
-                            <option value="BAIK" @if(old('kondisi', 'BAIK') == 'BAIK') selected @endif>BAIK</option>
-                            <option value="RUSAK" @if(old('kondisi') == 'RUSAK') selected @endif>RUSAK</option>
-                            <option value="DALAM PERBAIKAN" @if(old('kondisi') == 'DALAM PERBAIKAN') selected @endif>DALAM PERBAIKAN</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="lokasi" class="block text-sm font-medium text-gray-600">Lokasi Fisik</label>
-                        <input type="text" name="lokasi" id="lokasi" value="{{ old('lokasi') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
-                    </div>
-                    <div>
-                        <label for="jumlah" class="block text-sm font-medium text-gray-600">Jumlah</label>
-                        <input type="number" name="jumlah" id="jumlah" value="{{ old('jumlah', 1) }}" min="1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
-                    </div>
-                    <div>
-                        <label for="satuan" class="block text-sm font-medium text-gray-600">Satuan</label>
-                        <select name="satuan" id="satuan" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
-                            <template x-for="unit in availableUnits" :key="unit.id">
-                                <option :value="unit.name" x-text="unit.name"></option>
-                            </template>
+                        <label for="company_id" class="block text-sm font-medium text-gray-600">Perusahaan</label>
+                        <select name="company_id" id="company_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
+                            @foreach($companies as $company)
+                                <option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
+                            @endforeach
                         </select>
                     </div>
                 </div>
             </div>
-            
-            <div class="bg-white p-6 rounded-lg border shadow-sm">
-                <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Pengguna</h3>
+
+            <div class="bg-white p-8 rounded-lg shadow-md border">
+                <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-700">Informasi Pengguna</h3>
                 <div>
-                    <label for="user_id" class="block text-sm font-medium text-gray-600">Pilih Pengguna (Jika Sudah Ada)</label>
-                    <select name="user_id" id="user_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
-                        <option value="">-- Tidak Ada Pengguna --</option>
+                    <label for="asset_user_id" class="block text-sm font-medium text-gray-700">Pilih Pengguna (Jika Ada)</label>
+                    <select id="asset_user_id" name="asset_user_id" x-model="selectedAssetUserId" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
+                        <option value="">-- Tidak ada pengguna --</option>
                         @foreach($users as $user)
-                            <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>{{ $user->nama_pengguna }}</option>
+                            <option value="{{ $user->id }}">{{ $user->nama }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="mt-4 text-center text-sm font-semibold text-gray-500">ATAU</div>
-                <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-8">
+                <div x-show="selectedAssetUserId" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-md border" x-cloak>
                     <div>
-                        <label for="new_user_name" class="block text-sm font-medium text-gray-600">Tambah Pengguna Baru</label>
-                        <input type="text" name="new_user_name" id="new_user_name" value="{{ old('new_user_name') }}" placeholder="Nama Lengkap Pengguna Baru" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
+                        <label class="block text-sm font-medium text-gray-500">Jabatan</label>
+                        <p class="mt-1 text-sm text-gray-900" x-text="currentAssetUser.jabatan || '-'"></p>
                     </div>
                     <div>
-                        <label for="jabatan" class="block text-sm font-medium text-gray-600">Jabatan</label>
-                        <input type="text" name="jabatan" id="jabatan" value="{{ old('jabatan') }}" placeholder="Jabatan pengguna baru" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
-                    </div>
-                    <div>
-                        <label for="departemen" class="block text-sm font-medium text-gray-600">Departemen</label>
-                        <input type="text" name="departemen" id="departemen" value="{{ old('departemen') }}" placeholder="Departemen pengguna baru" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
+                        <label class="block text-sm font-medium text-gray-500">Departemen</label>
+                        <p class="mt-1 text-sm text-gray-900" x-text="currentAssetUser.departemen || '-'"></p>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-lg border shadow-sm">
-                <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Detail Spesifikasi & Pembelian</h3>
-                
-                <div x-show="['ELEC', 'VEHI'].includes(getCurrentCategoryCode())" class="mb-8">
-                    <label for="sub_category_id" class="block text-sm font-medium text-gray-600">Jenis Barang / Sub Kategori</label>
-                    <select name="sub_category_id" id="sub_category_id" x-model="selectedSubCategoryId" class="mt-1 block w-full md:w-1/3 border-gray-300 rounded-md shadow-sm py-2 px-3">
-                        <option value="">-- Pilih Jenis Barang --</option>
-                        <template x-for="sub in availableSubCategories" :key="sub.id">
-                            <option :value="sub.id" x-text="sub.name"></option>
-                        </template>
+            <div class="bg-white p-8 rounded-lg shadow-md border">
+                <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-700">Detail & Spesifikasi</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div><label for="serial_number" class="block text-sm font-medium text-gray-600">Serial Number</label><input type="text" name="serial_number" id="serial_number" value="{{ old('serial_number') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
+                    <div>
+                    <label for="kondisi" class="block text-sm font-medium text-gray-600">Kondisi</label>
+                    {{-- Pastikan ada name="kondisi" di sini --}}
+                    <select name="kondisi" id="kondisi" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
+                        <option value="Baik">Baik</option>
+                        <option value="Rusak">Rusak</option>
+                        <option value="Perbaikan">Perbaikan</option>
                     </select>
                 </div>
-
-                {{-- OPSI UNTUK KATEGORI ELEKTRONIK --}}
-                <div x-show="getCurrentCategoryCode() === 'ELEC'" class="space-y-6">
-                    <div x-show="getSelectedSubCategoryName() === 'Laptop' || getSelectedSubCategoryName() === 'Desktop/PC'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8">
-                        <div><label class="block text-sm font-medium text-gray-600">Processor</label><input type="text" name="spec[processor]" value="{{ old('spec.processor') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
-                        <div><label class="block text-sm font-medium text-gray-600">RAM</label><input type="text" name="spec[ram]" value="{{ old('spec.ram') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
-                        <div><label class="block text-sm font-medium text-gray-600">Storage</label><input type="text" name="spec[storage]" value="{{ old('spec.storage') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
-                        <div><label class="block text-sm font-medium text-gray-600">Graphics</label><input type="text" name="spec[graphics]" value="{{ old('spec.graphics') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
-                        <div><label class="block text-sm font-medium text-gray-600">Layar</label><input type="text" name="spec[layar]" value="{{ old('spec.layar') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
+                    <div><label for="jumlah" class="block text-sm font-medium text-gray-600">Jumlah</label><input type="number" name="jumlah" id="jumlah" value="{{ old('jumlah', 1) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
+                    <div>
+                        <label for="satuan" class="block text-sm font-medium text-gray-600">Satuan</label>
+                        <select name="satuan" id="satuan" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">
+                            <template x-for="unit in currentCategory.units" :key="unit.id">
+                                <option :value="unit.name" x-text="unit.name"></option>
+                            </template>
+                            <option value="Unit" x-show="currentCategory.units.length === 0">Unit</option>
+                        </select>
                     </div>
-
-                    <div x-show="getSelectedSubCategoryName() === 'Printer'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8">
-                        <div><label class="block text-sm font-medium text-gray-600">Tipe Printer</label><input type="text" name="spec[tipe_printer]" value="{{ old('spec.tipe_printer') }}" placeholder="Inkjet, Laser" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
+                    <div class="md:col-span-2"><label for="lokasi" class="block text-sm font-medium text-gray-600">Lokasi Fisik</label><input type="text" name="lokasi" id="lokasi" value="{{ old('lokasi') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
+                </div>
+                
+                <div class="mt-8 pt-6 border-t">
+                    <h4 class="text-lg font-medium text-gray-800 mb-4">Spesifikasi Detail</h4>
+                    <div class="space-y-4">
+                        <template x-if="['Laptop', 'Desktop/PC'].includes(currentSubCategory.name)">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div><label class="block text-sm">Processor</label><input type="text" name="spec[processor]" class="mt-1 w-full border-gray-300 rounded-md text-sm py-2 px-3"></div>
+                                <div><label class="block text-sm">RAM</label><input type="text" name="spec[ram]" class="mt-1 w-full border-gray-300 rounded-md text-sm py-2 px-3"></div>
+                                <div><label class="block text-sm">Storage</label><input type="text" name="spec[storage]" class="mt-1 w-full border-gray-300 rounded-md text-sm py-2 px-3"></div>
+                                <div><label class="block text-sm">Graphics</label><input type="text" name="spec[graphics]" class="mt-1 w-full border-gray-300 rounded-md text-sm py-2 px-3"></div>
+                            </div>
+                        </template>
+                        <template x-if="currentSubCategory.name === 'Monitor'">
+                            <div><label class="block text-sm">Ukuran Layar (inch)</label><input type="text" name="spec[layar]" class="mt-1 w-full border-gray-300 rounded-md text-sm py-2 px-3"></div>
+                        </template>
+                        <template x-if="currentCategory.code === 'VEHI'">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div><label class="block text-sm">Nomor Polisi</label><input type="text" name="spec[nomor_polisi]" class="mt-1 w-full border-gray-300 rounded-md text-sm py-2 px-3"></div>
+                                <div><label class="block text-sm">Nomor Rangka</label><input type="text" name="spec[nomor_rangka]" class="mt-1 w-full border-gray-300 rounded-md text-sm py-2 px-3"></div>
+                                <div><label class="block text-sm">Nomor Mesin</label><input type="text" name="spec[nomor_mesin]" class="mt-1 w-full border-gray-300 rounded-md text-sm py-2 px-3"></div>
+                            </div>
+                        </template>
+                        <div>
+                            <label class="block text-sm">Deskripsi / Spesifikasi Lainnya</label>
+                            <textarea name="spec[deskripsi]" rows="3" class="mt-1 w-full border-gray-300 rounded-md text-sm py-2 px-3"></textarea>
+                        </div>
                     </div>
-                </div>
-
-                {{-- OPSI UNTUK KATEGORI KENDARAAN --}}
-                <div x-show="getCurrentCategoryCode() === 'VEHI'" class="space-y-6">
-                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8">
-                        <div><label class="block text-sm font-medium text-gray-600">Nomor Polisi</label><input type="text" name="spec[nomor_polisi]" value="{{ old('spec.nomor_polisi') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
-                        <div><label class="block text-sm font-medium text-gray-600">Nomor Rangka</label><input type="text" name="spec[nomor_rangka]" value="{{ old('spec.nomor_rangka') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
-                        <div><label class="block text-sm font-medium text-gray-600">Nomor Mesin</label><input type="text" name="spec[nomor_mesin]" value="{{ old('spec.nomor_mesin') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
-                    </div>
-                </div>
-
-                {{-- OPSI UNTUK KATEGORI LAIN (FURNITURE, DLL) --}}
-                <div x-show="!['ELEC', 'VEHI'].includes(getCurrentCategoryCode())">
-                    <label class="block text-sm font-medium text-gray-600">Deskripsi / Spesifikasi</label>
-                    <textarea name="spec[deskripsi]" rows="5" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3" placeholder="Contoh: Bahan Jati, Ukuran 200x80cm, Warna Coklat Tua">{{ old('spec.deskripsi') }}</textarea>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8 mt-8 pt-6 border-t">
-                    <div><label for="tanggal_pembelian" class="block text-sm font-medium text-gray-600">Tanggal Pembelian</label><input type="date" name="tanggal_pembelian" value="{{ old('tanggal_pembelian') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
-                    <div><label for="harga_total" class="block text-sm font-medium text-gray-600">Harga (Rp)</label><input type="number" name="harga_total" value="{{ old('harga_total') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
-                    <div><label for="code_aktiva" class="block text-sm font-medium text-gray-600">Kode Aktiva</label><input type="text" name="code_aktiva" value="{{ old('code_aktiva') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
-                    <div><label for="po_number" class="block text-sm font-medium text-gray-600">Nomor PO</label><input type="text" name="po_number" value="{{ old('po_number') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
-                    <div><label for="nomor" class="block text-sm font-medium text-gray-600">Nomor BAST</label><input type="text" name="nomor" value="{{ old('nomor') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
-                    <div><label for="sumber_dana" class="block text-sm font-medium text-gray-600">Sumber Dana</label><input type="text" name="sumber_dana" value="{{ old('sumber_dana') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
                 </div>
             </div>
-            
-            <div class="bg-white p-6 rounded-lg border shadow-sm">
-                <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Tambahan</h3>
+
+            <div class="bg-white p-8 rounded-lg shadow-md border">
+                <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-700">Informasi Pembelian & Dokumen</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div><label for="tanggal_pembelian" class="block text-sm font-medium text-gray-600">Tanggal Pembelian</label><input type="date" name="tanggal_pembelian" id="tanggal_pembelian" value="{{ old('tanggal_pembelian') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
+                    <div><label for="harga_total" class="block text-sm font-medium text-gray-600">Harga Total (Rp)</label><input type="number" name="harga_total" id="harga_total" value="{{ old('harga_total') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
+                    <div><label for="po_number" class="block text-sm font-medium text-gray-600">Nomor PO</label><input type="text" name="po_number" id="po_number" value="{{ old('po_number') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
+                    <div><label for="nomor" class="block text-sm font-medium text-gray-600">Nomor BAST</label><input type="text" name="nomor" id="nomor" value="{{ old('nomor') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
+                    <div><label for="code_aktiva" class="block text-sm font-medium text-gray-600">Kode Aktiva</label><input type="text" name="code_aktiva" id="code_aktiva" value="{{ old('code_aktiva') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
+                    <div><label for="sumber_dana" class="block text-sm font-medium text-gray-600">Sumber Dana</label><input type="text" name="sumber_dana" id="sumber_dana" value="{{ old('sumber_dana') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3"></div>
+                </div>
+            </div>
+
+            <div class="bg-white p-8 rounded-lg shadow-md border">
+                <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-700">Informasi Tambahan</h3>
                 <div class="space-y-6">
                     <div><label for="include_items" class="block text-sm font-medium text-gray-600">Item Termasuk</label><textarea name="include_items" id="include_items" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">{{ old('include_items') }}</textarea></div>
                     <div><label for="peruntukan" class="block text-sm font-medium text-gray-600">Peruntukan</label><textarea name="peruntukan" id="peruntukan" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3">{{ old('peruntukan') }}</textarea></div>
@@ -233,7 +198,7 @@
 
         <div class="mt-8 pt-6 border-t flex justify-end items-center gap-3">
             <a href="{{ route('assets.index') }}" class="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors py-2 px-4 rounded-lg bg-gray-200 hover:bg-gray-300">Batal</a>
-            <button type="submit" class="bg-emerald-600 text-white font-semibold px-5 py-2 rounded-lg hover:bg-emerald-700 transition-colors shadow-md">Simpan Aset</button>
+            <button type="submit" class="bg-sky-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-sky-700 shadow-sm transition-colors">Simpan Aset</button>
         </div>
     </form>
 @endsection

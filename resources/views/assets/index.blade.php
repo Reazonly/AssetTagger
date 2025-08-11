@@ -86,16 +86,15 @@
                         <td class="px-6 py-4">{{ $asset->nama_barang }}</td>
                         <td class="px-6 py-4">{{ optional($asset->category)->name ?? 'N/A' }}</td>
                         <td class="px-6 py-4">{{ optional($asset->subCategory)->name ?? '-' }}</td>
-                        <td class="px-6 py-4">{{ optional($asset->user)->nama_pengguna ?? 'N/A' }}</td>
+                        <td class="px-6 py-4">{{ optional($asset->assetUser)->nama ?? 'N/A' }}</td>
                         <td class="px-6 py-4">
-                            @if($asset->kondisi == 'BAIK')
-                                <span class="px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full">BAIK</span>
-                            @elseif($asset->kondisi == 'RUSAK')
-                                <span class="px-2 py-1 text-xs font-semibold text-red-800 bg-red-100 rounded-full">RUSAK</span>
-                            @else
-                                <span class="px-2 py-1 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded-full">PERBAIKAN</span>
-                            @endif
-                        </td>
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full
+                                    @if($asset->kondisi == 'Baik') bg-green-100 text-green-800
+                                    @elseif($asset->kondisi == 'Rusak') bg-red-100 text-red-800
+                                    @else bg-yellow-100 text-yellow-800 @endif">
+                                    {{ $asset->kondisi }}
+                                </span>
+                            </td>
                         {{-- PERUBAHAN: Kolom Aksi untuk Admin dan Editor --}}
                         @if(in_array(auth()->user()->role, ['admin', 'editor']))
                         <td class="px-6 py-4 text-right whitespace-nowrap">

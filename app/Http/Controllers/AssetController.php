@@ -3,21 +3,30 @@
 namespace App\Http\Controllers;
 
 use App\Models\Asset;
-use App\Models\User;
 use App\Models\Company;
 use App\Models\Category;
 use App\Models\SubCategory;
+use App\Models\AssetUser;
 use App\Imports\AssetsImport;
 use App\Exports\AssetsExport;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Hash;
 
 class AssetController extends Controller
 {
+    private function getAssetUserIdFromRequest(Request $request): ?int
+    {
+        if ($request->filled('new_asset_user_name')) {
+            $newUser = AssetUser::create([
+                'nama' => $request->input('new_asset_user_name'),
+            ]);
+            return $newUser->id;
+        }
+        return $request->input('asset_user_id');
+    }
+
     private function generateAssetCode(Request $request, Category $category, ?SubCategory $subCategory, int $assetId): string
     {
         $getFourDigits = function ($string) {
@@ -45,29 +54,6 @@ class AssetController extends Controller
         return "{$namaBarangCode}/{$kategoriCode}/{$companyCode}/{$paddedId}";
     }
 
-    private function getUserIdFromRequest(Request $request): ?int
-    {
-        if ($request->filled('new_user_name')) {
-            $namaPengguna = trim($request->new_user_name);
-            $emailDummy = Str::slug($namaPengguna) . '_' . time() . '@jhonlin.local';
-
-            $user = User::firstOrCreate(
-                ['email' => $emailDummy], 
-                [
-                    'nama_pengguna' => $namaPengguna,
-                    'password' => Hash::make(Str::random(12)),
-                    'jabatan' => $request->jabatan,
-                    'departemen' => $request->departemen,
-                    'role' => 'user', // <-- PERUBAHAN: Tetapkan role sebagai 'user'
-                ]
-            );
-            return $user->id;
-        }
-        return $request->user_id;
-    }
-
-    // ... (sisa method lainnya tetap sama, tidak perlu diubah)
-    // Anda bisa menyalin seluruh isi file ini untuk memastikan tidak ada yang terlewat
     private function collectSpecificationsFromRequest(Request $request): array
     {
         $specs = [];
@@ -83,15 +69,15 @@ class AssetController extends Controller
 
     public function index(Request $request)
     {
-        $query = Asset::with(['user', 'category', 'company', 'subCategory']);
+        $query = Asset::with(['assetUser', 'category', 'company', 'subCategory']);
         if ($request->filled('search')) {
             $searchTerm = $request->input('search');
             $query->where(function ($subQuery) use ($searchTerm) {
                 $subQuery->where('code_asset', 'like', "%{$searchTerm}%")
                          ->orWhere('nama_barang', 'like', "%{$searchTerm}%")
                          ->orWhere('serial_number', 'like', "%{$searchTerm}%")
-                         ->orWhereHas('user', function ($userQuery) use ($searchTerm) {
-                             $userQuery->where('nama_pengguna', 'like', "%{$searchTerm}%");
+                         ->orWhereHas('assetUser', function ($userQuery) use ($searchTerm) {
+                             $userQuery->where('nama', 'like', "%{$searchTerm}%");
                          });
             });
         }
@@ -105,10 +91,12 @@ class AssetController extends Controller
 
     public function create()
     {
+        $categories = Category::with(['subCategories', 'units'])->orderBy('name')->get();
+        $assetUsers = AssetUser::orderBy('nama')->get();
         return view('assets.create', [
-            'users' => User::all(),
-            'categories' => Category::with(['units', 'subCategories'])->get(),
+            'categories' => $categories,
             'companies' => Company::all(),
+            'users' => $assetUsers,
         ]);
     }
 
@@ -118,17 +106,20 @@ class AssetController extends Controller
         $merkRule = $category && $category->requires_merk ? 'required|string|max:255' : 'nullable';
         $tipeRule = $category && !$category->requires_merk && $category->code !== 'FURN' ? 'required|string|max:255' : 'nullable';
         $subCategoryRequired = $category && in_array($category->code, ['ELEC', 'VEHI']);
+        
         $validatedData = $request->validate([
             'nama_barang' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
             'company_id' => 'required|exists:companies,id',
             'sub_category_id' => $subCategoryRequired ? 'required|exists:sub_categories,id' : 'nullable',
+            'asset_user_id' => 'nullable|exists:asset_users,id',
+            'new_asset_user_name' => 'nullable|string|max:255',
             'merk' => $merkRule,
             'tipe' => $tipeRule,
             'jumlah' => 'required|integer|min:1',
             'satuan' => 'required|string|max:50',
             'serial_number' => 'nullable|string|max:255|unique:assets,serial_number',
-            'kondisi' => 'required|string',
+            'kondisi' => 'required|string|in:Baik,Rusak,Perbaikan',
             'lokasi' => 'nullable|string|max:255',
             'tanggal_pembelian' => 'nullable|date',
             'harga_total' => 'nullable|numeric|min:0',
@@ -141,89 +132,131 @@ class AssetController extends Controller
             'keterangan' => 'nullable|string',
             'spec' => 'nullable|array',
         ]);
+
         $data = $validatedData;
         $data['specifications'] = $this->collectSpecificationsFromRequest($request);
+
         if ($request->filled('tanggal_pembelian')) {
             $data['thn_pembelian'] = Carbon::parse($request->tanggal_pembelian)->format('Y');
         }
-        $data['user_id'] = $this->getUserIdFromRequest($request);
-        unset($data['spec']);
+        
+        $data['asset_user_id'] = $this->getAssetUserIdFromRequest($request);
+        
+        unset($data['spec'], $data['new_asset_user_name']);
+        
         $data['code_asset'] = 'PENDING-' . time();
         $asset = Asset::create($data);
+        
         $subCategory = $request->sub_category_id ? SubCategory::find($request->sub_category_id) : null;
         $asset->code_asset = $this->generateAssetCode($request, $category, $subCategory, $asset->id);
         $asset->save();
-        if ($data['user_id']) {
-            $asset->history()->create(['user_id' => $data['user_id'], 'tanggal_mulai' => now()]);
+
+        if ($asset->asset_user_id) {
+            $asset->history()->create([
+                'asset_user_id' => $asset->asset_user_id,
+                'tanggal_mulai' => now(),
+            ]);
         }
+
         return redirect()->route('assets.show', $asset)->with('success', 'Aset baru berhasil ditambahkan: ' . $asset->code_asset);
     }
 
     public function show(Asset $asset)
     {
-        $asset->load(['user', 'category', 'company', 'subCategory', 'history.user']);
+        $asset->load(['assetUser', 'category', 'company', 'subCategory', 'history.assetUser']);
         return view('assets.show', compact('asset'));
     }
 
     public function edit(Asset $asset)
     {
-        $asset->load(['user', 'category', 'company', 'subCategory']);
+        $asset->load(['assetUser', 'category', 'company', 'subCategory']);
+        $categories = Category::with(['subCategories', 'units'])->orderBy('name')->get();
+        $assetUsers = AssetUser::orderBy('nama')->get();
         return view('assets.edit', [
             'asset' => $asset,
-            'users' => User::all(),
-            'categories' => Category::with(['units', 'subCategories'])->get(),
+            'categories' => $categories,
             'companies' => Company::all(),
+            'users' => $assetUsers,
         ]);
     }
 
     public function update(Request $request, Asset $asset)
-    {
-        $category = $asset->category;
-        $merkRule = $category && $category->requires_merk ? 'required|string|max:255' : 'nullable';
-        $tipeRule = $category && !$category->requires_merk && $category->code !== 'FURN' ? 'required|string|max:255' : 'nullable';
-        $subCategoryRequired = $category && in_array($category->code, ['ELEC', 'VEHI']);
-        $request->validate([
-            'sub_category_id' => $subCategoryRequired ? 'required|exists:sub_categories,id' : 'nullable',
-            'merk' => $merkRule,
-            'tipe' => $tipeRule,
-            'serial_number' => 'nullable|string|max:255|unique:assets,serial_number,' . $asset->id,
-            'jumlah' => 'required|integer|min:1',
-            'satuan' => 'required|string|max:50',
-            'kondisi' => 'required|string',
-            'lokasi' => 'nullable|string|max:255',
-            'tanggal_pembelian' => 'nullable|date',
-            'harga_total' => 'nullable|numeric|min:0',
-            'po_number' => 'nullable|string|max:255',
-            'nomor' => 'nullable|string|max:255',
-            'code_aktiva' => 'nullable|string|max:255',
-            'sumber_dana' => 'nullable|string|max:255',
-            'include_items' => 'nullable|string',
-            'peruntukan' => 'nullable|string',
-            'keterangan' => 'nullable|string',
-            'spec' => 'nullable|array',
-        ]);
-        $updateData = $request->except(['_token', '_method', 'nama_barang', 'category_id', 'company_id']);
-        $updateData['specifications'] = $this->collectSpecificationsFromRequest($request);
-        if ($request->filled('tanggal_pembelian')) {
-            $updateData['thn_pembelian'] = Carbon::parse($request->tanggal_pembelian)->format('Y');
-        } else {
-            $updateData['tanggal_pembelian'] = null;
-            $updateData['thn_pembelian'] = null;
-        }
-        $oldUserId = $asset->user_id;
-        $newUserId = $this->getUserIdFromRequest($request);
-        $updateData['user_id'] = $newUserId;
-        $asset->update($updateData);
-        if ($oldUserId != $newUserId) {
-            if ($oldUserId) {
-                $asset->history()->where('user_id', $oldUserId)->whereNull('tanggal_selesai')->update(['tanggal_selesai' => now()]);
-            }
-            if ($newUserId) {
-                $asset->history()->create(['user_id' => $newUserId, 'tanggal_mulai' => now()]);
-            }
-        }
-        return redirect()->route('assets.show', $asset->id)->with('success', 'Data aset berhasil diperbarui.');
+{
+    $category = $asset->category;
+    $merkRule = $category && $category->requires_merk ? 'required|string|max:255' : 'nullable';
+    $tipeRule = $category && !$category->requires_merk && $category->code !== 'FURN' ? 'required|string|max:255' : 'nullable';
+    $subCategoryRequired = $category && in_array($category->code, ['ELEC', 'VEHI']);
+    
+    $validatedData = $request->validate([
+        'sub_category_id' => $subCategoryRequired ? 'required|exists:sub_categories,id' : 'nullable',
+        'asset_user_id' => 'nullable|exists:asset_users,id',
+        'new_asset_user_name' => 'nullable|string|max:255',
+        'merk' => $merkRule,
+        'tipe' => $tipeRule,
+        'serial_number' => 'nullable|string|max:255|unique:assets,serial_number,' . $asset->id,
+        'jumlah' => 'required|integer|min:1',
+        'satuan' => 'required|string|max:50',
+        'kondisi' => 'required|string|in:Baik,Rusak,Perbaikan',
+        'lokasi' => 'nullable|string|max:255',
+        'tanggal_pembelian' => 'nullable|date',
+        'harga_total' => 'nullable|numeric|min:0',
+        'po_number' => 'nullable|string|max:255',
+        'nomor' => 'nullable|string|max:255',
+        'code_aktiva' => 'nullable|string|max:255',
+        'sumber_dana' => 'nullable|string|max:255',
+        'include_items' => 'nullable|string',
+        'peruntukan' => 'nullable|string',
+        'keterangan' => 'nullable|string',
+        'spec' => 'nullable|array',
+    ]);
+    
+    // --- PERBAIKAN UTAMA DI SINI ---
+    
+    // 1. Ambil spesifikasi dari request secara terpisah.
+    $specifications = $this->collectSpecificationsFromRequest($request);
+
+    // 2. Hapus 'spec' dari data yang akan diisi otomatis agar tidak error.
+    unset($validatedData['spec']);
+    unset($validatedData['new_asset_user_name']);
+
+    // 3. Isi model dengan data yang sudah bersih.
+    $asset->fill($validatedData);
+
+    // 4. Tetapkan nilai 'specifications' secara manual.
+    $asset->specifications = $specifications;
+
+    // --- AKHIR PERBAIKAN ---
+
+    if ($request->filled('tanggal_pembelian')) {
+        $asset->thn_pembelian = Carbon::parse($request->tanggal_pembelian)->format('Y');
+    } else {
+        $asset->tanggal_pembelian = null;
+        $asset->thn_pembelian = null;
     }
+
+    $oldAssetUserId = $asset->asset_user_id;
+    $newAssetUserId = $this->getAssetUserIdFromRequest($request);
+    $asset->asset_user_id = $newAssetUserId;
+    
+    $asset->save(); // Simpan semua perubahan
+
+    if ($oldAssetUserId != $newAssetUserId) {
+        if ($oldAssetUserId) {
+            $asset->history()
+                  ->where('asset_user_id', $oldAssetUserId)
+                  ->whereNull('tanggal_selesai')
+                  ->update(['tanggal_selesai' => now()]);
+        }
+        if ($newAssetUserId) {
+            $asset->history()->create([
+                'asset_user_id' => $newAssetUserId,
+                'tanggal_mulai' => now(),
+            ]);
+        }
+    }
+    
+    return redirect()->route('assets.show', $asset->id)->with('success', 'Data aset berhasil diperbarui.');
+}
 
     public function destroy(Asset $asset)
     {
@@ -234,7 +267,7 @@ class AssetController extends Controller
 
     public function publicShow(Asset $asset)
     {
-        $asset->load(['user', 'category', 'company', 'subCategory', 'history.user']);
+        $asset->load(['assetUser', 'category', 'company', 'subCategory', 'history.assetUser']);
         return view('assets.public-show', compact('asset'));
     }
 
@@ -254,7 +287,7 @@ class AssetController extends Controller
     {
         $assetIds = $request->query('ids');
         if ($assetIds && is_array($assetIds) && count($assetIds) > 0) {
-            $assets = Asset::with('user')->whereIn('id', $assetIds)->get();
+            $assets = Asset::with('assetUser')->whereIn('id', $assetIds)->get();
             return view('assets.print', compact('assets'));
         }
         return redirect()->route('assets.index')->with('error', 'Tidak ada aset yang dipilih untuk dicetak.');
@@ -280,7 +313,7 @@ class AssetController extends Controller
 
     public function downloadPDF(Asset $asset)
     {
-        $asset->load(['user', 'category', 'company', 'subCategory', 'history.user']);
+        $asset->load(['assetUser', 'category', 'company', 'subCategory', 'history.assetUser']);
         $pdf = Pdf::loadView('assets.pdf', ['asset' => $asset]);
         $safeFileName = str_replace('/', '-', $asset->code_asset);
         return $pdf->download('asset-detail-' . $safeFileName . '.pdf');

@@ -57,10 +57,10 @@ class Asset extends Model
     /**
      * Mendapatkan pengguna aset saat ini.
      */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
+    public function assetUser(): BelongsTo
+{
+    return $this->belongsTo(AssetUser::class);
+}
 
     /**
      * Mendapatkan seluruh riwayat pengguna aset.
