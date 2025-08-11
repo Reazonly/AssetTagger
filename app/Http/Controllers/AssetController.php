@@ -181,82 +181,78 @@ class AssetController extends Controller
     }
 
     public function update(Request $request, Asset $asset)
-{
-    $category = $asset->category;
-    $merkRule = $category && $category->requires_merk ? 'required|string|max:255' : 'nullable';
-    $tipeRule = $category && !$category->requires_merk && $category->code !== 'FURN' ? 'required|string|max:255' : 'nullable';
-    $subCategoryRequired = $category && in_array($category->code, ['ELEC', 'VEHI']);
-    
-    $validatedData = $request->validate([
-        'sub_category_id' => $subCategoryRequired ? 'required|exists:sub_categories,id' : 'nullable',
-        'asset_user_id' => 'nullable|exists:asset_users,id',
-        'new_asset_user_name' => 'nullable|string|max:255',
-        'merk' => $merkRule,
-        'tipe' => $tipeRule,
-        'serial_number' => 'nullable|string|max:255|unique:assets,serial_number,' . $asset->id,
-        'jumlah' => 'required|integer|min:1',
-        'satuan' => 'required|string|max:50',
-        'kondisi' => 'required|string|in:Baik,Rusak,Perbaikan',
-        'lokasi' => 'nullable|string|max:255',
-        'tanggal_pembelian' => 'nullable|date',
-        'harga_total' => 'nullable|numeric|min:0',
-        'po_number' => 'nullable|string|max:255',
-        'nomor' => 'nullable|string|max:255',
-        'code_aktiva' => 'nullable|string|max:255',
-        'sumber_dana' => 'nullable|string|max:255',
-        'include_items' => 'nullable|string',
-        'peruntukan' => 'nullable|string',
-        'keterangan' => 'nullable|string',
-        'spec' => 'nullable|array',
-    ]);
-    
-    // --- PERBAIKAN UTAMA DI SINI ---
-    
-    // 1. Ambil spesifikasi dari request secara terpisah.
-    $specifications = $this->collectSpecificationsFromRequest($request);
+    {
+        $category = $asset->category;
+        $merkRule = $category && $category->requires_merk ? 'required|string|max:255' : 'nullable';
+        $tipeRule = $category && !$category->requires_merk && $category->code !== 'FURN' ? 'required|string|max:255' : 'nullable';
+        $subCategoryRequired = $category && in_array($category->code, ['ELEC', 'VEHI']);
+        
+        $validatedData = $request->validate([
+            'sub_category_id' => $subCategoryRequired ? 'required|exists:sub_categories,id' : 'nullable',
+            'asset_user_id' => 'nullable|exists:asset_users,id',
+            'new_asset_user_name' => 'nullable|string|max:255',
+            'merk' => $merkRule,
+            'tipe' => $tipeRule,
+            'serial_number' => 'nullable|string|max:255|unique:assets,serial_number,' . $asset->id,
+            'jumlah' => 'required|integer|min:1',
+            'satuan' => 'required|string|max:50',
+            'kondisi' => 'required|string|in:Baik,Rusak,Perbaikan',
+            'lokasi' => 'nullable|string|max:255',
+            'tanggal_pembelian' => 'nullable|date',
+            'harga_total' => 'nullable|numeric|min:0',
+            'po_number' => 'nullable|string|max:255',
+            'nomor' => 'nullable|string|max:255',
+            'code_aktiva' => 'nullable|string|max:255',
+            'sumber_dana' => 'nullable|string|max:255',
+            'include_items' => 'nullable|string',
+            'peruntukan' => 'nullable|string',
+            'keterangan' => 'nullable|string',
+            'spec' => 'nullable|array',
+        ]);
+        
+        // --- PERBAIKAN LOGIKA HISTORY ---
+        // 1. Ambil ID pengguna lama SEBELUM model diubah.
+        $oldAssetUserId = $asset->asset_user_id;
 
-    // 2. Hapus 'spec' dari data yang akan diisi otomatis agar tidak error.
-    unset($validatedData['spec']);
-    unset($validatedData['new_asset_user_name']);
+        // 2. Siapkan data untuk diupdate.
+        $updateData = $validatedData;
+        $updateData['specifications'] = $this->collectSpecificationsFromRequest($request);
+        $newAssetUserId = $this->getAssetUserIdFromRequest($request);
+        $updateData['asset_user_id'] = $newAssetUserId;
 
-    // 3. Isi model dengan data yang sudah bersih.
-    $asset->fill($validatedData);
-
-    // 4. Tetapkan nilai 'specifications' secara manual.
-    $asset->specifications = $specifications;
-
-    // --- AKHIR PERBAIKAN ---
-
-    if ($request->filled('tanggal_pembelian')) {
-        $asset->thn_pembelian = Carbon::parse($request->tanggal_pembelian)->format('Y');
-    } else {
-        $asset->tanggal_pembelian = null;
-        $asset->thn_pembelian = null;
-    }
-
-    $oldAssetUserId = $asset->asset_user_id;
-    $newAssetUserId = $this->getAssetUserIdFromRequest($request);
-    $asset->asset_user_id = $newAssetUserId;
-    
-    $asset->save(); // Simpan semua perubahan
-
-    if ($oldAssetUserId != $newAssetUserId) {
-        if ($oldAssetUserId) {
-            $asset->history()
-                  ->where('asset_user_id', $oldAssetUserId)
-                  ->whereNull('tanggal_selesai')
-                  ->update(['tanggal_selesai' => now()]);
+        if ($request->filled('tanggal_pembelian')) {
+            $updateData['thn_pembelian'] = Carbon::parse($request->tanggal_pembelian)->format('Y');
+        } else {
+            $updateData['tanggal_pembelian'] = null;
+            $updateData['thn_pembelian'] = null;
         }
-        if ($newAssetUserId) {
-            $asset->history()->create([
-                'asset_user_id' => $newAssetUserId,
-                'tanggal_mulai' => now(),
-            ]);
+
+        unset($updateData['spec'], $updateData['new_asset_user_name']);
+
+        // 3. Update aset dengan semua data baru.
+        $asset->update($updateData);
+
+        // 4. Bandingkan ID lama dengan ID baru.
+        if ($oldAssetUserId != $newAssetUserId) {
+            // Tutup riwayat lama jika ada.
+            if ($oldAssetUserId) {
+                $asset->history()
+                      ->where('asset_user_id', $oldAssetUserId)
+                      ->whereNull('tanggal_selesai')
+                      ->update(['tanggal_selesai' => now()]);
+            }
+            // Buat riwayat baru jika ada pengguna baru.
+            if ($newAssetUserId) {
+                $asset->history()->create([
+                    'asset_user_id' => $newAssetUserId,
+                    'tanggal_mulai' => now(),
+                ]);
+            }
         }
+        // --- AKHIR PERBAIKAN ---
+        
+        return redirect()->route('assets.show', $asset->id)->with('success', 'Data aset berhasil diperbarui.');
     }
-    
-    return redirect()->route('assets.show', $asset->id)->with('success', 'Data aset berhasil diperbarui.');
-}
 
     public function destroy(Asset $asset)
     {

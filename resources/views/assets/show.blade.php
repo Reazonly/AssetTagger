@@ -7,10 +7,10 @@
             <p class="text-lg text-emerald-600 font-mono tracking-wider">{{ $asset->code_asset }}</p>
         </div>
         <div class="flex items-center gap-2">
-            <a href="{{ route('assets.index') }}" class="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors py-2 px-4 rounded-lg bg-gray-200 hover:bg-gray-300">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                Kembali
-            </a>
+            <a href="{{ route('assets.index') }}" class="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors py-2 px-4 rounded-lg bg-gray-200 hover:bg-gray-300 border border-black">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+    Kembali
+</a>
             
             {{-- PERUBAHAN: Tombol Edit untuk Admin dan Editor --}}
             @if(in_array(auth()->user()->role, ['admin', 'editor']))
@@ -165,6 +165,7 @@
                             </div>
                             <div class="mt-1">
                                 <p class="text-xs text-gray-500">{{ optional($h->assetUser)->jabatan ?? 'Jabatan tidak diketahui' }}</p>
+                                <p class="text-xs text-gray-500">{{ optional($h->assetUser)->departemen ?? 'Departemen tidak diketahui' }}</p>
                                 <p class="text-xs text-gray-400 mt-1">
                                     <span>Mulai: {{ \Carbon\Carbon::parse($h->tanggal_mulai)->format('d M Y') }}</span>
                                     @if($h->tanggal_selesai)

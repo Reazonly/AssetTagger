@@ -1,81 +1,77 @@
 @extends('layouts.app')
 
-@section('title', 'Master Data - Categories')
+@section('title', 'Master Data Kategori')
 
 @section('content')
-{{-- Kontainer Utama Sesuai Permintaan Anda --}}
-<div x-data="{ selectedItems: [] }" class="bg-white rounded-xl shadow-lg p-6 md:p-8">
-    
+<div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+
     {{-- Header Halaman --}}
-    <div class="flex flex-col sm:flex-row justify-between items-start mb-6">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-200 pb-6 mb-6">
         <div>
-            <h1 class="text-3xl font-bold text-gray-800">Master Kategori</h1>
-            <p class="text-sm text-gray-500 mt-1">Kelola, cari, dan filter semua kategori aset.</p>
+            <h1 class="text-3xl font-bold text-gray-900">Master Kategori</h1>
+            <p class="text-sm text-gray-500 mt-1">Kelola semua kategori aset yang tersedia.</p>
         </div>
-        <a href="{{ route('master-data.categories.create') }}" class="bg-green-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 shadow-md transition-colors inline-flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
-            Tambah Kategori
-        </a>
+        <div class="mt-4 md:mt-0">
+            <a href="{{ route('master-data.categories.create') }}" class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                <span>Tambah Kategori</span>
+            </a>
+        </div>
     </div>
 
-    {{-- Filter dan Aksi (Latar belakang dan bayangan dihilangkan) --}}
+    <!-- Form Pencarian -->
     <div class="mb-6">
-        <form action="{{ route('master-data.categories.index') }}" method="GET" class="w-full max-w-sm">
-            <div class="relative">
-                <input type="text" name="search" placeholder="Cari nama, kode..." value="{{ request('search') }}"
-                       class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500">
-                <svg class="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+        <form action="{{ route('master-data.categories.index') }}" method="GET">
+            <div class="flex">
+                <input type="text" name="search" placeholder="Cari nama atau kode kategori..." value="{{ request('search') }}" class="w-full md:w-1/3 border-gray-300 rounded-l-md shadow-sm py-2 px-3">
+                <button type="submit" class="px-4 py-2 bg-gray-800 text-white font-semibold rounded-r-md hover:bg-gray-700">Cari</button>
             </div>
         </form>
     </div>
-    
-    {{-- Konten Tabel (Latar belakang dan bayangan dihilangkan) --}}
-    <div class="overflow-x-auto">
-        <table class="w-full min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-100">
+
+    {{-- Tabel Data --}}
+    <div class="overflow-x-auto border border-gray-200 rounded-lg">
+        <table class="w-full text-sm text-left text-gray-600">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-100">
                 <tr>
-                    <th class="px-6 py-3 w-4"><input type="checkbox" @click="selectedItems = $event.target.checked ? {{ $categories->pluck('id') }} : []" class="rounded"></th>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Nama Kategori</th>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Kode</th>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Membutuhkan Merk?</th>
-                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Tanggal Dibuat</th>
-                    <th class="px-6 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Aksi</th>
+                    <th scope="col" class="px-6 py-3">Nama Kategori</th>
+                    <th scope="col" class="px-6 py-3">Kode</th>
+                    <th scope="col" class="px-6 py-3">Input Wajib</th>
+                    <th scope="col" class="px-6 py-3 text-center">Aksi</th>
                 </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                @forelse($categories as $category)
+            <tbody class="bg-white divide-y">
+                @forelse ($categories as $category)
                     <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4"><input type="checkbox" x-model="selectedItems" value="{{ $category->id }}" class="rounded"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $category->name }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $category->code }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td class="px-6 py-4 font-medium text-gray-900">{{ $category->name }}</td>
+                        <td class="px-6 py-4">{{ $category->code }}</td>
+                        <td class="px-6 py-4">
                             @if($category->requires_merk)
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Ya</span>
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Merk</span>
                             @else
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-200 text-gray-800">Tidak</span>
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">Tipe</span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $category->created_at->isoFormat('D MMM YYYY') }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div class="flex gap-4 justify-end">
-                                <a href="{{ route('master-data.categories.edit', $category) }}" class="text-blue-600 hover:text-blue-900 font-semibold">Edit</a>
-                                <form action="{{ route('master-data.categories.destroy', $category) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin?')">
+                        <td class="px-6 py-4 text-center">
+                            <div class="flex items-center justify-center gap-4">
+                                <a href="{{ route('master-data.categories.edit', $category->id) }}" class="font-medium text-blue-600 hover:text-blue-800">Edit</a>
+                                <form action="{{ route('master-data.categories.destroy', $category->id) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus kategori ini?');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-900 font-semibold">Hapus</button>
+                                    <button type="submit" class="font-medium text-red-600 hover:text-red-800">Hapus</button>
                                 </form>
                             </div>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">Tidak ada data kategori yang cocok.</td>
+                        <td colspan="4" class="text-center py-10 text-gray-500">Tidak ada data kategori yang cocok.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
-
+    
     @if ($categories->hasPages())
         <div class="mt-6">{{ $categories->appends(request()->query())->links() }}</div>
     @endif

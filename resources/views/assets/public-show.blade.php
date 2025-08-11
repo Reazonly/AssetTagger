@@ -62,7 +62,7 @@
                 <div>{{ optional($asset->assetUser)->departemen ?? 'N/A' }}</div>
             </div>
         </div>
-        
+
         {{-- Spesifikasi --}}
         @if($asset->specifications)
             <div class="bg-white p-6 rounded-xl border">
@@ -136,7 +136,8 @@
                             @endif
                         </div>
                         <div class="mt-1">
-                            <p class="text-xs text-gray-500">{{ optional($h->user)->jabatan ?? 'Jabatan tidak diketahui' }}</p>
+                            <p class="text-xs text-gray-500">{{ optional($h->assetUser)->jabatan ?? 'Jabatan tidak diketahui' }}</p>
+                            <p class="text-xs text-gray-500">{{ optional($h->assetUser)->departemen ?? 'Departemen tidak diketahui' }}</p>
                             <p class="text-xs text-gray-400 mt-1">
                                 <span>Mulai: {{ \Carbon\Carbon::parse($h->tanggal_mulai)->format('d M Y') }}</span>
                                 @if($h->tanggal_selesai)
