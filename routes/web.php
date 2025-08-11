@@ -46,15 +46,22 @@ Route::middleware('auth')->group(function () {
 
     // Grup KHUSUS untuk ADMIN AREA (Manajemen Pengguna & Master Data)
     Route::middleware(['role:admin'])->group(function() {
+        // Rute yang bisa diakses oleh semua Admin
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
-        Route::get('/users/create', [UserController::class, 'create'])->name('users.create'); // Rute baru
-        Route::post('/users', [UserController::class, 'store'])->name('users.store'); // Rute baru
         Route::post('/users/{user}/update-role', [UserController::class, 'updateRole'])->name('users.updateRole');
         
-        // --- FITUR HAPUS & RESET PASSWORD DITAMBAHKAN DI SINI ---
-        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-        Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.resetPassword');
-        // --- AKHIR PENAMBAHAN ---
+        // --- PERUBAHAN: Rute yang hanya bisa diakses oleh Super Admin (ID=1) ---
+        Route::middleware(function ($request, $next) {
+            if (auth()->id() !== 1) {
+                return redirect()->route('users.index')->with('error', 'Anda tidak memiliki hak akses untuk tindakan ini.');
+            }
+            return $next($request);
+        })->group(function () {
+            Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+            Route::post('/users', [UserController::class, 'store'])->name('users.store');
+            Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+            Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.resetPassword');
+        });
         
         Route::prefix('master-data')->name('master-data.')->group(function () {
             Route::resource('categories', CategoryController::class)->except(['show']);
