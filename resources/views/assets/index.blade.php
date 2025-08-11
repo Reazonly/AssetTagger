@@ -4,14 +4,12 @@
 
 @section('content')
 <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
-
-    {{-- Header: Judul dan Tombol Aksi Utama --}}
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-200 pb-6 mb-6">
         <div>
             <h1 class="text-3xl font-bold text-gray-900">Daftar Aset</h1>
             <p class="text-sm text-gray-500 mt-1">Kelola, cari, dan filter semua aset perusahaan.</p>
         </div>
-        {{-- PERUBAHAN: Tombol untuk Admin dan Editor --}}
+        
         @if(in_array(auth()->user()->role, ['admin', 'editor']))
         <div class="flex items-center gap-3 mt-4 md:mt-0">
             <button onclick="document.getElementById('importModal').classList.remove('hidden')" class="inline-flex items-center gap-2 bg-white text-gray-700 font-semibold px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
@@ -30,7 +28,6 @@
         @endif
     </div>
 
-    {{-- Filter, Pencarian, dan Aksi Pilihan --}}
     <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
         <form action="{{ route('assets.index') }}" method="GET" class="w-full md:w-auto flex flex-col sm:flex-row items-center gap-3">
             <div class="relative w-full sm:w-64">
@@ -74,7 +71,6 @@
         </div>
     </div>
 
-    {{-- Tabel Aset --}}
     <div class="overflow-x-auto border border-gray-200 rounded-lg">
         <table class="w-full text-sm text-left text-gray-600">
             <thead class="text-xs text-gray-700 uppercase bg-gray-100 border-b-2 border-black">
@@ -86,7 +82,6 @@
                     <th scope="col" class="px-6 py-3">Sub-Kategori</th>
                     <th scope="col" class="px-6 py-3">Pengguna</th>
                     <th scope="col" class="px-6 py-3">Kondisi</th>
-                    {{-- PERUBAHAN: Kolom Aksi untuk Admin dan Editor --}}
                     @if(in_array(auth()->user()->role, ['admin', 'editor']))
                         <th scope="col" class="px-6 py-3 text-right">Aksi</th>
                     @endif
@@ -109,7 +104,6 @@
                                     {{ $asset->kondisi }}
                                 </span>
                             </td>
-                        {{-- PERUBAHAN: Kolom Aksi untuk Admin dan Editor --}}
                         @if(in_array(auth()->user()->role, ['admin', 'editor']))
                         <td class="px-6 py-4 text-right whitespace-nowrap">
                             <a href="{{ route('assets.show', $asset->id) }}" class="font-medium text-emerald-600 hover:text-emerald-800">Lihat</a>
@@ -124,7 +118,6 @@
                     </tr>
                 @empty
                     <tr>
-                        {{-- PERUBAHAN: colspan disesuaikan untuk Admin dan Editor --}}
                         <td colspan="{{ in_array(auth()->user()->role, ['admin', 'editor']) ? '8' : '7' }}" class="text-center py-10 text-gray-500">
                             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                             <h3 class="mt-2 text-sm font-medium text-gray-900">Aset tidak ditemukan</h3>
@@ -136,11 +129,11 @@
         </table>
     </div>
     
-    {{-- Pagination --}}
+
     <div class="mt-6">{{ $assets->appends(request()->query())->links() }}</div>
 </div>
 
-{{-- Modal Impor (hanya untuk Admin dan Editor) --}}
+
 @if(in_array(auth()->user()->role, ['admin', 'editor']))
 <div id="importModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 overflow-y-auto h-full w-full hidden z-50 transition-opacity">
     <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-xl bg-white">
@@ -225,7 +218,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Initial check
     updateActionButtonsState();
 });
 </script>

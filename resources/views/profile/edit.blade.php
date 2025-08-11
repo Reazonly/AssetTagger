@@ -5,7 +5,7 @@
 @section('content')
 <div class="max-w-2xl mx-auto">
     
-    {{-- Header Profil --}}
+   
     <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 flex items-center border">
         <div class="h-20 w-20 rounded-full bg-sky-800 flex-shrink-0 flex items-center justify-center border-4 border-sky-200">
             <span class="text-3xl font-bold text-white uppercase">
@@ -24,7 +24,7 @@
         </div>
     </div>
 
-    {{-- Form Ubah Password --}}
+   
     <div class="mt-8 bg-white rounded-xl shadow-lg border">
         <form action="{{ route('profile.update') }}" method="POST">
             @csrf

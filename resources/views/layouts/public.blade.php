@@ -15,7 +15,7 @@
 <body class="bg-gray-50 text-gray-800">
     <div class="container mx-auto p-4 sm:p-8">
         <main class="bg-white p-6 sm:p-8 rounded-lg shadow-lg max-w-4xl mx-auto">
-            {{-- Ini adalah tempat konten halaman akan disisipkan --}}
+           
             @yield('content')
         </main>
         <footer class="text-center text-gray-400 text-xs mt-6 flex items-center justify-center">

@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Manajemen Aset') - AssetTagger</title>
 
-    {{-- Scripts & Styles --}}
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    {{-- Style yang dibutuhkan oleh Livewire --}}
+    
     @livewireStyles
 
     <style>
@@ -20,7 +20,7 @@
 <body class="bg-gray-100 text-gray-900">
     <div x-data="{ isSidebarOpen: true }" class="flex h-screen bg-gray-100">
 
-        {{-- Memanggil Sidebar dari file terpisah --}}
+       
         @include('layouts.sidebar')
 
         <div class="flex-1 flex flex-col overflow-hidden">
@@ -39,7 +39,7 @@
             </header>
             <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">
                 <div class="container mx-auto px-6 py-8">
-                     {{-- Menampilkan notifikasi sukses atau error --}}
+                     
                     @if (session('success'))
                         <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-5 rounded-md shadow" role="alert">
                             <p class="font-bold">Sukses</p>
@@ -54,7 +54,7 @@
                         </div>
                     @endif
 
-                    {{-- Baris ini akan menampilkan konten dari Livewire ($slot) dan halaman Blade biasa (@yield) --}}
+                 
                     {{ $slot ?? '' }}
                     @yield('content')
                 </div>
@@ -64,7 +64,7 @@
     
     @stack('scripts')
 
-    {{-- Script utama Livewire yang juga memuat Alpine.js --}}
+    
     @livewireScripts
 </body>
 </html>
