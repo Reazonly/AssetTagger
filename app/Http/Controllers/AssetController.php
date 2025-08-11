@@ -210,11 +210,8 @@ class AssetController extends Controller
             'spec' => 'nullable|array',
         ]);
         
-        // --- PERBAIKAN LOGIKA HISTORY ---
-        // 1. Ambil ID pengguna lama SEBELUM model diubah.
         $oldAssetUserId = $asset->asset_user_id;
 
-        // 2. Siapkan data untuk diupdate.
         $updateData = $validatedData;
         $updateData['specifications'] = $this->collectSpecificationsFromRequest($request);
         $newAssetUserId = $this->getAssetUserIdFromRequest($request);
@@ -229,19 +226,15 @@ class AssetController extends Controller
 
         unset($updateData['spec'], $updateData['new_asset_user_name']);
 
-        // 3. Update aset dengan semua data baru.
         $asset->update($updateData);
 
-        // 4. Bandingkan ID lama dengan ID baru.
         if ($oldAssetUserId != $newAssetUserId) {
-            // Tutup riwayat lama jika ada.
             if ($oldAssetUserId) {
                 $asset->history()
                       ->where('asset_user_id', $oldAssetUserId)
                       ->whereNull('tanggal_selesai')
                       ->update(['tanggal_selesai' => now()]);
             }
-            // Buat riwayat baru jika ada pengguna baru.
             if ($newAssetUserId) {
                 $asset->history()->create([
                     'asset_user_id' => $newAssetUserId,
@@ -249,7 +242,6 @@ class AssetController extends Controller
                 ]);
             }
         }
-        // --- AKHIR PERBAIKAN ---
         
         return redirect()->route('assets.show', $asset->id)->with('success', 'Data aset berhasil diperbarui.');
     }
@@ -292,19 +284,21 @@ class AssetController extends Controller
     public function export(Request $request)
     {
         $assetIds = $request->query('ids');
-        if (empty($assetIds)) {
-            return redirect()->route('assets.index')->with('error', 'Tidak ada aset yang dipilih untuk diekspor.');
+        $categoryCode = $request->query('category_code');
+        $search = $request->query('search');
+
+        if (empty($assetIds) && empty($categoryCode)) {
+            return redirect()->route('assets.index')->with('error', 'Tidak ada data yang dipilih untuk diekspor.');
         }
-        $categoryIds = Asset::whereIn('id', $assetIds)->distinct()->pluck('category_id');
+
         $fileNamePrefix = 'assets_export';
-        if ($categoryIds->count() === 1 && $categoryIds->first() !== null) {
-            $category = Category::find($categoryIds->first());
-            if ($category) {
-                $fileNamePrefix = 'assets_export_' . strtolower($category->code);
-            }
+        if ($categoryCode) {
+            $fileNamePrefix .= '_' . strtolower($categoryCode);
         }
+
         $fileName = $fileNamePrefix . '_' . date('Y-m-d_H-i-s') . '.xlsx';
-        return Excel::download(new AssetsExport(null, $assetIds, null), $fileName);
+        
+        return Excel::download(new AssetsExport($search, $assetIds, $categoryCode), $fileName);
     }
 
     public function downloadPDF(Asset $asset)

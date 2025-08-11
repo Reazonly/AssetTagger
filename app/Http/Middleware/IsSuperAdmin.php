@@ -15,12 +15,12 @@ class IsSuperAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Cek apakah pengguna sudah login dan memiliki ID = 1
+       
         if (auth()->check() && auth()->id() === 1) {
             return $next($request);
         }
 
-        // Jika bukan, kembalikan ke halaman sebelumnya dengan pesan error
+      
         return back()->with('error', 'Anda tidak memiliki hak akses untuk tindakan ini.');
     }
 }

@@ -26,7 +26,6 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
 
     public function query()
     {
-        // PERBAIKAN: Eager load relasi history.assetUser untuk efisiensi
         $query = Asset::with(['assetUser', 'category', 'company', 'subCategory', 'history.assetUser']);
 
         if (!empty($this->ids)) {
@@ -55,68 +54,92 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
 
     public function headings(): array
     {
-        return [
+        $baseHeadings = [
             'Kode Aset', 'Nama Barang', 'Kategori', 'Sub Kategori', 'Perusahaan',
             'Merk', 'Tipe', 'Serial Number', 'Pengguna Saat Ini', 'Jabatan Pengguna',
             'Departemen Pengguna', 'Kondisi', 'Lokasi Fisik', 'Jumlah', 'Satuan',
-            'Processor', 'RAM', 'Storage', 'Graphics', 'Layar',
-            'Nomor Polisi', 'Nomor Rangka', 'Nomor Mesin',
-            'Spesifikasi/Deskripsi Lainnya',
+        ];
+
+        $specHeadings = [];
+        // --- PERBAIKAN LOGIKA HEADINGS ---
+        if ($this->categoryCode) {
+            // Logika untuk Export Filter (spesifik)
+            switch ($this->categoryCode) {
+                case 'ELEC':
+                    $specHeadings = ['Processor', 'RAM', 'Storage', 'Graphics', 'Layar'];
+                    break;
+                case 'VEHI':
+                    $specHeadings = ['Nomor Polisi', 'Nomor Rangka', 'Nomor Mesin'];
+                    break;
+            }
+        } else {
+            // Logika untuk Export Terpilih (gabungan semua kolom spesifik)
+            $specHeadings = [
+                'Processor', 'RAM', 'Storage', 'Graphics', 'Layar', // Kolom Elektronik
+                'Nomor Polisi', 'Nomor Rangka', 'Nomor Mesin', // Kolom Kendaraan
+            ];
+        }
+        $specHeadings[] = 'Spesifikasi/Deskripsi Lainnya';
+        // --- AKHIR PERBAIKAN ---
+
+        $endHeadings = [
             'Tanggal Pembelian', 'Tahun Pembelian', 'Harga Total (Rp)', 'Nomor PO',
             'Nomor BAST', 'Kode Aktiva', 'Sumber Dana', 'Item Termasuk', 'Peruntukan', 'Keterangan',
-            'Riwayat Pengguna' // <-- KOLOM BARU DITAMBAHKAN
+            'Riwayat Pengguna'
         ];
+
+        return array_merge($baseHeadings, $specHeadings, $endHeadings);
     }
 
     public function map($asset): array
     {
         $specs = $asset->specifications ?? [];
-
-        // --- PERBAIKAN: Logika untuk memformat riwayat pengguna ---
+        
         $historyString = $asset->history->map(function ($h) {
             $startDate = Carbon::parse($h->tanggal_mulai)->format('d M Y');
             $endDate = $h->tanggal_selesai ? Carbon::parse($h->tanggal_selesai)->format('d M Y') : 'Sekarang';
             return optional($h->assetUser)->nama . " ({$startDate} - {$endDate})";
         })->implode('; ');
+
+        $baseData = [
+            $asset->code_asset, $asset->nama_barang, optional($asset->category)->name,
+            optional($asset->subCategory)->name, optional($asset->company)->name,
+            $asset->merk, $asset->tipe, $asset->serial_number,
+            optional($asset->assetUser)->nama, optional($asset->assetUser)->jabatan,
+            optional($asset->assetUser)->departemen, $asset->kondisi, $asset->lokasi,
+            $asset->jumlah, $asset->satuan,
+        ];
+
+        $specData = [];
+        // --- PERBAIKAN LOGIKA MAPPING DATA ---
+        if ($this->categoryCode) {
+            // Logika untuk Export Filter (spesifik)
+            switch ($this->categoryCode) {
+                case 'ELEC':
+                    $specData = [$specs['processor'] ?? null, $specs['ram'] ?? null, $specs['storage'] ?? null, $specs['graphics'] ?? null, $specs['layar'] ?? null];
+                    break;
+                case 'VEHI':
+                    $specData = [$specs['nomor_polisi'] ?? null, $specs['nomor_rangka'] ?? null, $specs['nomor_mesin'] ?? null];
+                    break;
+            }
+        } else {
+            // Logika untuk Export Terpilih (gabungan semua data spesifik)
+            $specData = [
+                $specs['processor'] ?? null, $specs['ram'] ?? null, $specs['storage'] ?? null, $specs['graphics'] ?? null, $specs['layar'] ?? null,
+                $specs['nomor_polisi'] ?? null, $specs['nomor_rangka'] ?? null, $specs['nomor_mesin'] ?? null,
+            ];
+        }
+        $specData[] = $specs['deskripsi'] ?? $specs['lainnya'] ?? null;
         // --- AKHIR PERBAIKAN ---
 
-        return [
-            $asset->code_asset,
-            $asset->nama_barang,
-            optional($asset->category)->name,
-            optional($asset->subCategory)->name,
-            optional($asset->company)->name,
-            $asset->merk,
-            $asset->tipe,
-            $asset->serial_number,
-            optional($asset->assetUser)->nama,
-            optional($asset->assetUser)->jabatan,
-            optional($asset->assetUser)->departemen,
-            $asset->kondisi,
-            $asset->lokasi,
-            $asset->jumlah,
-            $asset->satuan,
-            $specs['processor'] ?? null,
-            $specs['ram'] ?? null,
-            $specs['storage'] ?? null,
-            $specs['graphics'] ?? null,
-            $specs['layar'] ?? null,
-            $specs['nomor_polisi'] ?? null,
-            $specs['nomor_rangka'] ?? null,
-            $specs['nomor_mesin'] ?? null,
-            $specs['deskripsi'] ?? $specs['lainnya'] ?? null,
+        $endData = [
             $asset->tanggal_pembelian ? $asset->tanggal_pembelian->format('d-m-Y') : null,
-            $asset->thn_pembelian,
-            $asset->harga_total,
-            $asset->po_number,
-            $asset->nomor,
-            $asset->code_aktiva,
-            $asset->sumber_dana,
-            $asset->include_items,
-            $asset->peruntukan,
-            $asset->keterangan,
-            $historyString, // <-- DATA BARU DITAMBAHKAN
+            $asset->thn_pembelian, $asset->harga_total, $asset->po_number, $asset->nomor,
+            $asset->code_aktiva, $asset->sumber_dana, $asset->include_items,
+            $asset->peruntukan, $asset->keterangan, $historyString,
         ];
+
+        return array_merge($baseData, $specData, $endData);
     }
 
     public function styles(Worksheet $sheet)

@@ -22,15 +22,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Logika untuk URL ngrok (jika diperlukan)
-        if ($this->app->environment('local') && config('app.url') !== 'http://localhost') {
-            URL::forceRootUrl(config('app.url'));
-        }
-        
-        // Menggunakan style paginasi dari Tailwind CSS
         Paginator::useTailwind();
-
-        // 2. Mengatur bahasa default untuk semua format tanggal ke Bahasa Indonesia
         Carbon::setLocale('id');
     }
 }

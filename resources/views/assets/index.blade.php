@@ -57,6 +57,20 @@
             <button id="exportSelectedBtn" disabled class="flex items-center gap-2 bg-green-600 text-white font-semibold px-4 py-2 rounded-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed">
                 Export Terpilih
             </button>
+            <div x-data="{ open: false }" class="relative">
+                <button @click="open = !open" type="button" class="inline-flex items-center gap-2 px-4 py-2 text-gray-600 font-semibold rounded-lg hover:bg-gray-100 border text-sm">
+                    <span>Export Filter</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                </button>
+                <div x-show="open" @click.away="open = false" class="absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10" x-cloak>
+                    <div class="py-1" role="menu" aria-orientation="vertical">
+                        <a href="{{ route('assets.export', array_merge(request()->query(), ['category_code' => 'VEHI'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Export Kendaraan</a>
+                        <a href="{{ route('assets.export', array_merge(request()->query(), ['category_code' => 'ELEC'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Export Elektronik</a>
+                        <a href="{{ route('assets.export', array_merge(request()->query(), ['category_code' => 'FURN'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Export Furniture</a>
+                        <a href="{{ route('assets.export', array_merge(request()->query(), ['category_code' => 'OFFI'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Export Peralatan Kantor</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
