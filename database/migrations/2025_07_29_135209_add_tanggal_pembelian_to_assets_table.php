@@ -26,7 +26,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('assets', function (Blueprint $table) {
-            // Cek terlebih dahulu apakah kolomnya ada
             if (Schema::hasColumn('assets', 'tanggal_pembelian')) {
                 // Jika ada, baru hapus kolomnya
                 $table->dropColumn('tanggal_pembelian');
