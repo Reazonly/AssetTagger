@@ -105,9 +105,7 @@
             </dl>
         </div>
 
-        {{-- ====================================================== --}}
-        {{-- PERUBAHAN: MENAMBAHKAN BAGIAN INFORMASI TAMBAHAN --}}
-        {{-- ====================================================== --}}
+        
         <div class="bg-white p-6 rounded-xl border">
             <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">Informasi Tambahan</h3>
             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm">
@@ -123,7 +121,7 @@
             </dl>
         </div>
         
-        {{-- Histori Pengguna --}}
+
         <div class="bg-white p-6 rounded-xl border">
             <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-3">Histori Pengguna</h3>
             <ul class="space-y-4 text-sm">
