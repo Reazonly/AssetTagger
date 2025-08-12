@@ -12,9 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('assets', function (Blueprint $table) {
-            // Cek terlebih dahulu apakah kolomnya belum ada
             if (!Schema::hasColumn('assets', 'tanggal_pembelian')) {
-                // Jika belum ada, baru tambahkan kolomnya
                 $table->date('tanggal_pembelian')->nullable()->after('thn_pembelian');
             }
         });
@@ -27,7 +25,6 @@ return new class extends Migration
     {
         Schema::table('assets', function (Blueprint $table) {
             if (Schema::hasColumn('assets', 'tanggal_pembelian')) {
-                // Jika ada, baru hapus kolomnya
                 $table->dropColumn('tanggal_pembelian');
             }
         });
