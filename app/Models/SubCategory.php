@@ -11,29 +11,24 @@ class SubCategory extends Model
 {
     use HasFactory;
 
+    protected $guarded = ['id'];
+
+    // --- TAMBAHKAN BLOK INI ---
     /**
-     * The attributes that aren't mass assignable.
+     * The attributes that should be cast.
      *
      * @var array
      */
-    // Memperbolehkan semua field diisi kecuali 'id'
-    protected $guarded = ['id'];
+    protected $casts = [
+        'spec_fields' => 'array', // Otomatis cast kolom JSON ke array
+    ];
+    // --- AKHIR PENAMBAHAN ---
 
-    /**
-     * Mendefinisikan relasi bahwa setiap SubCategory dimiliki oleh satu Category.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
 
-    /**
-     * Mendefinisikan relasi bahwa satu SubCategory bisa dimiliki oleh banyak Asset.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
     public function assets(): HasMany
     {
         return $this->hasMany(Asset::class);

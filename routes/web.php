@@ -10,6 +10,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AssetUserController;
+use App\Http\Controllers\SubCategoryController;
 
 // Authentication Routes
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -62,6 +63,14 @@ Route::middleware('auth')->group(function () {
             Route::resource('categories', CategoryController::class)->except(['show']);
             Route::resource('companies', CompanyController::class)->except(['show']);
             Route::resource('asset-users', AssetUserController::class)->except(['show']);
+
+             Route::get('sub-categories', [SubCategoryController::class, 'index'])->name('sub-categories.index');
+                Route::get('sub-categories/{category}', [SubCategoryController::class, 'show'])->name('sub-categories.show');
+                Route::get('sub-categories/{category}/create', [SubCategoryController::class, 'create'])->name('sub-categories.create');
+                Route::post('sub-categories/{category}', [SubCategoryController::class, 'store'])->name('sub-categories.store');
+                Route::get('sub-categories/{subCategory}/edit', [SubCategoryController::class, 'edit'])->name('sub-categories.edit');
+                Route::put('sub-categories/{subCategory}', [SubCategoryController::class, 'update'])->name('sub-categories.update');
+                Route::delete('sub-categories/{subCategory}', [SubCategoryController::class, 'destroy'])->name('sub-categories.destroy');
         });
     });
 
