@@ -71,6 +71,7 @@
                          class="mt-2 space-y-2 pl-8" x-cloak>
                         <a href="{{ route('master-data.asset-users.index') }}" class="block px-4 py-2 text-sm rounded-md {{ request()->routeIs('master-data.asset-users.*') ? 'text-white font-bold' : 'text-sky-200 hover:text-white' }}">Pengguna Aset</a>
                         <a href="{{ route('master-data.categories.index') }}" class="block px-4 py-2 text-sm rounded-md {{ request()->routeIs('master-data.categories.*') ? 'text-white font-bold' : 'text-sky-200 hover:text-white' }}">Kategori</a>
+                         <a href="{{ route('master-data.sub-categories.index') }}" class="block px-4 py-2 text-sm rounded-md {{ request()->routeIs('master-data.sub-categories.*') ? 'text-white font-bold' : 'text-sky-200 hover:text-white' }}">Sub-Kategori</a>
                         <a href="{{ route('master-data.companies.index') }}" class="block px-4 py-2 text-sm rounded-md {{ request()->routeIs('master-data.companies.*') ? 'text-white font-bold' : 'text-sky-200 hover:text-white' }}">Perusahaan</a>
                     </div>
                 </div>
