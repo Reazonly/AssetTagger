@@ -48,7 +48,7 @@
 
             <div class="bg-white p-8 rounded-lg shadow-md border">
                 <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Pengguna</h3>
-                <div><label for="asset_user_id" class="block text-sm font-medium text-gray-700">Pilih Pengguna</label><select id="asset_user_id" name="asset_user_id" x-model="selectedAssetUserId" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"><option value="">-- Tidak ada pengguna --</option>@foreach($users as $user)<option value="{{ $user->id }}">{{ $user->nama }}</option>@endforeach</select></div>
+                <div><label for="asset_user_id" class="block text-sm font-medium text-gray-700">Pilih Pengguna (Jika Ada)</label><select id="asset_user_id" name="asset_user_id" x-model="selectedAssetUserId" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"><option value="">-- Tidak ada pengguna --</option>@foreach($users as $user)<option value="{{ $user->id }}">{{ $user->nama }}</option>@endforeach</select></div>
                 <div x-show="selectedAssetUserId" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-md border" x-cloak>
                     <div><label class="block text-sm font-medium text-gray-500">Jabatan</label><p class="mt-1 text-sm text-gray-900" x-text="currentAssetUser.jabatan || '-'"></p></div>
                     <div><label class="block text-sm font-medium text-gray-500">Departemen</label><p class="mt-1 text-sm text-gray-900" x-text="currentAssetUser.departemen || '-'"></p></div>
@@ -64,22 +64,26 @@
                     <div><label for="satuan" class="block text-sm font-medium text-gray-600">Satuan</label><select name="satuan" id="satuan" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"><template x-for="unit in currentCategory.units" :key="unit.id"><option :value="unit.name" x-text="unit.name"></option></template><option value="Unit" x-show="currentCategory.units.length === 0">Unit</option></select></div>
                     <div class="md:col-span-2"><label for="lokasi" class="block text-sm font-medium text-gray-600">Lokasi Fisik</label><input type="text" name="lokasi" id="lokasi" value="{{ old('lokasi') }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
                 </div>
-                <div class="mt-8 pt-6 border-t"><h4 class="text-lg font-medium text-gray-800 mb-4">Spesifikasi Detail</h4>
+                
+                <div class="mt-8 pt-6 border-t">
+                    <h4 class="text-lg font-medium text-gray-800 mb-4">Spesifikasi Detail</h4>
                     <div class="space-y-4">
-                        <template x-if="['Laptop', 'Desktop/PC'].includes(currentSubCategory.name)">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div><label class="block text-sm">Processor</label><input type="text" name="spec[processor]" class="mt-1 w-full border-2 border-gray-400 rounded-md text-sm py-2 px-3"></div>
-                                <div><label class="block text-sm">RAM</label><input type="text" name="spec[ram]" class="mt-1 w-full border-2 border-gray-400 rounded-md text-sm py-2 px-3"></div>
-                                <div><label class="block text-sm">Storage</label><input type="text" name="spec[storage]" class="mt-1 w-full border-2 border-gray-400 rounded-md text-sm py-2 px-3"></div>
-                                <div><label class="block text-sm">Graphics</label><input type="text" name="spec[graphics]" class="mt-1 w-full border-2 border-gray-400 rounded-md text-sm py-2 px-3"></div>
-                                <div><label class="block text-sm">Layar</label><input type="text" name="spec[layar]" class="mt-1 w-full border-2 border-gray-400 rounded-md text-sm py-2 px-3"></div>
-                            </div>
-                        </template>
-                        <template x-if="currentSubCategory.name === 'Monitor'">
-                            <div><label class="block text-sm">Ukuran Layar (inch)</label><input type="text" name="spec[layar]" class="mt-1 w-full border-2 border-gray-400 rounded-md text-sm py-2 px-3"></div>
-                        </template>
-                        <template x-if="currentCategory.code === 'VEHI'"><div class="grid grid-cols-1 md:grid-cols-3 gap-6"><div><label class="block text-sm">Nomor Polisi</label><input type="text" name="spec[nomor_polisi]" class="mt-1 w-full border-2 border-gray-400 rounded-md text-sm py-2 px-3"></div><div><label class="block text-sm">Nomor Rangka</label><input type="text" name="spec[nomor_rangka]" class="mt-1 w-full border-2 border-gray-400 rounded-md text-sm py-2 px-3"></div><div><label class="block text-sm">Nomor Mesin</label><input type="text" name="spec[nomor_mesin]" class="mt-1 w-full border-2 border-gray-400 rounded-md text-sm py-2 px-3"></div></div></template>
-                        <div><label class="block text-sm">Deskripsi / Spesifikasi Lainnya</label><textarea name="spec[deskripsi]" rows="3" class="mt-1 w-full border-2 border-gray-400 rounded-md text-sm py-2 px-3"></textarea></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <template x-if="currentSubCategory && currentSubCategory.spec_fields">
+                                <template x-for="field in currentSubCategory.spec_fields" :key="field">
+                                    <div>
+                                        <label class="block text-sm" x-text="field"></label>
+                                        <input type="text" :name="'spec[' + field.toLowerCase().replace(/ /g, '_') + ']'" 
+                                               class="mt-1 w-full border-2 border-gray-400 rounded-md text-sm py-2 px-3">
+                                    </div>
+                                </template>
+                            </template>
+                        </div>
+                                                
+                        <div>
+                            <label class="block text-sm">Deskripsi / Spesifikasi Tambahan</label>
+                            <textarea name="spec[deskripsi]" rows="3" class="mt-1 w-full border-2 border-gray-400 rounded-md text-sm py-2 px-3"></textarea>
+                        </div>
                     </div>
                 </div>
             </div>
