@@ -109,7 +109,7 @@
         </div>
         
         <div class="mt-8 pt-6 border-t flex justify-end items-center gap-3">
-            <a href="{{ route('assets.show', $asset->id) }}" class="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors py-2 px-4 rounded-lg bg-gray-200 hover:bg-gray-300 border border-black">Batal</a>
+            <a href="{{ route('assets.index', $asset->id) }}" class="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors py-2 px-4 rounded-lg bg-gray-200 hover:bg-gray-300 border border-black">Batal</a>
             <button type="submit" class="bg-sky-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-sky-700 shadow-sm transition-colors">Simpan Perubahan</button>
         </div>
     </form>
