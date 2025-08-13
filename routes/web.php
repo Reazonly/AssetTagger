@@ -11,6 +11,7 @@ use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AssetUserController;
 use App\Http\Controllers\SubCategoryController;
+use App\Http\Controllers\RoleController;
 
 // Authentication Routes
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -26,59 +27,75 @@ Route::get('/assets/get-units/{category}', [AssetController::class, 'getUnits'])
 
 // Main application routes (protected by auth middleware)
 Route::middleware('auth')->group(function () {
-    // Dashboard bisa diakses semua role yang sudah login
-    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    // Dashboard (membutuhkan izin 'view-dashboard')
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard')->middleware('permission:view-dashboard');
 
-    // --- FITUR PROFIL DITAMBAHKAN DI SINI ---
+    // Profil (bisa diakses semua pengguna yang login)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    // --- AKHIR PENAMBAHAN ---
 
-    // Grup untuk role yang bisa MEMODIFIKASI ASET (Admin dan Editor)
-    Route::middleware(['role:admin,editor'])->group(function () {
-        // Aset
-        Route::post('assets/import', [AssetController::class, 'import'])->name('assets.import');
-        Route::get('assets/create', [AssetController::class, 'create'])->name('assets.create');
-        Route::post('assets', [AssetController::class, 'store'])->name('assets.store');
-        Route::get('assets/{asset}/edit', [AssetController::class, 'edit'])->name('assets.edit');
-        Route::put('assets/{asset}', [AssetController::class, 'update'])->name('assets.update');
-        Route::delete('assets/{asset}', [AssetController::class, 'destroy'])->name('assets.destroy');
+    // =====================================================================
+    // PERBAIKAN: RUTE ASET DISUSUN ULANG BERDASARKAN URUTAN PRIORITAS
+    // Rute statis (tanpa parameter) diletakkan di atas rute dinamis.
+    // =====================================================================
+    Route::prefix('assets')->name('assets.')->group(function() {
+        // Rute GET (statis)
+        Route::get('/', [AssetController::class, 'index'])->name('index')->middleware('permission:view-asset');
+        Route::get('/create', [AssetController::class, 'create'])->name('create')->middleware('permission:create-asset');
+        Route::get('/print', [AssetController::class, 'print'])->name('print')->middleware('permission:view-asset');
+        Route::get('/export', [AssetController::class, 'export'])->name('export')->middleware('permission:view-asset');
+
+        // Rute POST
+        Route::post('/', [AssetController::class, 'store'])->name('store')->middleware('permission:create-asset');
+        Route::post('/import', [AssetController::class, 'import'])->name('import')->middleware('permission:import-asset');
+
+        // Rute GET (dinamis dengan parameter {asset})
+        Route::get('/{asset}', [AssetController::class, 'show'])->name('show')->middleware('permission:view-asset');
+        Route::get('/{asset}/edit', [AssetController::class, 'edit'])->name('edit')->middleware('permission:edit-asset');
+
+        // Rute PUT & DELETE (dinamis)
+        Route::put('/{asset}', [AssetController::class, 'update'])->name('update')->middleware('permission:edit-asset');
+        Route::delete('/{asset}', [AssetController::class, 'destroy'])->name('destroy')->middleware('permission:delete-asset');
     });
 
-    // Grup KHUSUS untuk ADMIN AREA (Manajemen Pengguna & Master Data)
-    Route::middleware(['role:admin'])->group(function() {
-        // Rute yang bisa diakses oleh semua Admin
-        Route::get('/users', [UserController::class, 'index'])->name('users.index');
-        Route::post('/users/{user}/update-role', [UserController::class, 'updateRole'])->name('users.updateRole');
+    // --- RUTE ADMIN AREA DENGAN PERMISSION ---
+    // Grup untuk semua yang terkait manajemen pengguna & role
+    Route::prefix('users')->name('users.')->middleware('permission:view-user')->group(function() {
+        Route::get('/', [UserController::class, 'index'])->name('index');
+        Route::post('/{user}/assign-roles', [UserController::class, 'assignRoles'])->name('assign-roles')->middleware('permission:assign-role');
         
-        // --- PERBAIKAN: Gunakan middleware 'superadmin' yang sudah didaftarkan ---
+        // Hanya Super Admin yang bisa membuat, menghapus, dan reset password
         Route::middleware('superadmin')->group(function () {
-            Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
-            Route::post('/users', [UserController::class, 'store'])->name('users.store');
-            Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-            Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.resetPassword');
-        });
-        
-        Route::prefix('master-data')->name('master-data.')->group(function () {
-            Route::resource('categories', CategoryController::class)->except(['show']);
-            Route::resource('companies', CompanyController::class)->except(['show']);
-            Route::resource('asset-users', AssetUserController::class)->except(['show']);
-
-             Route::get('sub-categories', [SubCategoryController::class, 'index'])->name('sub-categories.index');
-                Route::get('sub-categories/{category}', [SubCategoryController::class, 'show'])->name('sub-categories.show');
-                Route::get('sub-categories/{category}/create', [SubCategoryController::class, 'create'])->name('sub-categories.create');
-                Route::post('sub-categories/{category}', [SubCategoryController::class, 'store'])->name('sub-categories.store');
-                Route::get('sub-categories/{subCategory}/edit', [SubCategoryController::class, 'edit'])->name('sub-categories.edit');
-                Route::put('sub-categories/{subCategory}', [SubCategoryController::class, 'update'])->name('sub-categories.update');
-                Route::delete('sub-categories/{subCategory}', [SubCategoryController::class, 'destroy'])->name('sub-categories.destroy');
+            Route::get('/create', [UserController::class, 'create'])->name('create');
+            Route::post('/', [UserController::class, 'store'])->name('store');
+            Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
+            Route::post('/{user}/reset-password', [UserController::class, 'resetPassword'])->name('resetPassword');
         });
     });
 
-    // Grup untuk role yang bisa MELIHAT data (Semua role login)
-    Route::middleware(['role:admin,viewer,editor,user'])->group(function () {
-        Route::get('assets', [AssetController::class, 'index'])->name('assets.index');
-        Route::get('assets/print', [AssetController::class, 'print'])->name('assets.print');
-        Route::get('assets/export', [AssetController::class, 'export'])->name('assets.export');
-        Route::get('assets/{asset}', [AssetController::class, 'show'])->name('assets.show'); 
+    // Grup untuk Master Data
+    Route::prefix('master-data')->name('master-data.')->middleware('permission:manage-master-data')->group(function () {
+        Route::resource('categories', CategoryController::class)->except(['show']);
+        Route::resource('companies', CompanyController::class)->except(['show']);
+        Route::resource('asset-users', AssetUserController::class)->except(['show']);
+
+        Route::get('sub-categories', [SubCategoryController::class, 'index'])->name('sub-categories.index');
+        Route::get('sub-categories/{category}', [SubCategoryController::class, 'show'])->name('sub-categories.show');
+        Route::get('sub-categories/{category}/create', [SubCategoryController::class, 'create'])->name('sub-categories.create');
+        Route::post('sub-categories/{category}', [SubCategoryController::class, 'store'])->name('sub-categories.store');
+        Route::get('sub-categories/{subCategory}/edit', [SubCategoryController::class, 'edit'])->name('sub-categories.edit');
+        Route::put('sub-categories/{subCategory}', [SubCategoryController::class, 'update'])->name('sub-categories.update');
+        Route::delete('sub-categories/{subCategory}', [SubCategoryController::class, 'destroy'])->name('sub-categories.destroy');
+    });
+    
+    // --- RUTE BARU UNTUK MANAJEMEN ROLES & PERMISSIONS ---
+    Route::prefix('roles-management')->name('roles.')->middleware('superadmin')->group(function() {
+        Route::get('/', [RoleController::class, 'index'])->name('index');
+        Route::get('/create', [RoleController::class, 'create'])->name('create');
+        Route::post('/', [RoleController::class, 'store'])->name('store');
+        Route::get('/{role}/edit', [RoleController::class, 'edit'])->name('edit');
+        Route::put('/{role}', [RoleController::class, 'update'])->name('update');
+        Route::delete('/{role}', [RoleController::class, 'destroy'])->name('destroy');
     });
 });
+    

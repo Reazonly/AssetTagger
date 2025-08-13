@@ -11,18 +11,19 @@
         <img src="{{ asset('images/jhonlin_logo.png') }}" alt="Jhonlin Group Logo" class="h-16">
     </div>
 
-    
     <nav class="mt-6 flex-grow px-4" 
          x-data="{ 
             activeMenu: '{{ 
                 request()->routeIs('dashboard') ? 'dashboard' : 
                 (request()->routeIs('assets.*') ? 'assets' : 
-                (request()->routeIs('users.*') ? 'users' : 
+                (request()->routeIs('users.*') || request()->routeIs('roles.*') ? 'admin-area' : 
                 (request()->routeIs('master-data.*') ? 'master-data' : ''))) 
             }}',
+            isAdminAreaOpen: {{ (request()->routeIs('users.*') || request()->routeIs('roles.*')) ? 'true' : 'false' }},
             isMasterDataOpen: {{ request()->routeIs('master-data.*') ? 'true' : 'false' }}
          }">
 
+        @can('view-dashboard')
         <a href="{{ route('dashboard') }}" 
            @click="activeMenu = 'dashboard'"
            class="flex items-center px-4 py-3 rounded-lg duration-200 transform hover:translate-x-1 transition-all"
@@ -30,6 +31,9 @@
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
             <span class="mx-4 font-medium">Dashboard</span>
         </a>
+        @endcan
+        
+        @can('view-asset')
         <a href="{{ route('assets.index') }}" 
            @click="activeMenu = 'assets'"
            class="mt-2 flex items-center px-4 py-3 rounded-lg duration-200 transform hover:translate-x-1 transition-all"
@@ -37,19 +41,50 @@
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
             <span class="mx-4 font-medium">Manajemen Aset</span>
         </a>
+        @endcan
 
-        @if(auth()->user()->role == 'admin')
+        {{-- 
+            =====================================================================
+            PERBAIKAN: Ganti pengecekan role yang kaku dengan pengecekan 
+            permission yang lebih fleksibel.
+            =====================================================================
+        --}}
+        @php
+            // Cek apakah pengguna punya setidaknya satu izin administratif
+   
+            $hasAdminPermissions = auth()->user()->can('view-user') || auth()->user()->can('manage-roles') || auth()->user()->can('manage-master-data');
+        @endphp
+
+        @if($hasAdminPermissions)
             <div class="mt-6 pt-4 border-t border-sky-700">
                 <p class="px-4 text-xs text-sky-300 uppercase tracking-wider font-semibold">Admin Area</p>
                 
-                <a href="{{ route('users.index') }}" 
-                   @click="activeMenu = 'users'"
-                   class="mt-2 flex items-center px-4 py-3 rounded-lg duration-200 transform hover:translate-x-1 transition-all"
-                   :class="activeMenu === 'users' ? 'bg-sky-900 border-l-4 border-sky-400' : 'text-sky-100 hover:bg-sky-700 border-l-4 border-transparent'">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.125-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.125-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                    <span class="mx-4 font-medium">Manajemen User Login</span>
-                </a>
+                {{-- Tampilkan menu User & Role jika punya izin terkait --}}
+                @if(auth()->user()->can('view-user') || auth()->user()->can('manage-roles'))
+                <div class="mt-2">
+                    <button @click="isAdminAreaOpen = !isAdminAreaOpen; activeMenu = 'admin-area'"
+                            class="w-full flex justify-between items-center px-4 py-3 rounded-lg duration-200 transform hover:translate-x-1 transition-all"
+                            :class="activeMenu === 'admin-area' ? 'bg-sky-900 border-l-4 border-sky-400' : 'text-sky-100 hover:bg-sky-700 border-l-4 border-transparent'">
+                        <div class="flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.125-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.125-1.283-.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                            <span class="mx-4 font-medium">User & Role</span>
+                        </div>
+                        <svg class="h-5 w-5 transition-transform duration-200" :class="{'transform rotate-90': isAdminAreaOpen}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                    </button>
 
+                    <div x-show="isAdminAreaOpen" class="mt-2 space-y-2 pl-8" x-cloak>
+                        @can('view-user')
+                        <a href="{{ route('users.index') }}" class="block px-4 py-2 text-sm rounded-md {{ request()->routeIs('users.*') ? 'text-white font-bold' : 'text-sky-200 hover:text-white' }}">Manajemen User</a>
+                        @endcan
+                        @can('manage-roles')
+                        <a href="{{ route('roles.index') }}" class="block px-4 py-2 text-sm rounded-md {{ request()->routeIs('roles.*') ? 'text-white font-bold' : 'text-sky-200 hover:text-white' }}">Manajemen Role</a>
+                        @endcan
+                    </div>
+                </div>
+                @endif
+
+                {{-- Tampilkan menu Master Data jika punya izin terkait --}}
+                @can('manage-master-data')
                 <div class="mt-2">
                     <button @click="isMasterDataOpen = !isMasterDataOpen; activeMenu = 'master-data'"
                             class="w-full flex justify-between items-center px-4 py-3 rounded-lg duration-200 transform hover:translate-x-1 transition-all"
@@ -61,20 +96,14 @@
                         <svg class="h-5 w-5 transition-transform duration-200" :class="{'transform rotate-90': isMasterDataOpen}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
                     </button>
 
-                    <div x-show="isMasterDataOpen" 
-                         x-transition:enter="transition ease-out duration-200"
-                         x-transition:enter-start="opacity-0 transform -translate-y-2"
-                         x-transition:enter-end="opacity-100 transform translate-y-0"
-                         x-transition:leave="transition ease-in duration-150"
-                         x-transition:leave-start="opacity-100 transform translate-y-0"
-                         x-transition:leave-end="opacity-0 transform -translate-y-2"
-                         class="mt-2 space-y-2 pl-8" x-cloak>
+                    <div x-show="isMasterDataOpen" class="mt-2 space-y-2 pl-8" x-cloak>
                         <a href="{{ route('master-data.asset-users.index') }}" class="block px-4 py-2 text-sm rounded-md {{ request()->routeIs('master-data.asset-users.*') ? 'text-white font-bold' : 'text-sky-200 hover:text-white' }}">Pengguna Aset</a>
                         <a href="{{ route('master-data.categories.index') }}" class="block px-4 py-2 text-sm rounded-md {{ request()->routeIs('master-data.categories.*') ? 'text-white font-bold' : 'text-sky-200 hover:text-white' }}">Kategori</a>
                         <a href="{{ route('master-data.sub-categories.index') }}" class="block px-4 py-2 text-sm rounded-md {{ request()->routeIs('master-data.sub-categories.*') ? 'text-white font-bold' : 'text-sky-200 hover:text-white' }}">Sub-Kategori</a>
                         <a href="{{ route('master-data.companies.index') }}" class="block px-4 py-2 text-sm rounded-md {{ request()->routeIs('master-data.companies.*') ? 'text-white font-bold' : 'text-sky-200 hover:text-white' }}">Perusahaan</a>
                     </div>
                 </div>
+                @endcan
             </div>
         @endif
     </nav>
@@ -92,7 +121,7 @@
             <div>
                 <p class="text-sm font-semibold text-white">{{ Auth::user()->nama_pengguna }}</p>
                 <p class="text-xs text-sky-200 font-medium bg-sky-700 px-2 py-0.5 rounded-full inline-block mt-1">
-                    {{ ucfirst(Auth::user()->role) }}
+                    {{ Auth::user()->roles->first()->display_name ?? 'No Role' }}
                 </p>
             </div>
         </a>

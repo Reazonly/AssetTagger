@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -12,10 +12,9 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::whereIn('role', ['admin', 'editor', 'viewer'])
+        $query = User::whereHas('roles')
                      ->where('id', '!=', auth()->id());
 
-        // --- LOGIKA PENCARIAN DITAMBAHKAN ---
         if ($request->filled('search')) {
             $searchTerm = $request->input('search');
             $query->where(function ($q) use ($searchTerm) {
@@ -24,57 +23,58 @@ class UserController extends Controller
             });
         }
 
-        $users = $query->latest()->paginate(15);
-        return view('users.index', compact('users'));
+        $users = $query->with('roles')->latest()->paginate(15);
+        $roles = Role::orderBy('display_name')->get();
+
+        return view('users.index', compact('users', 'roles'));
     }
 
-    // --- METHOD BARU: Menampilkan form tambah pengguna ---
     public function create()
     {
-        return view('users.create');
+        $roles = Role::orderBy('display_name')->get();
+        return view('users.create', compact('roles'));
     }
 
-    // --- METHOD BARU: Menyimpan pengguna baru ---
     public function store(Request $request)
     {
         $validated = $request->validate([
             'nama_pengguna' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'role' => ['required', Rule::in(['admin', 'editor', 'viewer'])],
+            'roles' => ['required', 'array'],
+            'roles.*' => ['exists:roles,id'],
         ]);
 
-        User::create([
+        $user = User::create([
             'nama_pengguna' => $validated['nama_pengguna'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => $validated['role'],
         ]);
+        
+        $user->roles()->sync($validated['roles']);
 
         return redirect()->route('users.index')->with('success', 'Pengguna login baru berhasil ditambahkan.');
     }
-
-    public function updateRole(Request $request, User $user)
+    
+    public function assignRoles(Request $request, User $user)
     {
-        if ($user->id === auth()->id()) {
-            return back()->with('error', 'Anda tidak dapat mengubah role diri sendiri.');
-        }
+        
         if ($user->id === 1) {
             return back()->with('error', 'Role untuk Super Admin tidak dapat diubah.');
         }
+
         $validated = $request->validate([
-            'role' => ['required', Rule::in(['admin', 'editor', 'viewer'])],
+            'roles' => ['nullable', 'array'],
+            'roles.*' => ['exists:roles,id'],
         ]);
-        $user->role = $validated['role'];
-        $user->save();
+
+        $user->roles()->sync($request->input('roles', []));
+
         return redirect()->route('users.index')->with('success', 'Role untuk pengguna ' . $user->nama_pengguna . ' berhasil diperbarui.');
     }
 
     public function destroy(User $user)
     {
-        if (auth()->id() !== 1) {
-            return back()->with('error', 'Anda tidak memiliki hak akses untuk menghapus pengguna.');
-        }
         if ($user->id === 1) {
             return back()->with('error', 'Super Admin tidak dapat dihapus.');
         }
@@ -84,9 +84,6 @@ class UserController extends Controller
 
     public function resetPassword(User $user)
     {
-        if (auth()->id() !== 1) {
-            return back()->with('error', 'Anda tidak memiliki hak akses untuk mereset password.');
-        }
         if ($user->id === 1) {
             return back()->with('error', 'Password Super Admin hanya bisa diubah melalui halaman profil.');
         }

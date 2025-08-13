@@ -15,12 +15,15 @@ class IsSuperAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-       
-        if (auth()->check() && auth()->id() === 1) {
+        // =====================================================================
+        // PERBAIKAN: Mengganti pengecekan dari ID pengguna ke nama role.
+        // Sekarang, setiap pengguna dengan role 'super-admin' akan diizinkan.
+        // =====================================================================
+        if (auth()->check() && auth()->user()->hasRole('super-admin')) {
             return $next($request);
         }
 
-      
+        // Jika tidak, kembalikan ke halaman sebelumnya dengan pesan error.
         return back()->with('error', 'Anda tidak memiliki hak akses untuk tindakan ini.');
     }
 }
