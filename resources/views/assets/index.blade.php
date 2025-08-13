@@ -4,12 +4,13 @@
 
 @section('content')
 <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+
+
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-200 pb-6 mb-6">
         <div>
             <h1 class="text-3xl font-bold text-gray-900">Daftar Aset</h1>
             <p class="text-sm text-gray-500 mt-1">Kelola, cari, dan filter semua aset perusahaan.</p>
         </div>
-        
         @if(in_array(auth()->user()->role, ['admin', 'editor']))
         <div class="flex items-center gap-3 mt-4 md:mt-0">
             <button onclick="document.getElementById('importModal').classList.remove('hidden')" class="inline-flex items-center gap-2 bg-white text-gray-700 font-semibold px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
@@ -28,6 +29,7 @@
         @endif
     </div>
 
+    
     <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
         <form action="{{ route('assets.index') }}" method="GET" class="w-full md:w-auto flex flex-col sm:flex-row items-center gap-3">
             <div class="relative w-full sm:w-64">
@@ -59,7 +61,7 @@
                     <span>Export Filter</span>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                 </button>
-                <div x-show="open" @click.away="open = false" class="absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10" x-cloak>
+                <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10" x-cloak>
                     <div class="py-1" role="menu" aria-orientation="vertical">
                         <a href="{{ route('assets.export', array_merge(request()->query(), ['category_code' => 'VEHI'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Export Kendaraan</a>
                         <a href="{{ route('assets.export', array_merge(request()->query(), ['category_code' => 'ELEC'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Export Elektronik</a>
@@ -70,6 +72,7 @@
             </div>
         </div>
     </div>
+
 
     <div class="overflow-x-auto border border-gray-200 rounded-lg">
         <table class="w-full text-sm text-left text-gray-600">
@@ -96,14 +99,7 @@
                         <td class="px-6 py-4">{{ optional($asset->category)->name ?? 'N/A' }}</td>
                         <td class="px-6 py-4">{{ optional($asset->subCategory)->name ?? '-' }}</td>
                         <td class="px-6 py-4">{{ optional($asset->assetUser)->nama ?? 'N/A' }}</td>
-                        <td class="px-6 py-4">
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full
-                                    @if($asset->kondisi == 'Baik') bg-green-100 text-green-800
-                                    @elseif($asset->kondisi == 'Rusak') bg-red-100 text-red-800
-                                    @else bg-yellow-100 text-yellow-800 @endif">
-                                    {{ $asset->kondisi }}
-                                </span>
-                            </td>
+                        <td class="px-6 py-4"><span class="px-2 py-1 text-xs font-semibold rounded-full @if($asset->kondisi == 'Baik') bg-green-100 text-green-800 @elseif($asset->kondisi == 'Rusak') bg-red-100 text-red-800 @else bg-yellow-100 text-yellow-800 @endif">{{ $asset->kondisi }}</span></td>
                         @if(in_array(auth()->user()->role, ['admin', 'editor']))
                         <td class="px-6 py-4 text-right whitespace-nowrap">
                             <a href="{{ route('assets.show', $asset->id) }}" class="font-medium text-emerald-600 hover:text-emerald-800">Lihat</a>
@@ -129,96 +125,100 @@
         </table>
     </div>
     
-
     <div class="mt-6">{{ $assets->appends(request()->query())->links() }}</div>
 </div>
 
-
 @if(in_array(auth()->user()->role, ['admin', 'editor']))
-<div id="importModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 overflow-y-auto h-full w-full hidden z-50 transition-opacity">
-    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-xl bg-white">
-        <div class="flex justify-between items-center pb-3 border-b">
-            <h3 class="text-lg font-medium text-gray-900">Import Data dari Excel</h3>
-            <button onclick="document.getElementById('importModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-        </div>
-        <form action="{{ route('assets.import') }}" method="POST" enctype="multipart/form-data" class="mt-4">
-            @csrf
-            <p class="text-sm text-gray-600 mb-4">Pilih file Excel (.xlsx, .xls) atau CSV (.csv) untuk mengimpor data aset secara massal.</p>
-            <input type="file" name="file" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" required accept=".xls,.xlsx,.csv">
-            <div class="mt-6 flex justify-end space-x-3">
-                <button type="button" onclick="document.getElementById('importModal').classList.add('hidden')" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">Batal</button>
-                <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">Upload & Import</button>
-            </div>
-        </form>
-    </div>
-</div>
+
 @endif
 @endsection
 
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
+    const storageKey = 'selectedAssetIds';
+    let selectedAssetIds = JSON.parse(localStorage.getItem(storageKey)) || [];
+
     const selectAllCheckbox = document.getElementById('selectAllCheckbox');
     const assetCheckboxes = document.querySelectorAll('.asset-checkbox');
     const printSelectedBtn = document.getElementById('printSelectedBtn');
     const exportSelectedBtn = document.getElementById('exportSelectedBtn');
     
-    function updateActionButtonsState() {
-        const selectedCount = Array.from(assetCheckboxes).filter(cb => cb.checked).length;
-        const anyChecked = selectedCount > 0;
+    const saveState = () => {
+        localStorage.setItem(storageKey, JSON.stringify(selectedAssetIds));
+    };
 
+    const updateUI = () => {
+
+        assetCheckboxes.forEach(checkbox => {
+            const assetId = parseInt(checkbox.value, 10);
+            checkbox.checked = selectedAssetIds.includes(assetId);
+        });
+
+ 
+        const allVisibleChecked = assetCheckboxes.length > 0 && Array.from(assetCheckboxes).every(cb => cb.checked);
+        selectAllCheckbox.checked = allVisibleChecked;
+
+
+        const anyChecked = selectedAssetIds.length > 0;
         printSelectedBtn.disabled = !anyChecked;
         exportSelectedBtn.disabled = !anyChecked;
-    }
+    };
 
     selectAllCheckbox.addEventListener('change', function () {
         assetCheckboxes.forEach(checkbox => {
-            checkbox.checked = this.checked;
+            const assetId = parseInt(checkbox.value, 10);
+            const isChecked = this.checked;
+
+            checkbox.checked = isChecked;
+
+            if (isChecked) {
+
+                if (!selectedAssetIds.includes(assetId)) {
+                    selectedAssetIds.push(assetId);
+                }
+            } else {
+
+                selectedAssetIds = selectedAssetIds.filter(id => id !== assetId);
+            }
         });
-        updateActionButtonsState();
+        saveState();
+        updateUI();
     });
 
     assetCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function () {
-            if (!this.checked) {
-                selectAllCheckbox.checked = false;
+            const assetId = parseInt(this.value, 10);
+            if (this.checked) {
+                if (!selectedAssetIds.includes(assetId)) {
+                    selectedAssetIds.push(assetId);
+                }
             } else {
-                const allChecked = Array.from(assetCheckboxes).every(cb => cb.checked);
-                selectAllCheckbox.checked = allChecked;
+                selectedAssetIds = selectedAssetIds.filter(id => id !== assetId);
             }
-            updateActionButtonsState();
+            saveState();
+            updateUI();
         });
     });
 
     printSelectedBtn.addEventListener('click', function () {
-        const selectedIds = Array.from(assetCheckboxes)
-            .filter(cb => cb.checked)
-            .map(cb => 'ids[]=' + cb.value)
-            .join('&');
-        if (selectedIds) {
-            window.open("{{ route('assets.print') }}?" + selectedIds, '_blank');
+        if (selectedAssetIds.length > 0) {
+            const queryParams = selectedAssetIds.map(id => 'ids[]=' + id).join('&');
+            window.open("{{ route('assets.print') }}?" + queryParams, '_blank');
         }
     });
 
     exportSelectedBtn.addEventListener('click', function() {
-        const selectedIds = Array.from(assetCheckboxes)
-            .filter(cb => cb.checked)
-            .map(cb => 'ids[]=' + cb.value)
-            .join('&');
-        
-        if (selectedIds) {
-            const categoryId = document.getElementById('category_filter').value;
-            let exportUrl = "{{ route('assets.export') }}?" + selectedIds;
-            if (categoryId) {
-                exportUrl += `&category_id=${categoryId}`; // Perbaikan kecil pada bug javascript
-            }
-            window.location.href = exportUrl;
+        if (selectedAssetIds.length > 0) {
+            const queryParams = selectedAssetIds.map(id => 'ids[]=' + id).join('&');
+            window.location.href = "{{ route('assets.export') }}?" + queryParams;
         }
     });
 
-    updateActionButtonsState();
+   
+    updateUI();
+
 });
 </script>
 @endpush
