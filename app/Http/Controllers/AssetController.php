@@ -92,7 +92,8 @@ class AssetController extends Controller
     public function create()
     {
         $categories = Category::with(['subCategories', 'units'])->orderBy('name')->get();
-        $assetUsers = AssetUser::orderBy('nama')->get();
+        // --- PERUBAHAN DI SINI ---
+        $assetUsers = AssetUser::with('company')->orderBy('nama')->get();
         return view('assets.create', [
             'categories' => $categories,
             'companies' => Company::all(),
@@ -163,7 +164,7 @@ class AssetController extends Controller
 
     public function show(Asset $asset)
     {
-        $asset->load(['assetUser', 'category', 'company', 'subCategory', 'history.assetUser']);
+        $asset->load(['assetUser.company', 'category', 'company', 'subCategory', 'history.assetUser.company']);
         return view('assets.show', compact('asset'));
     }
 
@@ -171,7 +172,8 @@ class AssetController extends Controller
     {
         $asset->load(['assetUser', 'category', 'company', 'subCategory']);
         $categories = Category::with(['subCategories', 'units'])->orderBy('name')->get();
-        $assetUsers = AssetUser::orderBy('nama')->get();
+        // --- PERUBAHAN DI SINI ---
+        $assetUsers = AssetUser::with('company')->orderBy('nama')->get();
         return view('assets.edit', [
             'asset' => $asset,
             'categories' => $categories,
@@ -255,7 +257,7 @@ class AssetController extends Controller
 
     public function publicShow(Asset $asset)
     {
-        $asset->load(['assetUser', 'category', 'company', 'subCategory', 'history.assetUser']);
+        $asset->load(['assetUser.company', 'category', 'company', 'subCategory', 'history.assetUser.company']);
         return view('assets.public-show', compact('asset'));
     }
 

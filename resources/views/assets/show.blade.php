@@ -75,14 +75,38 @@
                     @endif
                     <div class="flex flex-col"><dt class="font-medium text-gray-500">Jumlah</dt><dd class="text-gray-900 mt-1">{{ $asset->jumlah }} {{ $asset->satuan }}</dd></div>
                     
-                    <div class="sm:col-span-2 md:col-span-3 mt-4 pt-5 border-t">
-                        <h4 class="text-lg font-semibold text-gray-800 mb-4">Informasi Pengguna</h4>
-                        <dl class="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-5 text-sm">
-                            <div class="flex flex-col"><dt class="font-medium text-gray-500">Pengguna Saat Ini</dt><dd class="text-gray-900 mt-1">{{ optional($asset->assetUser)->nama ?? 'Tidak ada' }}</dd></div>
-                            <div class="flex flex-col"><dt class="font-medium text-gray-500">Jabatan</dt><dd class="text-gray-900 mt-1">{{ optional($asset->assetUser)->jabatan ?? 'N/A' }}</dd></div>
-                            <div class="flex flex-col"><dt class="font-medium text-gray-500">Departemen</dt><dd class="text-gray-900 mt-1">{{ optional($asset->assetUser)->departemen ?? 'N/A' }}</dd></div>
-                        </dl>
-                    </div>
+                    {{-- Ganti blok "Informasi Pengguna" Anda dengan kode di bawah ini --}}
+
+                <div class="sm:col-span-2 md:col-span-3 mt-4 pt-5 border-t">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-4">Informasi Pengguna</h4>
+                    
+                    {{-- Tata letak diubah menjadi 2 kolom untuk tampilan yang lebih rapi --}}
+                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm">
+                        
+                        {{-- Setiap item sekarang dibungkus dengan benar di dalam div-nya sendiri --}}
+                        <div class="flex flex-col">
+                            <dt class="font-medium text-gray-500">Pengguna Saat Ini</dt>
+                            <dd class="text-gray-900 mt-1">{{ optional($asset->assetUser)->nama ?? 'Tidak ada' }}</dd>
+                        </div>
+                        
+                        <div class="flex flex-col">
+                            <dt class="font-medium text-gray-500">Jabatan</dt>
+                            <dd class="text-gray-900 mt-1">{{ optional($asset->assetUser)->jabatan ?? 'N/A' }}</dd>
+                        </div>
+                        
+                        <div class="flex flex-col">
+                            <dt class="font-medium text-gray-500">Departemen</dt>
+                            <dd class="text-gray-900 mt-1">{{ optional($asset->assetUser)->departemen ?? 'N/A' }}</dd>
+                        </div>
+                        
+                        <div class="flex flex-col">
+                            <dt class="font-medium text-gray-500">Perusahaan</dt>
+                            <dd class="text-gray-900 mt-1">{{ optional($asset->assetUser->company)->name ?? 'N/A' }}</dd>
+                        </div>
+
+                    </dl>
+                </div>
+
                 </dl>
             </div>
 

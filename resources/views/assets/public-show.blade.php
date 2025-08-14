@@ -60,6 +60,9 @@
                 <div class="font-medium text-gray-500">Departemen</div>
                  {{-- PERBAIKAN DI SINI --}}
                 <div>{{ optional($asset->assetUser)->departemen ?? 'N/A' }}</div>
+
+                <div class="font-medium text-gray-500">Perusahaan</div>
+                <div>{{ optional($asset->assetUser->company)->name ?? 'N/A' }}</div>
             </div>
         </div>
 
@@ -136,6 +139,7 @@
                         <div class="mt-1">
                             <p class="text-xs text-gray-500">{{ optional($h->assetUser)->jabatan ?? 'Jabatan tidak diketahui' }}</p>
                             <p class="text-xs text-gray-500">{{ optional($h->assetUser)->departemen ?? 'Departemen tidak diketahui' }}</p>
+                            
                             <p class="text-xs text-gray-400 mt-1">
                                 <span>Mulai: {{ \Carbon\Carbon::parse($h->tanggal_mulai)->format('d M Y') }}</span>
                                 @if($h->tanggal_selesai)

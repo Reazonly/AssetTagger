@@ -46,12 +46,32 @@
                 </div>
             </div>
 
+            <!-- Informasi Pengguna -->
             <div class="bg-white p-8 rounded-lg shadow-md border">
                 <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Pengguna</h3>
-                <div><label for="asset_user_id" class="block text-sm font-medium text-gray-700">Pilih Pengguna (Jika Ada)</label><select id="asset_user_id" name="asset_user_id" x-model="selectedAssetUserId" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"><option value="">-- Tidak ada pengguna --</option>@foreach($users as $user)<option value="{{ $user->id }}">{{ $user->nama }}</option>@endforeach</select></div>
-                <div x-show="selectedAssetUserId" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-md border" x-cloak>
-                    <div><label class="block text-sm font-medium text-gray-500">Jabatan</label><p class="mt-1 text-sm text-gray-900" x-text="currentAssetUser.jabatan || '-'"></p></div>
-                    <div><label class="block text-sm font-medium text-gray-500">Departemen</label><p class="mt-1 text-sm text-gray-900" x-text="currentAssetUser.departemen || '-'"></p></div>
+                <div>
+                    <label for="asset_user_id" class="block text-sm font-medium text-gray-700">Pilih Pengguna</label>
+                    <select id="asset_user_id" name="asset_user_id" x-model.number="selectedAssetUserId" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">
+                        <option value="">-- Tidak ada pengguna --</option>
+                        @foreach($users as $user)
+                            <option value="{{ $user->id }}">{{ $user->nama }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <!-- PERUBAHAN DI SINI -->
+                <div x-show="selectedAssetUserId" class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-md border" x-cloak>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Jabatan</label>
+                        <p class="mt-1 text-sm text-gray-900" x-text="currentAssetUser.jabatan || '-'"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Departemen</label>
+                        <p class="mt-1 text-sm text-gray-900" x-text="currentAssetUser.departemen || '-'"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Perusahaan</label>
+                        <p class="mt-1 text-sm text-gray-900" x-text="currentAssetUser.company ? currentAssetUser.company.name : '-'"></p>
+                    </div>
                 </div>
             </div>
 
