@@ -42,20 +42,26 @@ class AssetController extends Controller
         $paddedId = str_pad($assetId, 3, '0', STR_PAD_LEFT);
 
         // --- PERBAIKAN LOGIKA DI SINI ---
-        // Skenario 1: Untuk Elektronik & Kendaraan
-        if (in_array($category->code, ['ELEC', 'VEHI'])) {
+        // Skenario 1: Untuk Elektronik
+        if ($category->code === 'ELEC') {
             $jenisBarangCode = $getFourDigits(optional($subCategory)->name);
             $merkCode = $getFourDigits($request->merk);
             return "{$jenisBarangCode}/{$merkCode}/{$companyCode}/{$paddedId}";
         } 
-        // Skenario 2: Khusus untuk Furniture
+        // Skenario 2: Khusus untuk Kendaraan
+        elseif ($category->code === 'VEHI') {
+            $jenisBarangCode = $getFourDigits(optional($subCategory)->name);
+            $namaBarangCode = $getFourDigits($request->nama_barang); // Menggunakan nama barang (e.g., Avanza)
+            return "{$jenisBarangCode}/{$namaBarangCode}/{$companyCode}/{$paddedId}";
+        }
+        // Skenario 3: Khusus untuk Furniture
         elseif ($category->code === 'FURN') {
             $jenisBarangCode = $getFourDigits(optional($subCategory)->name);
-            $kategoriCode = $getFourDigits($category->code); // Mengambil kode 'FURN'
+            $kategoriCode = $getFourDigits($category->code);
             return "{$jenisBarangCode}/{$kategoriCode}/{$companyCode}/{$paddedId}";
         }
         
-        // Skenario 3: Untuk semua kategori lainnya
+        // Skenario 4: Untuk semua kategori lainnya
         $kategoriCode = $getFourDigits($category->code);
         $namaBarangCode = $getFourDigits($request->nama_barang);
         return "{$namaBarangCode}/{$kategoriCode}/{$companyCode}/{$paddedId}";
