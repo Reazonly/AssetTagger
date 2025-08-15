@@ -40,16 +40,23 @@ class AssetController extends Controller
         $company = Company::find($request->company_id);
         $companyCode = $getThreeDigits(optional($company)->code);
         $paddedId = str_pad($assetId, 3, '0', STR_PAD_LEFT);
+
+        // --- PERBAIKAN LOGIKA DI SINI ---
+        // Skenario 1: Untuk Elektronik & Kendaraan
         if (in_array($category->code, ['ELEC', 'VEHI'])) {
             $jenisBarangCode = $getFourDigits(optional($subCategory)->name);
             $merkCode = $getFourDigits($request->merk);
             return "{$jenisBarangCode}/{$merkCode}/{$companyCode}/{$paddedId}";
-        } elseif ($category->code === 'FURN') {
-            $namaBarangCode = $getFourDigits($request->nama_barang);
-            $kategoriCode = $getFourDigits($category->name);
-            return "{$namaBarangCode}/{$kategoriCode}/{$companyCode}/{$paddedId}";
+        } 
+        // Skenario 2: Khusus untuk Furniture
+        elseif ($category->code === 'FURN') {
+            $jenisBarangCode = $getFourDigits(optional($subCategory)->name);
+            $kategoriCode = $getFourDigits($category->code); // Mengambil kode 'FURN'
+            return "{$jenisBarangCode}/{$kategoriCode}/{$companyCode}/{$paddedId}";
         }
-        $kategoriCode = $getFourDigits($category->name);
+        
+        // Skenario 3: Untuk semua kategori lainnya
+        $kategoriCode = $getFourDigits($category->code);
         $namaBarangCode = $getFourDigits($request->nama_barang);
         return "{$namaBarangCode}/{$kategoriCode}/{$companyCode}/{$paddedId}";
     }
@@ -91,28 +98,46 @@ class AssetController extends Controller
 
     public function create()
     {
-        $categories = Category::with(['subCategories', 'units'])->orderBy('name')->get();
-        // --- PERUBAHAN DI SINI ---
+        $categories = Category::with(['subCategories' => function ($query) {
+            $query->latest();
+        }, 'units'])->orderBy('name')->get();
+
         $assetUsers = AssetUser::with('company')->orderBy('nama')->get();
         return view('assets.create', [
             'categories' => $categories,
-            'companies' => Company::all(),
+            'companies' => Company::orderBy('name')->get(),
             'users' => $assetUsers,
         ]);
     }
 
     public function store(Request $request)
     {
-        $category = Category::find($request->category_id);
-        $merkRule = $category && $category->requires_merk ? 'required|string|max:255' : 'nullable';
-        $tipeRule = $category && !$category->requires_merk && $category->code !== 'FURN' ? 'required|string|max:255' : 'nullable';
-        $subCategoryRequired = $category && in_array($category->code, ['ELEC', 'VEHI']);
+        $subCategory = SubCategory::find($request->sub_category_id);
+        $inputType = optional($subCategory)->input_type ?? 'none';
+        
+        $merkRule = 'nullable|string|max:255';
+        $tipeRule = 'nullable|string|max:255';
+
+        if ($inputType === 'merk') {
+            $merkRule = 'required|string|max:255';
+        }
+        if ($inputType === 'tipe') {
+            $tipeRule = 'required|string|max:255';
+        }
+        if ($inputType === 'merk_dan_tipe') {
+            if ($request->has('use_merk')) {
+                $merkRule = 'required|string|max:255';
+            }
+            if ($request->has('use_tipe')) {
+                $tipeRule = 'required|string|max:255';
+            }
+        }
         
         $validatedData = $request->validate([
             'nama_barang' => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
             'company_id' => 'required|exists:companies,id',
-            'sub_category_id' => $subCategoryRequired ? 'required|exists:sub_categories,id' : 'nullable',
+            'sub_category_id' => 'nullable|exists:sub_categories,id',
             'asset_user_id' => 'nullable|exists:asset_users,id',
             'new_asset_user_name' => 'nullable|string|max:255',
             'merk' => $merkRule,
@@ -148,7 +173,7 @@ class AssetController extends Controller
         $data['code_asset'] = 'PENDING-' . time();
         $asset = Asset::create($data);
         
-        $subCategory = $request->sub_category_id ? SubCategory::find($request->sub_category_id) : null;
+        $category = Category::find($request->category_id);
         $asset->code_asset = $this->generateAssetCode($request, $category, $subCategory, $asset->id);
         $asset->save();
 
@@ -171,30 +196,26 @@ class AssetController extends Controller
     public function edit(Asset $asset)
     {
         $asset->load(['assetUser', 'category', 'company', 'subCategory']);
-        $categories = Category::with(['subCategories', 'units'])->orderBy('name')->get();
-        // --- PERUBAHAN DI SINI ---
+        
+        $categories = Category::with(['subCategories' => function ($query) {
+            $query->latest();
+        }, 'units'])->orderBy('name')->get();
+        
         $assetUsers = AssetUser::with('company')->orderBy('nama')->get();
         return view('assets.edit', [
             'asset' => $asset,
             'categories' => $categories,
-            'companies' => Company::all(),
+            'companies' => Company::orderBy('name')->get(),
             'users' => $assetUsers,
         ]);
     }
 
     public function update(Request $request, Asset $asset)
     {
-        $category = $asset->category;
-        $merkRule = $category && $category->requires_merk ? 'required|string|max:255' : 'nullable';
-        $tipeRule = $category && !$category->requires_merk && $category->code !== 'FURN' ? 'required|string|max:255' : 'nullable';
-        $subCategoryRequired = $category && in_array($category->code, ['ELEC', 'VEHI']);
-        
         $validatedData = $request->validate([
-            'sub_category_id' => $subCategoryRequired ? 'required|exists:sub_categories,id' : 'nullable',
+            'company_id' => 'required|exists:companies,id',
             'asset_user_id' => 'nullable|exists:asset_users,id',
             'new_asset_user_name' => 'nullable|string|max:255',
-            'merk' => $merkRule,
-            'tipe' => $tipeRule,
             'serial_number' => 'nullable|string|max:255|unique:assets,serial_number,' . $asset->id,
             'jumlah' => 'required|integer|min:1',
             'satuan' => 'required|string|max:50',
@@ -209,13 +230,11 @@ class AssetController extends Controller
             'include_items' => 'nullable|string',
             'peruntukan' => 'nullable|string',
             'keterangan' => 'nullable|string',
-            'spec' => 'nullable|array',
         ]);
         
         $oldAssetUserId = $asset->asset_user_id;
 
         $updateData = $validatedData;
-        $updateData['specifications'] = $this->collectSpecificationsFromRequest($request);
         $newAssetUserId = $this->getAssetUserIdFromRequest($request);
         $updateData['asset_user_id'] = $newAssetUserId;
 
@@ -226,7 +245,7 @@ class AssetController extends Controller
             $updateData['thn_pembelian'] = null;
         }
 
-        unset($updateData['spec'], $updateData['new_asset_user_name']);
+        unset($updateData['new_asset_user_name']);
 
         $asset->update($updateData);
 

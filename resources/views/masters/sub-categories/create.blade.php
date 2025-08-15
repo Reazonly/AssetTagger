@@ -13,6 +13,17 @@
                     <label for="name" class="block text-sm font-medium text-gray-700">Nama Sub-Kategori</label>
                     <input type="text" name="name" id="name" value="{{ old('name') }}" required class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">
                 </div>
+
+                <div class="pt-4 border-t">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Input Wajib di Form Aset</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center"><input type="radio" name="input_type" value="none" class="mr-2" checked> Tidak ada</label>
+                        <label class="flex items-center"><input type="radio" name="input_type" value="merk" class="mr-2"> Perlu Merk</label>
+                        <label class="flex items-center"><input type="radio" name="input_type" value="tipe" class="mr-2"> Hanya Tipe</label>
+                        <label class="flex items-center"><input type="radio" name="input_type" value="merk_dan_tipe" class="mr-2"> Perlu Merk & Tipe (2 Opsi)</label>
+                    </div>
+                </div>
+
                 <div class="pt-4 border-t">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Kolom Spesifikasi Detail (Opsional)</label>
                     <p class="text-xs text-gray-500 mb-3">Tambahkan field input yang akan muncul di form aset jika sub-kategori ini dipilih. Contoh: Processor, RAM, Ukuran Layar.</p>

@@ -29,7 +29,6 @@ class CategoryController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:10|unique:categories,code',
-            'requires_merk' => 'required|boolean',
         ]);
         Category::create($validated);
         return redirect()->route('master-data.categories.index')->with('success', 'Kategori baru berhasil ditambahkan.');
@@ -45,7 +44,6 @@ class CategoryController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:10|unique:categories,code,' . $category->id,
-            'requires_merk' => 'required|boolean',
         ]);
         $category->update($validated);
         return redirect()->route('master-data.categories.index')->with('success', 'Data kategori berhasil diperbarui.');

@@ -19,24 +19,16 @@
 
         <div class="space-y-8" 
              x-data="{ 
-                categoriesData: {{ Js::from($categories->keyBy('id')) }},
                 assetUsersData: {{ Js::from($users->keyBy('id')) }},
-                selectedCategoryId: {{ old('category_id', $asset->category_id) }},
-                selectedSubCategoryId: null,
                 selectedAssetUserId: {{ old('asset_user_id', $asset->asset_user_id) ?? 'null' }},
-                get currentCategory() { return this.categoriesData[this.selectedCategoryId] || {} },
-                get currentAssetUser() { return this.assetUsersData[this.selectedAssetUserId] || {} },
-                init() {
-                    this.$nextTick(() => {
-                        this.selectedSubCategoryId = {{ old('sub_category_id', $asset->sub_category_id) ?? 'null' }};
-                    });
-                }
+                get currentAssetUser() { return this.assetUsersData[this.selectedAssetUserId] || {} }
              }">
             
-            <!-- Informasi Utama -->
             <div class="bg-white p-8 rounded-lg shadow-md border">
                 <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Utama</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    {{-- PERUBAHAN DI SINI: Field diubah menjadi teks statis, kecuali Perusahaan --}}
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Nama Barang</label>
                         <p class="mt-1 text-lg text-gray-900 font-semibold">{{ $asset->nama_barang }}</p>
@@ -45,37 +37,41 @@
                         <label class="block text-sm font-medium text-gray-700">Kategori</label>
                         <p class="mt-1 text-lg text-gray-900 font-semibold">{{ optional($asset->category)->name }}</p>
                     </div>
-                    <template x-if="currentCategory && (currentCategory.code === 'ELEC' || currentCategory.code === 'VEHI')">
-                        <div>
-                            <label for="sub_category_id" class="block text-sm font-medium text-gray-700">Sub Kategori</label>
-                            <select id="sub_category_id" name="sub_category_id" x-model.number="selectedSubCategoryId" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">
-                                <option value="">-- Pilih Sub Kategori --</option>
-                                <template x-for="subCategory in currentCategory.sub_categories" :key="subCategory.id">
-                                    <option :value="subCategory.id" x-text="subCategory.name"></option>
-                                </template>
-                            </select>
-                        </div>
-                    </template>
-                    <template x-if="currentCategory && currentCategory.requires_merk">
-                        <div>
-                            <label for="merk" class="block text-sm font-medium text-gray-700">Merk</label>
-                            <input type="text" name="merk" id="merk" value="{{ old('merk', $asset->merk) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">
-                        </div>
-                    </template>
-                    <template x-if="currentCategory && !currentCategory.requires_merk && currentCategory.code !== 'FURN'">
-                        <div>
-                            <label for="tipe" class="block text-sm font-medium text-gray-700">Tipe</label>
-                            <input type="text" name="tipe" id="tipe" value="{{ old('tipe', $asset->tipe) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">
-                        </div>
-                    </template>
+
+                    @if($asset->subCategory)
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">Perusahaan Pemilik</label>
-                        <p class="mt-1 text-lg text-gray-900 font-semibold">{{ optional($asset->company)->name }}</p>
+                        <label class="block text-sm font-medium text-gray-700">Sub Kategori</label>
+                        <p class="mt-1 text-lg text-gray-900 font-semibold">{{ optional($asset->subCategory)->name }}</p>
+                    </div>
+                    @endif
+
+                    @if($asset->merk)
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Merk</label>
+                        <p class="mt-1 text-lg text-gray-900 font-semibold">{{ $asset->merk }}</p>
+                    </div>
+                    @endif
+
+                    @if($asset->tipe)
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Tipe</label>
+                        <p class="mt-1 text-lg text-gray-900 font-semibold">{{ $asset->tipe }}</p>
+                    </div>
+                    @endif
+
+                    <div>
+                        <label for="company_id" class="block text-sm font-medium text-gray-700">Perusahaan Pemilik (Dapat Diubah)</label>
+                        <select name="company_id" id="company_id" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">
+                            @foreach($companies as $company)
+                                <option value="{{ $company->id }}" {{ old('company_id', $asset->company_id) == $company->id ? 'selected' : '' }}>
+                                    {{ $company->name }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
             </div>
 
-            <!-- Informasi Pengguna -->
             <div class="bg-white p-8 rounded-lg shadow-md border">
                 <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Pengguna</h3>
                 <div>
@@ -87,7 +83,6 @@
                         @endforeach
                     </select>
                 </div>
-                <!-- PERUBAHAN DI SINI -->
                 <div x-show="selectedAssetUserId" class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-md border" x-cloak>
                     <div>
                         <label class="block text-sm font-medium text-gray-500">Jabatan</label>
@@ -104,36 +99,20 @@
                 </div>
             </div>
 
-             <!-- Detail & Spesifikasi -->
-            <div class="bg-white p-8 rounded-lg shadow-md border">
+             <div class="bg-white p-8 rounded-lg shadow-md border">
                 <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Detail & Spesifikasi</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {{-- Sisanya tetap bisa diedit --}}
                     <div><label for="serial_number" class="block text-sm font-medium text-gray-700">Serial Number</label><input type="text" name="serial_number" id="serial_number" value="{{ old('serial_number', $asset->serial_number) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
-                    <div><label for="kondisi" class="block text-sm font-medium text-gray-700">Kondisi</label><select name="kondisi" id="kondisi" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"><option value="Baik" {{ $asset->kondisi == 'Baik' ? 'selected' : '' }}>Baik</option><option value="Rusak" {{ $asset->kondisi == 'Rusak' ? 'selected' : '' }}>Rusak</option><option value="Perbaikan" {{ $asset->kondisi == 'Perbaikan' ? 'selected' : '' }}>Perbaikan</option></select></div>
+                    <div><label for="kondisi" class="block text-sm font-medium text-gray-700">Kondisi</label><select name="kondisi" id="kondisi" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"><option value="Baik" {{ old('kondisi', $asset->kondisi) == 'Baik' ? 'selected' : '' }}>Baik</option><option value="Rusak" {{ old('kondisi', $asset->kondisi) == 'Rusak' ? 'selected' : '' }}>Rusak</option><option value="Perbaikan" {{ old('kondisi', $asset->kondisi) == 'Perbaikan' ? 'selected' : '' }}>Perbaikan</option></select></div>
                     <div><label for="lokasi" class="block text-sm font-medium text-gray-700">Lokasi Fisik</label><input type="text" name="lokasi" id="lokasi" value="{{ old('lokasi', $asset->lokasi) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
                     <div class="grid grid-cols-2 gap-4">
                         <div><label for="jumlah" class="block text-sm font-medium text-gray-700">Jumlah</label><input type="number" name="jumlah" id="jumlah" value="{{ old('jumlah', $asset->jumlah) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
                         <div><label for="satuan" class="block text-sm font-medium text-gray-700">Satuan</label><input type="text" name="satuan" id="satuan" value="{{ old('satuan', $asset->satuan) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
                     </div>
-                    <template x-if="currentCategory && currentCategory.sub_categories">
-                        <div class="md:col-span-2 space-y-4 pt-4 border-t">
-                             <h4 class="text-md font-medium text-gray-800">Spesifikasi Detail</h4>
-                             <template x-for="sub in currentCategory.sub_categories" :key="sub.id">
-                                 <div x-show="sub.id == selectedSubCategoryId && sub.spec_fields" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                     <template x-for="field in sub.spec_fields" :key="field">
-                                         <div>
-                                             <label :for="'spec_'+field" class="block text-sm font-medium text-gray-700" x-text="field"></label>
-                                             <input :id="'spec_'+field" :name="'spec['+field+']'" type="text" value="{{ old('spec.' . 'field', $asset->specifications['field'] ?? '') }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">
-                                         </div>
-                                     </template>
-                                 </div>
-                             </template>
-                        </div>
-                    </template>
                 </div>
             </div>
 
-            <!-- Informasi Pembelian -->
             <div class="bg-white p-8 rounded-lg shadow-md border">
                 <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Pembelian & Dokumen</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -146,7 +125,6 @@
                 </div>
             </div>
 
-            <!-- Informasi Tambahan -->
             <div class="bg-white p-8 rounded-lg shadow-md border">
                 <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Tambahan</h3>
                 <div class="space-y-6">

@@ -38,7 +38,7 @@
             
             {{-- Informasi Umum & Pengguna --}}
             <div class="bg-white p-6 rounded-xl border shadow-sm">
-                <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-800">Informasi Umum</h3>
+                <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-800 border-b-2 border-black">Informasi Umum</h3>
                 <dl class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-5 text-sm">
                     
                     <div class="flex flex-col">
@@ -77,8 +77,8 @@
                     
                     {{-- Ganti blok "Informasi Pengguna" Anda dengan kode di bawah ini --}}
 
-                <div class="sm:col-span-2 md:col-span-3 mt-4 pt-5 border-t">
-                    <h4 class="text-lg font-semibold text-gray-800 mb-4">Informasi Pengguna</h4>
+                <div class="sm:col-span-2 md:col-span-3 mt-4 pt-5 border-t  border-black">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-4 ">Informasi Pengguna</h4>
                     
                     {{-- Tata letak diubah menjadi 2 kolom untuk tampilan yang lebih rapi --}}
                     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm">
@@ -112,7 +112,7 @@
 
             @if($asset->specifications)
             <div class="bg-white p-6 rounded-xl border shadow-sm">
-                <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-800">Spesifikasi & Deskripsi</h3>
+                <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-800 border-b-2 border-black">Spesifikasi & Deskripsi</h3>
                 <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm">
                     @forelse($asset->specifications as $key => $value)
                         <div class="flex flex-col">
@@ -127,7 +127,7 @@
             @endif
 
             <div class="bg-white p-6 rounded-xl border shadow-sm">
-                <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-800">Informasi Pembelian & Dokumen</h3>
+                <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-800 border-b-2 border-black">Informasi Pembelian & Dokumen</h3>
                 <dl class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-5 text-sm">
                     @if($asset->tanggal_pembelian)
                     <div class="flex flex-col"><dt class="font-medium text-gray-500">Tanggal Beli</dt><dd class="text-gray-900 mt-1">{{ $asset->tanggal_pembelian ? $asset->tanggal_pembelian->isoFormat('D MMMM YYYY') : 'N/A' }}</dd></div>
@@ -151,7 +151,7 @@
             </div>
             
             <div class="bg-white p-6 rounded-xl border shadow-sm">
-                <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-800">Informasi Tambahan</h3>
+                <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-800 border-b-2 border-black">Informasi Tambahan</h3>
                 <div class="text-sm space-y-5">
                     @if($asset->include_items)
                     <div><dt class="font-medium text-gray-500">Item Termasuk</dt><dd class="text-gray-700 mt-1 prose-sm max-w-none">{{ $asset->include_items ?? 'N/A' }}</dd></div>
@@ -176,20 +176,23 @@
                     Cetak Label
                 </a>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border">
-                <h3 class="text-xl font-semibold mb-4">Histori Pengguna</h3>
-                <ul class="space-y-4 text-sm">
+            <div class="lg:col-span-1">
+            <div class="bg-white p-6 rounded-xl border">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-3 border-b-2 border-black">Histori Pengguna</h3>
+                <ul class="space-y-4 text-sm max-h-96 overflow-y-auto">
                     @forelse ($asset->history as $h)
                         <li class="border-b border-gray-200 pb-3 last:border-b-0">
                             <div class="flex justify-between items-center">
                                 <p class="font-semibold text-gray-800">{{ optional($h->assetUser)->nama ?? 'Pengguna Dihapus' }}</p>
-                                @if(is_null($h->tanggal_selesai) && $asset->user_id == $h->user_id)
+                                @if(is_null($h->tanggal_selesai))
                                     <span class="flex-shrink-0 text-xs bg-green-100 text-green-800 font-semibold px-2 py-1 rounded-full">Saat Ini</span>
                                 @endif
                             </div>
                             <div class="mt-1">
-                                <p class="text-xs text-gray-500">{{ optional($h->assetUser)->jabatan ?? 'Jabatan tidak diketahui' }}</p>
-                                <p class="text-xs text-gray-500">{{ optional($h->assetUser)->departemen ?? 'Departemen tidak diketahui' }}</p>
+                                <p class="text-xs text-gray-500">{{ optional($h->assetUser)->jabatan ?? 'N/A' }}</p>
+                                <p class="text-xs text-gray-500">{{ optional($h->assetUser)->departemen ?? 'N/A' }}</p>
+                                <!-- PERBAIKAN DI SINI -->
+                                <p class="text-xs text-gray-500 font-medium">{{ optional(optional($h->assetUser)->company)->name ?? 'Perusahaan tidak diketahui' }}</p>
                                 <p class="text-xs text-gray-400 mt-1">
                                     <span>Mulai: {{ \Carbon\Carbon::parse($h->tanggal_mulai)->format('d M Y') }}</span>
                                     @if($h->tanggal_selesai)
@@ -203,6 +206,7 @@
                     @endforelse
                 </ul>
             </div>
+        </div>
         </div>
     </div>
 @endsection

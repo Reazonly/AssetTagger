@@ -4,10 +4,9 @@
 <div class="max-w-2xl mx-auto">
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold text-gray-800">Tambah Kategori Baru</h1>
-        <a href="{{ route('master-data.categories.index') }}" class="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors py-2 px-4 rounded-lg bg-gray-200 hover:bg-gray-300 border border-black inline-flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                    Kembali
-                </a> 
+        <a href="{{ route('master-data.categories.index') }}" class="text-sm font-semibold text-gray-600 hover:text-gray-900">
+            &larr; Kembali
+        </a> 
     </div>
     <div class="bg-white p-8 rounded-lg shadow-md border">
         <form action="{{ route('master-data.categories.store') }}" method="POST">
@@ -22,13 +21,6 @@
                     <label for="code" class="block text-sm font-medium text-gray-700">Kode (Maks. 10 karakter)</label>
                     <input type="text" name="code" id="code" value="{{ old('code') }}" required maxlength="10" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3 @error('code') border-red-500 @enderror">
                     @error('code') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                </div>
-                <div>
-                    <label for="requires_merk" class="block text-sm font-medium text-gray-700">Input Wajib</label>
-                    <select name="requires_merk" id="requires_merk" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">
-                        <option value="1" {{ old('requires_merk') == '1' ? 'selected' : '' }}>Membutuhkan Merk</option>
-                        <option value="0" {{ old('requires_merk') == '0' ? 'selected' : '' }}>Membutuhkan Tipe</option>
-                    </select>
                 </div>
             </div>
             <div class="mt-8 flex gap-4">

@@ -36,7 +36,6 @@
                 <tr>
                     <th scope="col" class="px-6 py-3">Nama Kategori</th>
                     <th scope="col" class="px-6 py-3">Kode</th>
-                    <th scope="col" class="px-6 py-3">Input Wajib</th>
                     <th scope="col" class="px-6 py-3 text-center">Aksi</th>
                 </tr>
             </thead>
@@ -45,13 +44,6 @@
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 font-medium text-gray-900">{{ $category->name }}</td>
                         <td class="px-6 py-4">{{ $category->code }}</td>
-                        <td class="px-6 py-4">
-                            @if($category->requires_merk)
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Merk</span>
-                            @else
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">Tipe</span>
-                            @endif
-                        </td>
                         <td class="px-6 py-4 text-center">
                             <div class="flex items-center justify-center gap-4">
                                 <a href="{{ route('master-data.categories.edit', $category->id) }}" class="font-medium text-blue-600 hover:text-blue-800">Edit</a>

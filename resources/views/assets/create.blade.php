@@ -25,33 +25,80 @@
              x-data="{ 
                 categoriesData: {{ Js::from($categories->keyBy('id')) }},
                 assetUsersData: {{ Js::from($users->keyBy('id')) }},
-                selectedCategoryId: {{ old('category_id', $categories->first()->id ?? 0) }},
+                selectedCategoryId: {{ old('category_id') ?? 'null' }},
                 selectedSubCategoryId: {{ old('sub_category_id') ?? 'null' }},
                 selectedAssetUserId: {{ old('asset_user_id') ?? 'null' }},
-                get currentCategory() { return this.categoriesData[this.selectedCategoryId] || { sub_categories: [], units: [] }; },
-                get currentSubCategory() { const subCategories = Array.isArray(this.currentCategory.sub_categories) ? this.currentCategory.sub_categories : Object.values(this.currentCategory.sub_categories); return subCategories.find(sc => sc.id == this.selectedSubCategoryId) || {}; },
+                useMerk: {{ old('use_merk') ? 'true' : 'false' }},
+                useTipe: {{ old('use_tipe') ? 'true' : 'false' }},
+                
+                get currentCategory() { return this.categoriesData[this.selectedCategoryId] || {}; },
                 get currentAssetUser() { return this.assetUsersData[this.selectedAssetUserId] || {}; },
-                resetSubCategory() { this.selectedSubCategoryId = null; }
-             }">
+                
+                get subCategories() { return this.currentCategory.sub_categories || []; },
+                get currentSubCategory() { return this.subCategories.find(sc => sc.id == this.selectedSubCategoryId) || {}; },
+                get hasSubCategories() { return this.subCategories.length > 0; },
+                
+                get isPrimaryInfoReady() {
+                    if (!this.selectedCategoryId) return false;
+                    return this.hasSubCategories ? !!this.selectedSubCategoryId : true;
+                },
+                
+                get inputType() { return this.currentSubCategory.input_type || 'none'; }
+             }"
+             x-init="$watch('selectedCategoryId', () => { selectedSubCategoryId = null })">
 
             <div class="bg-white p-8 rounded-lg shadow-md border">
                 <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Utama</h3>
+                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="md:col-span-2"><label for="nama_barang" class="block text-sm font-medium text-gray-600">Nama Barang / Tipe</label><input type="text" name="nama_barang" id="nama_barang" value="{{ old('nama_barang') }}" required class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
-                    <div><label for="category_id" class="block text-sm font-medium text-gray-600">Kategori</label><select name="category_id" id="category_id" x-model="selectedCategoryId" @change="resetSubCategory()" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">@foreach($categories as $category)<option value="{{ $category->id }}">{{ $category->name }}</option>@endforeach</select></div>
-                    <div x-show="Object.keys(currentCategory.sub_categories).length > 0"><label for="sub_category_id" class="block text-sm font-medium text-gray-600">Sub Kategori</label><select name="sub_category_id" id="sub_category_id" x-model="selectedSubCategoryId" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"><option value="">-- Pilih Sub Kategori --</option><template x-for="subCategory in currentCategory.sub_categories" :key="subCategory.id"><option :value="subCategory.id" x-text="subCategory.name"></option></template></select></div>
-                    <div x-show="currentCategory.requires_merk"><label for="merk" class="block text-sm font-medium text-gray-600">Merk</label><input type="text" name="merk" id="merk" value="{{ old('merk') }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
-                    <div x-show="!currentCategory.requires_merk && currentCategory.code !== 'FURN'"><label for="tipe" class="block text-sm font-medium text-gray-600">Tipe</label><input type="text" name="tipe" id="tipe" value="{{ old('tipe') }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
-                    <div><label for="company_id" class="block text-sm font-medium text-gray-600">Perusahaan</label><select name="company_id" id="company_id" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">@foreach($companies as $company)<option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>@endforeach</select></div>
+                    <div>
+                        <label for="category_id" class="block text-sm font-medium text-gray-600">Langkah 1: Pilih Kategori</label>
+                        <select name="category_id" id="category_id" x-model="selectedCategoryId" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">
+                            <option value="">-- Pilih Kategori --</option>
+                            @foreach($categories as $category)
+                                <option value="{{ $category->id }}">{{ $category->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div x-show="hasSubCategories" x-cloak>
+                        <label for="sub_category_id" class="block text-sm font-medium text-gray-600">Langkah 2: Pilih Sub Kategori</label>
+                        <select name="sub_category_id" id="sub_category_id" x-model="selectedSubCategoryId" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">
+                            <option value="">-- Pilih Sub Kategori --</option>
+                            <template x-for="subCategory in subCategories" :key="subCategory.id">
+                                <option :value="subCategory.id" x-text="subCategory.name"></option>
+                            </template>
+                        </select>
+                    </div>
+                </div>
+
+                <div x-show="isPrimaryInfoReady" x-cloak class="mt-6 pt-6 border-t">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2"><label for="nama_barang" class="block text-sm font-medium text-gray-600">Nama Barang</label><input type="text" name="nama_barang" id="nama_barang" value="{{ old('nama_barang') }}" required class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
+                        
+                        <!-- Logika Fleksibel untuk Merk & Tipe -->
+                        <div x-show="inputType === 'merk_dan_tipe'" class="md:col-span-2 flex items-center space-x-6">
+                            <label class="flex items-center"><input type="checkbox" name="use_merk" x-model="useMerk" class="mr-2"> Input Merk</label>
+                            <label class="flex items-center"><input type="checkbox" name="use_tipe" x-model="useTipe" class="mr-2"> Input Tipe</label>
+                        </div>
+                        
+                        <div x-show="inputType === 'merk' || (inputType === 'merk_dan_tipe' && useMerk)"><label for="merk" class="block text-sm font-medium text-gray-600">Merk</label><input type="text" name="merk" id="merk" value="{{ old('merk') }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
+                        
+                        <div x-show="inputType === 'tipe' || (inputType === 'merk_dan_tipe' && useTipe)"><label for="tipe" class="block text-sm font-medium text-gray-600">Tipe</label><input type="text" name="tipe" id="tipe" value="{{ old('tipe') }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
+                        
+                        <div><label for="company_id" class="block text-sm font-medium text-gray-600">Perusahaan Pemilik</label><select name="company_id" id="company_id" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">@foreach($companies as $company)<option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>@endforeach</select></div>
+                    </div>
                 </div>
             </div>
+
+            <div x-show="isPrimaryInfoReady" x-cloak class="space-y-8">
 
             <!-- Informasi Pengguna -->
             <div class="bg-white p-8 rounded-lg shadow-md border">
                 <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Pengguna</h3>
                 <div>
                     <label for="asset_user_id" class="block text-sm font-medium text-gray-700">Pilih Pengguna</label>
-                    <select id="asset_user_id" name="asset_user_id" x-model.number="selectedAssetUserId" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">
+                    <select id="asset_user_id" name="asset_user_id" x-model.number="selectedAssetUserId" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3" required>
                         <option value="">-- Tidak ada pengguna --</option>
                         @foreach($users as $user)
                             <option value="{{ $user->id }}">{{ $user->nama }}</option>
