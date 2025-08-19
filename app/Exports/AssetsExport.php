@@ -33,12 +33,10 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             }
         }
         
-       
         $unwantedKeys = ['perusahaan_pemilik', 'perusahaan_pengguna'];
         $uniqueKeys = array_unique($keys);
         
         return array_values(array_diff($uniqueKeys, $unwantedKeys));
-       
     }
 
     public function query()
@@ -52,7 +50,9 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             'Kode Aset', 'Nama Barang', 'Kategori', 'Sub Kategori', 'Perusahaan Pemilik (Kode)',
             'Merk', 'Tipe', 'Serial Number', 'Pengguna Aset', 'Jabatan Pengguna',
             'Departemen Pengguna', 'Perusahaan Pengguna (Kode)', 'Kondisi', 'Lokasi', 'Jumlah',
-            'Satuan', 'Tanggal Pembelian', 'Harga Total (Rp)', 'Nomor PO', 'Nomor BAST',
+            'Satuan', 
+            'Hari Pembelian', 'Tanggal Pembelian', 'Bulan Pembelian', 'Tahun Pembelian',
+            'Harga Total (Rp)', 'Nomor PO', 'Nomor BAST',
             'Kode Aktiva', 'Sumber Dana', 'Item Termasuk', 'Peruntukan', 'Keterangan',
             'Riwayat Pengguna'
         ];
@@ -68,6 +68,12 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $userName = optional($h->assetUser)->nama ?? 'N/A';
             return "{$userName} ({$startDate} - {$endDate})";
         })->implode('; ');
+
+        $tanggal = $asset->tanggal_pembelian ? Carbon::parse($asset->tanggal_pembelian)->locale('id') : null;
+        $hari = $tanggal ? $tanggal->isoFormat('dddd') : null;
+        $tgl = $tanggal ? $tanggal->day : null;
+        $bulan = $tanggal ? $tanggal->isoFormat('MMMM') : null;
+        $tahun = $tanggal ? $tanggal->year : null;
 
         $baseData = [
             $asset->code_asset,
@@ -86,7 +92,10 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $asset->lokasi,
             $asset->jumlah,
             $asset->satuan,
-            optional($asset->tanggal_pembelian)->format('Y-m-d'),
+            $hari,
+            $tgl,
+            $bulan,
+            $tahun,
             $asset->harga_total,
             $asset->po_number,
             $asset->nomor,

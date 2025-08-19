@@ -127,28 +127,29 @@
             @endif
 
             <div class="bg-white p-6 rounded-xl border shadow-sm">
-                <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-800 border-b-2 border-black">Informasi Pembelian & Dokumen</h3>
-                <dl class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-5 text-sm">
-                    @if($asset->tanggal_pembelian)
-                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Tanggal Beli</dt><dd class="text-gray-900 mt-1">{{ $asset->tanggal_pembelian ? $asset->tanggal_pembelian->isoFormat('D MMMM YYYY') : 'N/A' }}</dd></div>
-                    @endif
-                    @if($asset->harga_total > 0)
-                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Harga</dt><dd class="text-gray-900 mt-1">Rp {{ number_format($asset->harga_total, 0, ',', '.') }}</dd></div>
-                    @endif
-                    @if($asset->po_number)
-                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Nomor PO</dt><dd class="text-gray-900 mt-1">{{ $asset->po_number ?? 'N/A' }}</dd></div>
-                    @endif
-                    @if($asset->nomor)
-                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Nomor BAST</dt><dd class="text-gray-900 mt-1">{{ $asset->nomor ?? 'N/A' }}</dd></div>
-                    @endif
-                    @if($asset->code_aktiva)
-                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Kode Aktiva</dt><dd class="text-gray-900 mt-1">{{ $asset->code_aktiva ?? 'N/A' }}</dd></div>
-                    @endif
-                    @if($asset->sumber_dana)
-                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Sumber Dana</dt><dd class="text-gray-900 mt-1">{{ $asset->sumber_dana ?? 'N/A' }}</dd></div>
-                    @endif
-                </dl>
-            </div>
+        <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-800 border-b-2 border-black">Informasi Pembelian & Dokumen</h3>
+        <dl class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-5 text-sm">
+            @if($asset->tanggal_pembelian)
+            {{-- PERBAIKAN DI SINI: Menambahkan nama hari dengan format 'dddd' --}}
+            <div class="flex flex-col"><dt class="font-medium text-gray-500">Tanggal Beli</dt><dd class="text-gray-900 mt-1">{{ $asset->tanggal_pembelian ? $asset->tanggal_pembelian->locale('id')->isoFormat('dddd, D MMMM YYYY') : 'N/A' }}</dd></div>
+            @endif
+            @if($asset->harga_total > 0)
+            <div class="flex flex-col"><dt class="font-medium text-gray-500">Harga</dt><dd class="text-gray-900 mt-1">Rp {{ number_format($asset->harga_total, 0, ',', '.') }}</dd></div>
+            @endif
+            @if($asset->po_number)
+            <div class="flex flex-col"><dt class="font-medium text-gray-500">Nomor PO</dt><dd class="text-gray-900 mt-1">{{ $asset->po_number ?? 'N/A' }}</dd></div>
+            @endif
+            @if($asset->nomor)
+            <div class="flex flex-col"><dt class="font-medium text-gray-500">Nomor BAST</dt><dd class="text-gray-900 mt-1">{{ $asset->nomor ?? 'N/A' }}</dd></div>
+            @endif
+            @if($asset->code_aktiva)
+            <div class="flex flex-col"><dt class="font-medium text-gray-500">Kode Aktiva</dt><dd class="text-gray-900 mt-1">{{ $asset->code_aktiva ?? 'N/A' }}</dd></div>
+            @endif
+            @if($asset->sumber_dana)
+            <div class="flex flex-col"><dt class="font-medium text-gray-500">Sumber Dana</dt><dd class="text-gray-900 mt-1">{{ $asset->sumber_dana ?? 'N/A' }}</dd></div>
+            @endif
+        </dl>
+    </div>
             
             <div class="bg-white p-6 rounded-xl border shadow-sm">
                 <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-800 border-b-2 border-black">Informasi Tambahan</h3>
