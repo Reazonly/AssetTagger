@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\AssetUser;
 use App\Models\Company;
 use Illuminate\Http\Request;
+use App\Imports\AssetUserImport; // Tambahkan ini di atas
+use Maatwebsite\Excel\Facades\Excel; // Tambahkan ini di atas
+
 
 class AssetUserController extends Controller
 {
@@ -73,4 +76,12 @@ class AssetUserController extends Controller
         $assetUser->delete();
         return redirect()->route('master-data.asset-users.index')->with('success', 'Pengguna aset berhasil dihapus.');
     }
+
+    public function import(Request $request)
+{
+    $request->validate(['file' => 'required|mimes:xls,xlsx,csv']);
+    Excel::import(new AssetUserImport, $request->file('file'));
+    return redirect()->route('master-data.asset-users.index')->with('success', 'Data pengguna aset berhasil diimpor.');
+}
+
 }

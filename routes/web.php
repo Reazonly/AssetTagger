@@ -86,6 +86,10 @@ Route::middleware('auth')->group(function () {
         Route::get('sub-categories/{subCategory}/edit', [SubCategoryController::class, 'edit'])->name('sub-categories.edit');
         Route::put('sub-categories/{subCategory}', [SubCategoryController::class, 'update'])->name('sub-categories.update');
         Route::delete('sub-categories/{subCategory}', [SubCategoryController::class, 'destroy'])->name('sub-categories.destroy');
+   
+        Route::post('categories/import', [CategoryController::class, 'import'])->name('categories.import'); // <-- TAMBAHKAN INI
+        Route::post('asset-users/import', [AssetUserController::class, 'import'])->name('asset-users.import'); 
+        Route::post('sub-categories/{category}/import', [SubCategoryController::class, 'import'])->name('sub-categories.import'); // Diubah
     });
     
     // --- RUTE BARU UNTUK MANAJEMEN ROLES & PERMISSIONS ---

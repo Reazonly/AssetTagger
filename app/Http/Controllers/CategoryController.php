@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use Illuminate\Http\Request;
+use App\Imports\CategoryImport; // Tambahkan ini di atas
+use Maatwebsite\Excel\Facades\Excel; // Tambahkan ini di atas
 
 class CategoryController extends Controller
 {
@@ -57,4 +59,11 @@ class CategoryController extends Controller
         $category->delete();
         return redirect()->route('master-data.categories.index')->with('success', 'Data kategori berhasil dihapus.');
     }
+
+    public function import(Request $request)
+{
+    $request->validate(['file' => 'required|mimes:xls,xlsx,csv']);
+    Excel::import(new CategoryImport, $request->file('file'));
+    return redirect()->route('master-data.categories.index')->with('success', 'Data kategori berhasil diimpor.');
+}
 }

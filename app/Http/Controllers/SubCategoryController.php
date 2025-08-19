@@ -6,6 +6,9 @@ use App\Models\Category;
 use App\Models\SubCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use App\Imports\SubCategoryImport; // Tambahkan ini di atas
+use Maatwebsite\Excel\Facades\Excel; // Tambahkan ini di atas
+
 
 class SubCategoryController extends Controller
 {
@@ -80,7 +83,7 @@ class SubCategoryController extends Controller
             'input_type' => $validated['input_type'],
         ]);
 
-        return redirect()->route('masters.sub-categories.show', $subCategory->category_id)
+        return redirect()->route('master-data.sub-categories.show', $subCategory->category_id)
                          ->with('success', 'Sub-kategori berhasil diperbarui.');
     }
 
@@ -88,7 +91,19 @@ class SubCategoryController extends Controller
     {
         $categoryId = $subCategory->category_id;
         $subCategory->delete();
-        return redirect()->route('masters.sub-categories.show', $categoryId)
+        return redirect()->route('master-data.sub-categories.show', $categoryId)
                          ->with('success', 'Sub-kategori berhasil dihapus.');
+    }
+
+    public function import(Request $request, Category $category) // Method diubah
+    {
+        $request->validate(['file' => 'required|mimes:xls,xlsx,csv']);
+        
+        // Kirim kategori induk ke kelas Import
+        Excel::import(new SubCategoryImport($category), $request->file('file')); 
+        
+        // Redirect kembali ke halaman detail kategori
+        return redirect()->route('master-data.sub-categories.show', $category->id)
+                         ->with('success', 'Data sub-kategori berhasil diimpor.');
     }
 }

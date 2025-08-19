@@ -32,7 +32,13 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
                 $keys = array_merge($keys, array_keys($asset->specifications));
             }
         }
-        return array_unique($keys);
+        
+       
+        $unwantedKeys = ['perusahaan_pemilik', 'perusahaan_pengguna'];
+        $uniqueKeys = array_unique($keys);
+        
+        return array_values(array_diff($uniqueKeys, $unwantedKeys));
+       
     }
 
     public function query()
@@ -40,9 +46,6 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
         return $this->query->with(['category', 'subCategory', 'company', 'assetUser.company', 'history.assetUser']);
     }
 
-    /**
-     * Menentukan header untuk file Excel.
-     */
     public function headings(): array
     {
         $baseHeadings = [
@@ -57,9 +60,6 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
         return array_merge($baseHeadings, $this->specKeys);
     }
 
-    /**
-     * Memetakan data aset ke dalam kolom Excel.
-     */
     public function map($asset): array
     {
         $historyString = $asset->history->map(function ($h) {
@@ -106,32 +106,23 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
         return array_merge($baseData, $specData);
     }
 
-    /**
-     * Memberikan style pada sheet Excel.
-     */
     public function styles(Worksheet $sheet)
     {
         $columnCount = count($this->headings());
         $lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($columnCount);
 
         return [
-            // Style untuk baris header (baris 1)
             1 => [
                 'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
                 'fill' => ['fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => '28A745']],
                 'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
             ],
-
-            // =====================================================================
-            // PERUBAHAN DI SINI: Menambahkan perataan tengah horizontal untuk semua kolom
-            // =====================================================================
             'A:' . $lastColumn => [
                 'alignment' => [
                     'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
                     'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
                 ],
             ],
-            // =====================================================================
         ];
     }
 }

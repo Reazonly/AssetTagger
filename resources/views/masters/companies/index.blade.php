@@ -42,16 +42,16 @@
    
     <div class="overflow-x-auto border border-gray-200 rounded-lg">
         <table class="w-full text-sm text-left text-gray-600">
-            <thead class="text-xs text-gray-700 uppercase bg-gray-100">
-                <tr  class="text-center">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-100 border-b-2 border-black">
+                <tr  class="text-center divide-x divide-gray-300">
                     <th scope="col" class="px-6 py-3">Nama Perusahaan</th>
                     <th scope="col" class="px-6 py-3">Kode</th>
-                    <th scope="col" class="px-6 py-3 text-center">Aksi</th>
+                    <th scope="col" class="px-6 py-3">Aksi</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y">
                 @forelse ($companies as $company)
-                    <tr class="hover:bg-gray-50 text-center">
+                    <tr class="border-b hover:bg-gray-50 divide-x divide-gray-200 text-center">
                         <td class="px-6 py-4 font-medium text-gray-900">{{ $company->name }}</td>
                         <td class="px-6 py-4">{{ $company->code }}</td>
                         <td class="px-6 py-4 text-center">

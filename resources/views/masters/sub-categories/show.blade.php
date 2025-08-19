@@ -1,30 +1,30 @@
 @extends('layouts.app')
 @section('title', 'Sub-Kategori untuk ' . $category->name)
 @section('content')
-<div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+{{-- PERBAIKAN: Tambahkan x-data di sini untuk menginisialisasi Alpine.js --}}
+<div x-data="{ showImportModal: false }" class="bg-white rounded-xl shadow-lg p-6 md:p-8">
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-200 pb-6 mb-6">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900">Sub-Kategori: <span class="text-sky-600">{{ $category->name }}</span></h1>
+            <h1 class="text-3xl font-bold text-gray-900">
+                <a href="{{ route('master-data.sub-categories.index') }}" class="text-emerald-600 hover:underline">Sub-Kategori</a> / {{ $category->name }}
+            </h1>
+            <p class="text-sm text-gray-500 mt-1">Kelola sub-kategori untuk kategori ini.</p>
         </div>
-       <div class="mt-4 md:mt-0 flex items-center gap-3">
-    
-    <a href="{{ route('master-data.sub-categories.index') }}" class="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors py-2 px-4 rounded-lg bg-gray-200 hover:bg-gray-300 border border-black inline-flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-        Kembali
-    </a>
-
-    <a href="{{ route('master-data.sub-categories.create', $category->id) }}" class="inline-flex items-center gap-2 bg-emerald-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-emerald-700">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-        </svg>
-        <span>Tambah Sub-Kategori</span>
-    </a>
-    
-
-</div>
+        {{-- Tombol Aksi --}}
+        <div class="flex items-center gap-3 mt-4 md:mt-0">
+            {{-- Tombol ini sekarang akan berfungsi --}}
+            <button @click="showImportModal = true" class="inline-flex items-center gap-2 bg-white text-gray-700 font-semibold px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                Import
+            </button>
+            <a href="{{ route('master-data.sub-categories.create', $category->id) }}" class="inline-flex items-center gap-2 bg-emerald-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                Tambah Sub-Kategori
+            </a>
+        </div>
     </div>
 
-<div class="mb-6">
+    <div class="mb-6">
         <form action="{{ route('master-data.sub-categories.show', $category->id) }}" method="GET">
             <div class="relative w-full md:w-1/3">
                 <input 
@@ -45,16 +45,16 @@
 
     <div class="overflow-x-auto border border-gray-200 rounded-lg">
         <table class="w-full text-sm text-left text-gray-600">
-            <thead class="text-xs text-gray-700 uppercase bg-gray-100">
-                <tr  class="text-center">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-100 border-b-2 border-black">
+                <tr class="text-center divide-x divide-gray-300">
                     <th scope="col" class="px-6 py-3">Nama Sub-Kategori</th>
                     <th scope="col" class="px-6 py-3">Field Spesifikasi Kustom</th>
-                    <th scope="col" class="px-6 py-3 text-center">Aksi</th>
+                    <th scope="col" class="px-6 py-3">Aksi</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y">
                 @forelse ($subCategories as $subCategory)
-                    <tr class="hover:bg-gray-50 text-center">
+                    <tr class="border-b hover:bg-gray-50 divide-x divide-gray-200 text-center">
                         <td class="px-6 py-4 font-medium text-gray-900">{{ $subCategory->name }}</td>
                         <td class="px-6 py-4">
                             @if(!empty($subCategory->spec_fields))
@@ -81,6 +81,25 @@
             </tbody>
         </table>
     </div>
+
+    {{-- Modal ini sekarang akan berfungsi --}}
+    <div x-show="showImportModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div @click.away="showImportModal = false" class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">Import Sub-Kategori untuk {{ $category->name }}</h3>
+            <form action="{{ route('master-data.sub-categories.import', $category->id) }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <p class="text-sm text-gray-600 mb-4">
+                    Unggah file Excel dengan kolom: <strong>nama sub kategori dan tipe input</strong>.
+                </p>
+                <input type="file" name="file" required class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"/>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" @click="showImportModal = false" class="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Batal</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-md hover:bg-emerald-700">Import</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
     @if ($subCategories->hasPages())<div class="mt-6">{{ $subCategories->links() }}</div>@endif
 </div>
 @endsection
