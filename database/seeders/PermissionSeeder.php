@@ -13,10 +13,8 @@ class PermissionSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
-            // Dashboard
             ['name' => 'view-dashboard', 'display_name' => 'Lihat Dashboard'],
             
-            // Assets
             ['name' => 'view-asset', 'display_name' => 'Lihat Aset'],
             ['name' => 'create-asset', 'display_name' => 'Buat Aset'],
             ['name' => 'edit-asset', 'display_name' => 'Edit Aset'],
@@ -25,14 +23,11 @@ class PermissionSeeder extends Seeder
             ['name' => 'export-asset', 'display_name' => 'Ekspor Aset'],
             ['name' => 'print-asset', 'display_name' => 'Cetak Label Aset'],
 
-            // Users
             ['name' => 'view-user', 'display_name' => 'Lihat Pengguna'],
             ['name' => 'assign-role', 'display_name' => 'Tetapkan Role Pengguna'],
             
-            // Master Data
             ['name' => 'manage-master-data', 'display_name' => 'Kelola Master Data'],
 
-            // Roles & Permissions (Super Admin only)
             ['name' => 'manage-roles', 'display_name' => 'Kelola Roles & Permissions'],
         ];
 

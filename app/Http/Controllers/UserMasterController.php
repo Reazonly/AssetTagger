@@ -10,7 +10,6 @@ use Illuminate\Support\Str;
 
 class UserMasterController extends Controller
 {
-    // Menampilkan daftar pengguna dengan role 'user'
     public function index(Request $request)
     {
         $query = User::where('role', 'user');
@@ -29,13 +28,11 @@ class UserMasterController extends Controller
         return view('masters.users.index', compact('users'));
     }
 
-    // Menampilkan form untuk membuat pengguna baru
     public function create()
     {
         return view('masters.users.create');
     }
 
-    // Menyimpan pengguna baru ke database
    public function store(Request $request)
     {
         $validated = $request->validate([
@@ -53,14 +50,12 @@ class UserMasterController extends Controller
             'role' => 'user',
         ];
 
-        // Jika email dan password diisi, buat akun login
         if (!empty($validated['email']) && !empty($validated['password'])) {
             $createData['email'] = $validated['email'];
             $createData['password'] = Hash::make($validated['password']);
         } else {
-            // Jika tidak, buat email dummy agar data tetap unik dan password acak
             $createData['email'] = Str::slug($validated['nama_pengguna']) . '-' . time() . '@placeholder.local';
-            $createData['password'] = Hash::make(Str::random(32)); // Password acak yang tidak akan digunakan
+            $createData['password'] = Hash::make(Str::random(32));
         }
 
         User::create($createData);
@@ -68,19 +63,16 @@ class UserMasterController extends Controller
         return redirect()->route('master-data.users.index')->with('success', 'Pengguna baru berhasil ditambahkan.');
     }
 
-    // Menampilkan form untuk mengedit pengguna
     public function edit(User $user)
     {
         if ($user->role !== 'user') {
             return redirect()->route('master-data.users.index')->with('error', 'Anda tidak dapat mengedit pengguna dengan role selain "user" di halaman ini.');
         }
-        // Cek apakah email adalah placeholder
         $user->is_placeholder = Str::endsWith($user->email, '@placeholder.local');
         return view('masters.users.edit', compact('user'));
     }
 
 
-    // Memperbarui data pengguna di database
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
@@ -97,12 +89,10 @@ class UserMasterController extends Controller
             'departemen' => $validated['departemen'],
         ];
 
-        // Jika email diisi, update emailnya
         if (!empty($validated['email'])) {
             $updateData['email'] = $validated['email'];
         }
         
-        // Jika password baru diisi, hash dan update passwordnya
         if (!empty($validated['password'])) {
             $updateData['password'] = Hash::make($validated['password']);
         }
@@ -111,7 +101,6 @@ class UserMasterController extends Controller
 
         return redirect()->route('master-data.users.index')->with('success', 'Data pengguna berhasil diperbarui.');
     }
-    // Menghapus pengguna
     public function destroy(User $user)
     {
         if ($user->assets()->count() > 0) {

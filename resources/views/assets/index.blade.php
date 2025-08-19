@@ -3,10 +3,8 @@
 @section('title', 'Daftar Aset')
 
 @section('content')
-{{-- PERBAIKAN: Menambahkan `fileName` ke state Alpine.js untuk input file --}}
 <div x-data="{ showImportModal: false, fileName: '' }" class="bg-white rounded-xl shadow-lg p-6 md:p-8">
 
-    {{-- Header Halaman --}}
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-200 pb-6 mb-6">
         <div>
             <h1 class="text-3xl font-bold text-gray-900">Daftar Aset</h1>
@@ -29,7 +27,6 @@
     </div>
 
     
-    {{-- Filter, Pencarian, dan Tombol Aksi --}}
     <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
         <form action="{{ route('assets.index') }}" method="GET" class="w-full md:w-auto flex flex-col sm:flex-row items-center gap-3">
             <div class="relative w-full sm:w-64">
@@ -74,7 +71,6 @@
         </div>
     </div>
 
-    {{-- Tabel Aset --}}
     <div class="overflow-x-auto border border-gray-200 rounded-lg">
         <table class="w-full text-sm text-left text-gray-600">
             <thead class="text-xs text-gray-700 uppercase bg-gray-100 border-b-2 border-black">
@@ -134,9 +130,7 @@
     
     <div class="mt-6">{{ $assets->appends(request()->query())->links() }}</div>
 
-    {{-- ===================================================================== --}}
-    {{-- PERBAIKAN MODAL IMPORT DI SINI --}}
-    {{-- ===================================================================== --}}
+    
     @can('import-asset')
         <div x-show="showImportModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
             <div @click.away="showImportModal = false" class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
@@ -147,7 +141,6 @@
                         Unggah file Excel. Pastikan kolom header sesuai template export, contohnya: <strong>Nama Barang, Kategori, Sub Kategori, Serial Number, Pengguna Aset, Kondisi, Lokasi.</strong>
                     </p>
                     <div class="mt-4">
-                        {{-- Input file yang disembunyikan --}}
                         <input
                             type="file"
                             name="file"
@@ -156,7 +149,6 @@
                             @change="fileName = $event.target.files[0] ? $event.target.files[0].name : ''"
                             required
                         >
-                        {{-- Desain tombol dan teks nama file --}}
                         <div class="flex items-center">
                             <label for="file-upload" class="cursor-pointer inline-flex items-center px-4 py-2 bg-emerald-50 text-emerald-700 font-semibold text-sm rounded-lg hover:bg-emerald-100">
                                 Choose File

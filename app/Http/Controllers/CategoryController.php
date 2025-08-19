@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use Illuminate\Http\Request;
-use App\Imports\CategoryImport; // Tambahkan ini di atas
-use Maatwebsite\Excel\Facades\Excel; // Tambahkan ini di atas
+use App\Imports\CategoryImport; 
+use Maatwebsite\Excel\Facades\Excel; 
 
 class CategoryController extends Controller
 {

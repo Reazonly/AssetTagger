@@ -34,7 +34,6 @@
             </table>
         </div>
 
-        {{-- --- PERBAIKAN TOTAL PADA BAGIAN SPESIFIKASI --- --}}
         <div class="section">
             <h3>Spesifikasi & Deskripsi</h3>
             @if(!empty($asset->specifications))
@@ -50,7 +49,6 @@
                 <p>Tidak ada detail spesifikasi yang diberikan.</p>
             @endif
         </div>
-        {{-- --- AKHIR PERBAIKAN --- --}}
 
         <div class="section">
             <h3>Informasi Pembelian</h3>

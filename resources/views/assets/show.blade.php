@@ -12,7 +12,6 @@
     Kembali
 </a>
             
-           {{-- Tombol Edit berdasarkan Izin (Permission) --}}
 @can('edit-asset')
 <a href="{{ route('assets.edit', $asset->id) }}" class="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 shadow-md transition-colors inline-flex items-center gap-2">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
@@ -33,10 +32,8 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {{-- KOLOM KIRI (INFORMASI DETAIL) --}}
         <div class="lg:col-span-2 space-y-6">
             
-            {{-- Informasi Umum & Pengguna --}}
             <div class="bg-white p-6 rounded-xl border shadow-sm">
                 <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-800 border-b-2 border-black">Informasi Umum</h3>
                 <dl class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-5 text-sm">
@@ -75,15 +72,12 @@
                     @endif
                     <div class="flex flex-col"><dt class="font-medium text-gray-500">Jumlah</dt><dd class="text-gray-900 mt-1">{{ $asset->jumlah }} {{ $asset->satuan }}</dd></div>
                     
-                    {{-- Ganti blok "Informasi Pengguna" Anda dengan kode di bawah ini --}}
 
                 <div class="sm:col-span-2 md:col-span-3 mt-4 pt-5 border-t  border-black">
                     <h4 class="text-lg font-semibold text-gray-800 mb-4 ">Informasi Pengguna</h4>
                     
-                    {{-- Tata letak diubah menjadi 2 kolom untuk tampilan yang lebih rapi --}}
                     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm">
                         
-                        {{-- Setiap item sekarang dibungkus dengan benar di dalam div-nya sendiri --}}
                         <div class="flex flex-col">
                             <dt class="font-medium text-gray-500">Pengguna Saat Ini</dt>
                             <dd class="text-gray-900 mt-1">{{ optional($asset->assetUser)->nama ?? 'Tidak ada' }}</dd>
@@ -130,7 +124,6 @@
         <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-800 border-b-2 border-black">Informasi Pembelian & Dokumen</h3>
         <dl class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-5 text-sm">
             @if($asset->tanggal_pembelian)
-            {{-- PERBAIKAN DI SINI: Menambahkan nama hari dengan format 'dddd' --}}
             <div class="flex flex-col"><dt class="font-medium text-gray-500">Tanggal Beli</dt><dd class="text-gray-900 mt-1">{{ $asset->tanggal_pembelian ? $asset->tanggal_pembelian->locale('id')->isoFormat('dddd, D MMMM YYYY') : 'N/A' }}</dd></div>
             @endif
             @if($asset->harga_total > 0)
@@ -167,7 +160,6 @@
             </div>
         </div>
 
-        {{-- KOLOM KANAN (TINDAKAN & HISTORI) --}}
         <div class="space-y-6">
             <div class="bg-white p-6 rounded-xl shadow-sm text-center border">
                 <h3 class="text-xl font-semibold mb-4">QR Code</h3>
@@ -192,7 +184,6 @@
                             <div class="mt-1">
                                 <p class="text-xs text-gray-500">{{ optional($h->assetUser)->jabatan ?? 'N/A' }}</p>
                                 <p class="text-xs text-gray-500">{{ optional($h->assetUser)->departemen ?? 'N/A' }}</p>
-                                <!-- PERBAIKAN DI SINI -->
                                 <p class="text-xs text-gray-500 font-medium">{{ optional(optional($h->assetUser)->company)->name ?? 'Perusahaan tidak diketahui' }}</p>
                                 <p class="text-xs text-gray-400 mt-1">
                                     <span>Mulai: {{ \Carbon\Carbon::parse($h->tanggal_mulai)->format('d M Y') }}</span>

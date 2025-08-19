@@ -68,7 +68,7 @@
             font-family: 'Consolas', 'Courier New', Courier, monospace;
             font-size: 13px;
             font-weight: bold;
-            color: #28a745; /* Warna hijau untuk kode aset */
+            color: #28a745; 
         }
         .label-qr {
             flex-shrink: 0;
@@ -104,7 +104,7 @@
             .label-container {
                 margin: 0;
                 box-shadow: none;
-                border: 1px solid #ccc; /* Border tetap ada saat dicetak */
+                border: 1px solid #ccc;
             }
         }
     </style>

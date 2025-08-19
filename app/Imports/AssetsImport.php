@@ -144,7 +144,6 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
 
     private function defaultHeadings(): array
     {
-        // Mengembalikan kolom kode perusahaan
         return [
             'kode_aset', 'nama_barang', 'kategori', 'sub_kategori', 'perusahaan_pemilik_kode',
             'merk', 'tipe', 'serial_number', 'pengguna_aset', 'jabatan_pengguna',

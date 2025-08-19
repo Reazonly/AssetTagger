@@ -76,7 +76,6 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="md:col-span-2"><label for="nama_barang" class="block text-sm font-medium text-gray-600">Nama Barang</label><input type="text" name="nama_barang" id="nama_barang" value="{{ old('nama_barang') }}" required class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
                         
-                        <!-- Logika Fleksibel untuk Merk & Tipe -->
                         <div x-show="inputType === 'merk_dan_tipe'" class="md:col-span-2 flex items-center space-x-6">
                             <label class="flex items-center"><input type="checkbox" name="use_merk" x-model="useMerk" class="mr-2"> Input Merk</label>
                             <label class="flex items-center"><input type="checkbox" name="use_tipe" x-model="useTipe" class="mr-2"> Input Tipe</label>
@@ -93,7 +92,6 @@
 
             <div x-show="isPrimaryInfoReady" x-cloak class="space-y-8">
 
-            <!-- Informasi Pengguna -->
             <div class="bg-white p-8 rounded-lg shadow-md border">
                 <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Pengguna</h3>
                 <div>
@@ -105,7 +103,6 @@
                         @endforeach
                     </select>
                 </div>
-                <!-- PERUBAHAN DI SINI -->
                 <div x-show="selectedAssetUserId" class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-md border" x-cloak>
                     <div>
                         <label class="block text-sm font-medium text-gray-500">Jabatan</label>

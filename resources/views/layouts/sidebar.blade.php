@@ -43,14 +43,8 @@
         </a>
         @endcan
 
-        {{-- 
-            =====================================================================
-            PERBAIKAN: Ganti pengecekan role yang kaku dengan pengecekan 
-            permission yang lebih fleksibel.
-            =====================================================================
-        --}}
+        
         @php
-            // Cek apakah pengguna punya setidaknya satu izin administratif
    
             $hasAdminPermissions = auth()->user()->can('view-user') || auth()->user()->can('manage-roles') || auth()->user()->can('manage-master-data');
         @endphp
@@ -59,7 +53,6 @@
             <div class="mt-6 pt-4 border-t border-sky-700">
                 <p class="px-4 text-xs text-sky-300 uppercase tracking-wider font-semibold">Admin Area</p>
                 
-                {{-- Tampilkan menu User & Role jika punya izin terkait --}}
                 @if(auth()->user()->can('view-user') || auth()->user()->can('manage-roles'))
                 <div class="mt-2">
                     <button @click="isAdminAreaOpen = !isAdminAreaOpen; activeMenu = 'admin-area'"
@@ -83,7 +76,6 @@
                 </div>
                 @endif
 
-                {{-- Tampilkan menu Master Data jika punya izin terkait --}}
                 @can('manage-master-data')
                 <div class="mt-2">
                     <button @click="isMasterDataOpen = !isMasterDataOpen; activeMenu = 'master-data'"

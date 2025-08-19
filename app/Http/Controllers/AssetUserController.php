@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\AssetUser;
 use App\Models\Company;
 use Illuminate\Http\Request;
-use App\Imports\AssetUserImport; // Tambahkan ini di atas
-use Maatwebsite\Excel\Facades\Excel; // Tambahkan ini di atas
+use App\Imports\AssetUserImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 
 class AssetUserController extends Controller
@@ -30,14 +30,12 @@ class AssetUserController extends Controller
 
     public function create()
     {
-        // Mengambil data perusahaan dan mengirimkannya ke view
         $companies = Company::orderBy('name')->get();
         return view('masters.asset-users.create', compact('companies'));
     }
 
     public function store(Request $request)
     {
-        // Menambahkan validasi untuk company_id
         $validated = $request->validate([
             'nama' => 'required|string|max:255',
             'jabatan' => 'nullable|string|max:255',
@@ -50,14 +48,12 @@ class AssetUserController extends Controller
 
     public function edit(AssetUser $assetUser)
     {
-        // Mengambil data perusahaan dan mengirimkannya ke view
         $companies = Company::orderBy('name')->get();
         return view('masters.asset-users.edit', compact('assetUser', 'companies'));
     }
 
     public function update(Request $request, AssetUser $assetUser)
     {
-        // Menambahkan validasi untuk company_id
         $validated = $request->validate([
             'nama' => 'required|string|max:255',
             'jabatan' => 'nullable|string|max:255',

@@ -311,25 +311,21 @@ class AssetController extends Controller
 
     public function export(Request $request)
     {
-        // Ambil parameter dari request
-        $selectedIds = $request->query('ids'); // Untuk export terpilih
-        $categoryId = $request->query('category_id_export'); // Untuk export filter
+        $selectedIds = $request->query('ids'); 
+        $categoryId = $request->query('category_id_export');
         $search = $request->query('search');
 
         $query = Asset::query();
 
-        // 1. Prioritas utama: Export berdasarkan ID yang dipilih (checkbox)
         if (!empty($selectedIds) && is_array($selectedIds)) {
             $query->whereIn('id', $selectedIds);
             $fileName = 'assets_terpilih_' . date('Y-m-d') . '.xlsx';
         
-        // 2. Jika tidak ada ID, filter berdasarkan Kategori dari dropdown "Export Filter"
         } elseif (!empty($categoryId)) {
             $query->where('category_id', $categoryId);
             $category = Category::find($categoryId);
             $fileName = 'assets_' . Str::slug($category->name ?? 'filtered') . '_' . date('Y-m-d') . '.xlsx';
         
-        // 3. Fallback: Jika tidak ada keduanya, export semua hasil pencarian saat ini
         } else {
              if ($search) {
                 $query->where(function ($subQuery) use ($search) {
@@ -341,12 +337,10 @@ class AssetController extends Controller
             $fileName = 'assets_semua_' . date('Y-m-d') . '.xlsx';
         }
 
-        // Cek jika query menghasilkan data kosong
         if ($query->count() == 0) {
             return redirect()->route('assets.index')->with('error', 'Tidak ada data yang sesuai untuk diexport.');
         }
 
-        // Pass query builder ke class export, bukan collection
         return Excel::download(new AssetsExport($query), $fileName);
     }
 

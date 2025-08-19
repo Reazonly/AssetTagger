@@ -50,7 +50,7 @@ class RoleController extends Controller
         $permissions = Permission::orderBy('display_name')->get()->groupBy(function($item) {
             return explode('-', $item->name)[0];
         });
-        $role->load('permissions'); // Eager load permissions for the role
+        $role->load('permissions');
         return view('roles.edit', compact('role', 'permissions'));
     }
 
@@ -75,7 +75,6 @@ class RoleController extends Controller
 
     public function destroy(Role $role)
     {
-        // Prevent deleting core roles if needed
         if (in_array($role->name, ['super-admin', 'admin', 'editor', 'viewer'])) {
             return back()->with('error', 'Role inti tidak dapat dihapus.');
         }

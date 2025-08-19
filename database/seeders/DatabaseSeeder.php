@@ -11,15 +11,12 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            // Panggil seeder untuk master data dasar terlebih dahulu
             MasterDataSeeder::class,
             SubCategorySeeder::class,
 
-            // Panggil seeder untuk Roles & Permissions
-            PermissionSeeder::class, // Membuat semua izin yang ada
-            RoleSeeder::class,       // Membuat role dan melampirkan izin ke role tersebut
+            PermissionSeeder::class,
+            RoleSeeder::class,
 
-            // Panggil seeder untuk membuat user awal
             UserSeeder::class,
         ]);
     }

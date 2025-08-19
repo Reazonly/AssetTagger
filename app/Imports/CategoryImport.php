@@ -12,7 +12,6 @@ class CategoryImport implements ToModel, WithHeadingRow, WithUpserts
 {
     public function model(array $row)
     {
-        // Normalisasi key dari row
         $normalizedRow = $this->normalizeRowKeys($row);
 
         return new Category([
@@ -28,7 +27,6 @@ class CategoryImport implements ToModel, WithHeadingRow, WithUpserts
     }
 
     /**
-     * Mengubah key dari heading yang mudah dibaca menjadi format snake_case.
      */
     private function normalizeRowKeys(array $row): array
     {

@@ -33,10 +33,7 @@ class AssetUserImport implements ToModel, WithHeadingRow, WithUpserts
         return 'nama';
     }
 
-    /**
-     * Mengubah key dari heading yang mudah dibaca (e.g., "Kode Perusahaan") menjadi
-     * format snake_case yang digunakan di database (e.g., "kode_perusahaan").
-     */
+   
     private function normalizeRowKeys(array $row): array
     {
         $normalized = [];

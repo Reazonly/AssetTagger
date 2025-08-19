@@ -11,7 +11,6 @@ class MasterDataSeeder extends Seeder
 {
     public function run(): void
     {
-        // Data Perusahaan
         $companies = [
             ['name' => 'Jhonlin Group', 'code' => 'JG'],
             ['name' => 'Jhonlin Marine Trans', 'code' => 'JMT'],
@@ -23,13 +22,11 @@ class MasterDataSeeder extends Seeder
             Company::create($company);
         }
 
-        // Data Kategori
         $elektronik = Category::create(['name' => 'Elektronik', 'code' => 'ELEC', 'requires_merk' => true]);
         $kendaraan = Category::create(['name' => 'Kendaraan', 'code' => 'VEHI', 'requires_merk' => true]);
         $furniture = Category::create(['name' => 'Furniture', 'code' => 'FURN', 'requires_merk' => false]);
         $atk = Category::create(['name' => 'Peralatan Kantor', 'code' => 'OFFI', 'requires_merk' => false]);
 
-        // Data Satuan berdasarkan Kategori
         Unit::create(['name' => 'Unit', 'category_id' => $elektronik->id]);
         Unit::create(['name' => 'Pcs', 'category_id' => $elektronik->id]);
         

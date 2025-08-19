@@ -11,10 +11,8 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        // Cari role 'super-admin' yang sudah dibuat oleh RoleSeeder
         $superAdminRole = Role::where('name', 'super-admin')->first();
 
-        // Buat user baru
         $user = User::create([
             'nama_pengguna' => 'Super Admin',
             'email' => 'admin@jhonlin.co',
@@ -23,7 +21,6 @@ class UserSeeder extends Seeder
             'departemen' => 'Head Office',
         ]);
 
-        // Lampirkan role 'super-admin' ke user tersebut
         if ($superAdminRole) {
             $user->roles()->attach($superAdminRole->id);
         }

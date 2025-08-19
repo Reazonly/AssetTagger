@@ -28,7 +28,6 @@
                 <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Utama</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     
-                    {{-- PERUBAHAN DI SINI: Field diubah menjadi teks statis, kecuali Perusahaan --}}
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Nama Barang</label>
                         <p class="mt-1 text-lg text-gray-900 font-semibold">{{ $asset->nama_barang }}</p>
@@ -102,7 +101,6 @@
              <div class="bg-white p-8 rounded-lg shadow-md border">
                 <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Detail & Spesifikasi</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {{-- Sisanya tetap bisa diedit --}}
                     <div><label for="serial_number" class="block text-sm font-medium text-gray-700">Serial Number</label><input type="text" name="serial_number" id="serial_number" value="{{ old('serial_number', $asset->serial_number) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
                     <div><label for="kondisi" class="block text-sm font-medium text-gray-700">Kondisi</label><select name="kondisi" id="kondisi" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"><option value="Baik" {{ old('kondisi', $asset->kondisi) == 'Baik' ? 'selected' : '' }}>Baik</option><option value="Rusak" {{ old('kondisi', $asset->kondisi) == 'Rusak' ? 'selected' : '' }}>Rusak</option><option value="Perbaikan" {{ old('kondisi', $asset->kondisi) == 'Perbaikan' ? 'selected' : '' }}>Perbaikan</option></select></div>
                     <div><label for="lokasi" class="block text-sm font-medium text-gray-700">Lokasi Fisik</label><input type="text" name="lokasi" id="lokasi" value="{{ old('lokasi', $asset->lokasi) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
