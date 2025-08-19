@@ -4,9 +4,6 @@
 <div class="max-w-2xl mx-auto">
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold text-gray-800">Tambah Pengguna Aset Baru</h1>
-        <a href="{{ route('master-data.asset-users.index') }}" class="text-sm font-semibold text-gray-600 hover:text-gray-900">
-            &larr; Kembali ke Daftar
-        </a>
     </div>
     
     <div class="bg-white p-8 rounded-lg shadow-md border">

@@ -9,26 +9,23 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Illuminate\Database\Eloquent\Builder;
 use Carbon\Carbon;
 
 class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize, WithStyles
 {
-    protected $search;
-    protected $assetIds;
-    protected $categoryCode;
+    protected $query;
     protected $specKeys;
 
-    public function __construct($search, $assetIds, $categoryCode)
+    public function __construct(Builder $query)
     {
-        $this->search = $search;
-        $this->assetIds = $assetIds;
-        $this->categoryCode = $categoryCode;
+        $this->query = $query;
         $this->specKeys = $this->getUniqueSpecKeys();
     }
 
     private function getUniqueSpecKeys()
     {
-        $assets = $this->query()->get();
+        $assets = (clone $this->query)->get();
         $keys = [];
         foreach ($assets as $asset) {
             if (is_array($asset->specifications)) {
@@ -40,26 +37,31 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
 
     public function query()
     {
-        // Eager load semua relasi yang dibutuhkan, termasuk history
-        return Asset::query()->with(['category', 'subCategory', 'company', 'assetUser.company', 'history.assetUser']);
+        return $this->query->with(['category', 'subCategory', 'company', 'assetUser.company', 'history.assetUser']);
     }
 
+    /**
+     * Menentukan header untuk file Excel.
+     */
     public function headings(): array
     {
         $baseHeadings = [
-            'kode_aset', 'nama_barang', 'kategori', 'sub_kategori', 'perusahaan_pemilik',
-            'merk', 'tipe', 'serial_number', 'pengguna_aset', 'jabatan_pengguna',
-            'departemen_pengguna', 'perusahaan_pengguna', 'kondisi', 'lokasi', 'jumlah',
-            'satuan', 'tanggal_pembelian', 'harga_total_rp', 'nomor_po', 'nomor_bast',
-            'kode_aktiva', 'sumber_dana', 'item_termasuk', 'peruntukan', 'keterangan',
-            'riwayat_pengguna' // Menambahkan kolom riwayat
+            'Kode Aset', 'Nama Barang', 'Kategori', 'Sub Kategori', 'Perusahaan Pemilik (Kode)',
+            'Merk', 'Tipe', 'Serial Number', 'Pengguna Aset', 'Jabatan Pengguna',
+            'Departemen Pengguna', 'Perusahaan Pengguna (Kode)', 'Kondisi', 'Lokasi', 'Jumlah',
+            'Satuan', 'Tanggal Pembelian', 'Harga Total (Rp)', 'Nomor PO', 'Nomor BAST',
+            'Kode Aktiva', 'Sumber Dana', 'Item Termasuk', 'Peruntukan', 'Keterangan',
+            'Riwayat Pengguna'
         ];
+
         return array_merge($baseHeadings, $this->specKeys);
     }
 
+    /**
+     * Memetakan data aset ke dalam kolom Excel.
+     */
     public function map($asset): array
     {
-        // Format riwayat pengguna menjadi satu string
         $historyString = $asset->history->map(function ($h) {
             $startDate = Carbon::parse($h->tanggal_mulai)->format('d M Y');
             $endDate = $h->tanggal_selesai ? Carbon::parse($h->tanggal_selesai)->format('d M Y') : 'Sekarang';
@@ -72,14 +74,14 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $asset->nama_barang,
             optional($asset->category)->name,
             optional($asset->subCategory)->name,
-            optional($asset->company)->name,
+            optional($asset->company)->code,
             $asset->merk,
             $asset->tipe,
             $asset->serial_number,
             optional($asset->assetUser)->nama,
             optional($asset->assetUser)->jabatan,
             optional($asset->assetUser)->departemen,
-            optional(optional($asset->assetUser)->company)->name,
+            optional(optional($asset->assetUser)->company)->code,
             $asset->kondisi,
             $asset->lokasi,
             $asset->jumlah,
@@ -93,7 +95,7 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $asset->include_items,
             $asset->peruntukan,
             $asset->keterangan,
-            $historyString, // Menambahkan data riwayat
+            $historyString,
         ];
 
         $specData = [];
@@ -104,20 +106,32 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
         return array_merge($baseData, $specData);
     }
 
+    /**
+     * Memberikan style pada sheet Excel.
+     */
     public function styles(Worksheet $sheet)
     {
         $columnCount = count($this->headings());
         $lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($columnCount);
 
         return [
+            // Style untuk baris header (baris 1)
             1 => [
                 'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
                 'fill' => ['fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => '28A745']],
                 'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
             ],
+
+            // =====================================================================
+            // PERUBAHAN DI SINI: Menambahkan perataan tengah horizontal untuk semua kolom
+            // =====================================================================
             'A:' . $lastColumn => [
-                'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
+                'alignment' => [
+                    'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                    'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                ],
             ],
+            // =====================================================================
         ];
     }
 }

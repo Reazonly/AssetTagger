@@ -3,21 +3,15 @@
 @section('title', 'Daftar Aset')
 
 @section('content')
-{{-- PERUBAHAN: Menggunakan x-data untuk modal import --}}
 <div x-data="{ showImportModal: false }" class="bg-white rounded-xl shadow-lg p-6 md:p-8">
 
+    {{-- HEADER --}}
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-200 pb-6 mb-6">
         <div>
             <h1 class="text-3xl font-bold text-gray-900">Daftar Aset</h1>
             <p class="text-sm text-gray-500 mt-1">Kelola, cari, dan filter semua aset perusahaan.</p>
         </div>
         <div class="flex items-center gap-3 mt-4 md:mt-0">
-            {{-- 
-                =====================================================================
-                PERBAIKAN 1: Mengganti pengecekan role dengan permission.
-                Setiap tombol sekarang diperiksa dengan izinnya masing-masing.
-                =====================================================================
-            --}}
             @can('import-asset')
             <button @click="showImportModal = true" class="inline-flex items-center gap-2 bg-white text-gray-700 font-semibold px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -38,6 +32,7 @@
     </div>
 
     
+    {{-- FILTER DAN TOMBOL AKSI --}}
     <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
         <form action="{{ route('assets.index') }}" method="GET" class="w-full md:w-auto flex flex-col sm:flex-row items-center gap-3">
             <div class="relative w-full sm:w-64">
@@ -71,20 +66,22 @@
                 </button>
                 <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10" x-cloak>
                     <div class="py-1" role="menu" aria-orientation="vertical">
-                        <a href="{{ route('assets.export', array_merge(request()->query(), ['category_code' => 'VEHI'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Export Kendaraan</a>
-                        <a href="{{ route('assets.export', array_merge(request()->query(), ['category_code' => 'ELEC'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Export Elektronik</a>
-                        <a href="{{ route('assets.export', array_merge(request()->query(), ['category_code' => 'FURN'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Export Furniture</a>
-                        <a href="{{ route('assets.export', array_merge(request()->query(), ['category_code' => 'OFFI'])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Export Peralatan Kantor</a>
+                         @foreach($categories as $category)
+                            <a href="{{ route('assets.export', array_merge(request()->query(), ['category_id_export' => $category->id])) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                Export {{ $category->name }}
+                            </a>
+                        @endforeach
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    {{-- TABEL ASET --}}
     <div class="overflow-x-auto border border-gray-200 rounded-lg">
         <table class="w-full text-sm text-left text-gray-600">
             <thead class="text-xs text-gray-700 uppercase bg-gray-100 border-b-2 border-black">
-                <tr class="divide-x divide-gray-300">
+                <tr class="divide-x divide-gray-300 text-center">
                     <th scope="col" class="p-4"><input type="checkbox" id="selectAllCheckbox" class="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"></th>
                     <th scope="col" class="px-6 py-3">Kode Aset</th>
                     <th scope="col" class="px-6 py-3">Nama/Tipe Barang</th>
@@ -92,20 +89,14 @@
                     <th scope="col" class="px-6 py-3">Sub-Kategori</th>
                     <th scope="col" class="px-6 py-3">Pengguna</th>
                     <th scope="col" class="px-6 py-3">Kondisi</th>
-                    {{-- 
-                        =====================================================================
-                        PERBAIKAN 2: Menampilkan kolom Aksi jika user bisa
-                        mengedit ATAU menghapus aset.
-                        =====================================================================
-                    --}}
                     @if(auth()->user()->can('edit-asset') || auth()->user()->can('delete-asset'))
-                        <th scope="col" class="px-6 py-3 text-right">Aksi</th>
+                        <th scope="col" class="px-6 py-3 text-center">Aksi</th>
                     @endif
                 </tr>
             </thead>
             <tbody class="bg-white">
                 @forelse ($assets as $asset)
-                    <tr class="border-b hover:bg-gray-50 divide-x divide-gray-200">
+                    <tr class="border-b hover:bg-gray-50 divide-x divide-gray-200 text-center">
                         <td class="w-4 p-4"><input type="checkbox" name="asset_ids[]" value="{{ $asset->id }}" class="asset-checkbox h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"></td>
                         <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{ $asset->code_asset }}</td>
                         <td class="px-6 py-4">{{ $asset->nama_barang }}</td>
@@ -113,12 +104,6 @@
                         <td class="px-6 py-4">{{ optional($asset->subCategory)->name ?? '-' }}</td>
                         <td class="px-6 py-4">{{ optional($asset->assetUser)->nama ?? 'N/A' }}</td>
                         <td class="px-6 py-4"><span class="px-2 py-1 text-xs font-semibold rounded-full @if($asset->kondisi == 'Baik') bg-green-100 text-green-800 @elseif($asset->kondisi == 'Rusak') bg-red-100 text-red-800 @else bg-yellow-100 text-yellow-800 @endif">{{ $asset->kondisi }}</span></td>
-                        {{-- 
-                            =====================================================================
-                            PERBAIKAN 3: Menampilkan kolom Aksi dan setiap tombol di dalamnya
-                            juga diperiksa dengan permission masing-masing.
-                            =====================================================================
-                        --}}
                         @if(auth()->user()->can('edit-asset') || auth()->user()->can('delete-asset'))
                         <td class="px-6 py-4 text-right whitespace-nowrap">
                             @can('view-asset')
@@ -139,12 +124,6 @@
                     </tr>
                 @empty
                     <tr>
-                        {{-- 
-                            =====================================================================
-                            PERBAIKAN 4: Menyesuaikan jumlah kolom (colspan)
-                            dengan kondisi yang baru.
-                            =====================================================================
-                        --}}
                         <td colspan="{{ auth()->user()->can('edit-asset') || auth()->user()->can('delete-asset') ? '8' : '7' }}" class="text-center py-10 text-gray-500">
                             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                             <h3 class="mt-2 text-sm font-medium text-gray-900">Aset tidak ditemukan</h3>
@@ -158,7 +137,7 @@
     
     <div class="mt-6">{{ $assets->appends(request()->query())->links() }}</div>
 
-    {{-- Modal untuk Import Aset --}}
+    {{-- MODAL IMPORT --}}
     @can('import-asset')
         <div x-show="showImportModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
             <div @click.away="showImportModal = false" class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
@@ -180,8 +159,16 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // Kode JavaScript untuk seleksi lintas halaman tidak perlu diubah, sudah benar.
     const storageKey = 'selectedAssetIds';
+    
+    // =====================================================================
+    // PERBAIKAN FINAL: Hanya hapus localStorage jika TIDAK ADA query parameter
+    // di URL (artinya bukan hasil search, filter, atau paginasi).
+    // =====================================================================
+    if (window.location.search === '') {
+        localStorage.removeItem(storageKey);
+    }
+
     let selectedAssetIds = JSON.parse(localStorage.getItem(storageKey)) || [];
 
     const selectAllCheckbox = document.getElementById('selectAllCheckbox');
@@ -194,6 +181,11 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     const updateUI = () => {
+        const anyChecked = selectedAssetIds.length > 0;
+        
+        if(printSelectedBtn) printSelectedBtn.disabled = !anyChecked;
+        if(exportSelectedBtn) exportSelectedBtn.disabled = !anyChecked;
+
         assetCheckboxes.forEach(checkbox => {
             const assetId = parseInt(checkbox.value, 10);
             checkbox.checked = selectedAssetIds.includes(assetId);
@@ -204,24 +196,21 @@ document.addEventListener('DOMContentLoaded', function () {
         if (selectAllCheckbox) {
             selectAllCheckbox.checked = allVisibleChecked;
         }
-
-        const anyChecked = selectedAssetIds.length > 0;
-        if(printSelectedBtn) printSelectedBtn.disabled = !anyChecked;
-        if(exportSelectedBtn) exportSelectedBtn.disabled = !anyChecked;
     };
 
     if (selectAllCheckbox) {
         selectAllCheckbox.addEventListener('change', function () {
+            const isChecked = this.checked;
             document.querySelectorAll('.asset-checkbox').forEach(checkbox => {
                 const assetId = parseInt(checkbox.value, 10);
-                const isChecked = this.checked;
-                checkbox.checked = isChecked;
+                const index = selectedAssetIds.indexOf(assetId);
                 if (isChecked) {
-                    if (!selectedAssetIds.includes(assetId)) {
+                    checkbox.checked = true;
+                    if (index === -1) {
                         selectedAssetIds.push(assetId);
                     }
                 } else {
-                    const index = selectedAssetIds.indexOf(assetId);
+                    checkbox.checked = false;
                     if (index > -1) {
                         selectedAssetIds.splice(index, 1);
                     }
@@ -235,15 +224,11 @@ document.addEventListener('DOMContentLoaded', function () {
     assetCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function () {
             const assetId = parseInt(this.value, 10);
-            if (this.checked) {
-                if (!selectedAssetIds.includes(assetId)) {
-                    selectedAssetIds.push(assetId);
-                }
-            } else {
-                const index = selectedAssetIds.indexOf(assetId);
-                if (index > -1) {
-                    selectedAssetIds.splice(index, 1);
-                }
+            const index = selectedAssetIds.indexOf(assetId);
+            if (this.checked && index === -1) {
+                selectedAssetIds.push(assetId);
+            } else if (!this.checked && index > -1) {
+                selectedAssetIds.splice(index, 1);
             }
             saveState();
             updateUI();
@@ -267,8 +252,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
-
-    // Panggil updateUI saat halaman dimuat untuk mengembalikan state checkbox
+    
     updateUI();
 });
 </script>

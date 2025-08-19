@@ -12,6 +12,7 @@ use App\Exports\AssetsExport;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class AssetController extends Controller
@@ -80,7 +81,7 @@ class AssetController extends Controller
         return $specs;
     }
 
-    public function index(Request $request)
+     public function index(Request $request)
     {
         $query = Asset::with(['assetUser', 'category', 'company', 'subCategory']);
         if ($request->filled('search')) {
@@ -277,7 +278,7 @@ class AssetController extends Controller
     {
         $asset->history()->delete();
         $asset->delete();
-        return redirect()->route('assets.index')->with('success', 'Aset dan semua riwayatnya berhasil dihapus.');
+        return redirect()->route('assets.index')->with('success', 'Aset berhasil dipindahkan ke arsip.');
     }
 
     public function publicShow(Asset $asset)
@@ -310,22 +311,43 @@ class AssetController extends Controller
 
     public function export(Request $request)
     {
-        $assetIds = $request->query('ids');
-        $categoryCode = $request->query('category_code');
+        // Ambil parameter dari request
+        $selectedIds = $request->query('ids'); // Untuk export terpilih
+        $categoryId = $request->query('category_id_export'); // Untuk export filter
         $search = $request->query('search');
 
-        if (empty($assetIds) && empty($categoryCode)) {
-            return redirect()->route('assets.index')->with('error', 'Tidak ada data yang dipilih untuk diekspor.');
-        }
+        $query = Asset::query();
 
-        $fileNamePrefix = 'assets_export';
-        if ($categoryCode) {
-            $fileNamePrefix .= '_' . strtolower($categoryCode);
-        }
-
-        $fileName = $fileNamePrefix . '_' . date('Y-m-d_H-i-s') . '.xlsx';
+        // 1. Prioritas utama: Export berdasarkan ID yang dipilih (checkbox)
+        if (!empty($selectedIds) && is_array($selectedIds)) {
+            $query->whereIn('id', $selectedIds);
+            $fileName = 'assets_terpilih_' . date('Y-m-d') . '.xlsx';
         
-        return Excel::download(new AssetsExport($search, $assetIds, $categoryCode), $fileName);
+        // 2. Jika tidak ada ID, filter berdasarkan Kategori dari dropdown "Export Filter"
+        } elseif (!empty($categoryId)) {
+            $query->where('category_id', $categoryId);
+            $category = Category::find($categoryId);
+            $fileName = 'assets_' . Str::slug($category->name ?? 'filtered') . '_' . date('Y-m-d') . '.xlsx';
+        
+        // 3. Fallback: Jika tidak ada keduanya, export semua hasil pencarian saat ini
+        } else {
+             if ($search) {
+                $query->where(function ($subQuery) use ($search) {
+                    $subQuery->where('code_asset', 'like', "%{$search}%")
+                             ->orWhere('nama_barang', 'like', "%{$search}%")
+                             ->orWhere('serial_number', 'like', "%{$search}%");
+                });
+            }
+            $fileName = 'assets_semua_' . date('Y-m-d') . '.xlsx';
+        }
+
+        // Cek jika query menghasilkan data kosong
+        if ($query->count() == 0) {
+            return redirect()->route('assets.index')->with('error', 'Tidak ada data yang sesuai untuk diexport.');
+        }
+
+        // Pass query builder ke class export, bukan collection
+        return Excel::download(new AssetsExport($query), $fileName);
     }
 
     public function downloadPDF(Asset $asset)

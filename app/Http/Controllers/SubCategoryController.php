@@ -5,21 +5,38 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\SubCategory;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class SubCategoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $categories = Category::withCount('subCategories')->latest()->paginate(15);
+        $query = Category::withCount('subCategories')->with('subCategories');
+
+        // Logika pencarian untuk halaman index
+        if ($request->filled('search')) {
+            $searchTerm = $request->input('search');
+            $query->where('name', 'like', "%{$searchTerm}%")
+                  ->orWhereHas('subCategories', function ($q) use ($searchTerm) {
+                      $q->where('name', 'like', "%{$searchTerm}%");
+                  });
+        }
+
+        $categories = $query->latest()->paginate(10);
         return view('masters.sub-categories.index', compact('categories'));
     }
 
-    public function show(Category $category)
+    public function show(Request $request, Category $category)
     {
-        // --- PERBAIKAN DI SINI ---
-        // Menambahkan .latest() untuk mengurutkan dari yang terbaru.
-        $subCategories = $category->subCategories()->latest()->paginate(15);
+        $query = $category->subCategories();
+
+        // Logika pencarian untuk halaman show
+        if ($request->filled('search')) {
+            $searchTerm = $request->input('search');
+            $query->where('name', 'like', "%{$searchTerm}%");
+        }
+
+        $subCategories = $query->latest()->paginate(15);
         return view('masters.sub-categories.show', compact('category', 'subCategories'));
     }
 
@@ -32,23 +49,17 @@ class SubCategoryController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'input_type' => ['required', Rule::in(['none', 'merk', 'tipe', 'merk_dan_tipe'])],
-            'spec_fields' => 'nullable|array',
-            'spec_fields.*' => 'nullable|string|max:255',
+            'input_type' => 'required|string|in:merk,tipe,merk_dan_tipe,none',
         ]);
-
-        $specFields = !empty($validated['spec_fields']) 
-            ? array_filter($validated['spec_fields']) 
-            : null;
 
         $category->subCategories()->create([
             'name' => $validated['name'],
+            'slug' => Str::slug($validated['name']),
             'input_type' => $validated['input_type'],
-            'spec_fields' => $specFields,
         ]);
 
-        return redirect()->route('master-data.sub-categories.show', $category)
-                         ->with('success', 'Sub-Kategori baru berhasil ditambahkan.');
+        return redirect()->route('master-data.sub-categories.show', $category->id)
+                         ->with('success', 'Sub-kategori baru berhasil ditambahkan.');
     }
 
     public function edit(SubCategory $subCategory)
@@ -60,33 +71,24 @@ class SubCategoryController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'input_type' => ['required', Rule::in(['none', 'merk', 'tipe', 'merk_dan_tipe'])],
-            'spec_fields' => 'nullable|array',
-            'spec_fields.*' => 'nullable|string|max:255',
+            'input_type' => 'required|string|in:merk,tipe,merk_dan_tipe,none',
         ]);
 
-        $specFields = !empty($validated['spec_fields']) 
-            ? array_filter($validated['spec_fields']) 
-            : null;
-        
         $subCategory->update([
             'name' => $validated['name'],
+            'slug' => Str::slug($validated['name']),
             'input_type' => $validated['input_type'],
-            'spec_fields' => $specFields,
         ]);
 
-        return redirect()->route('master-data.sub-categories.show', $subCategory->category_id)
-                         ->with('success', 'Sub-Kategori berhasil diperbarui.');
+        return redirect()->route('masters.sub-categories.show', $subCategory->category_id)
+                         ->with('success', 'Sub-kategori berhasil diperbarui.');
     }
 
     public function destroy(SubCategory $subCategory)
     {
-        if ($subCategory->assets()->count() > 0) {
-            return back()->with('error', 'Sub-Kategori tidak dapat dihapus karena masih digunakan oleh data aset.');
-        }
         $categoryId = $subCategory->category_id;
         $subCategory->delete();
-        return redirect()->route('master-data.sub-categories.show', $categoryId)
-                         ->with('success', 'Sub-Kategori berhasil dihapus.');
+        return redirect()->route('masters.sub-categories.show', $categoryId)
+                         ->with('success', 'Sub-kategori berhasil dihapus.');
     }
 }

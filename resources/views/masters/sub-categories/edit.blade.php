@@ -3,7 +3,6 @@
 @section('content')
 <div class="max-w-2xl mx-auto">
     <div class="mb-6">
-        <a href="{{ route('master-data.sub-categories.show', $subCategory->category_id) }}" class="text-sm font-semibold text-gray-600 hover:text-gray-900">&larr; Kembali</a>
         <h1 class="text-3xl font-bold text-gray-800 mt-2">Edit Sub-Kategori: <span class="text-sky-600">{{ $subCategory->name }}</span></h1>
     </div>
     <div class="bg-white p-8 rounded-lg shadow-md border" x-data="{ specFields: {{ json_encode(old('spec_fields', $subCategory->spec_fields ?? [''])) }} }">

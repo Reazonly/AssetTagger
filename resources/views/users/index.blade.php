@@ -41,16 +41,16 @@
     <div class="overflow-x-auto border border-gray-200 rounded-lg">
         <table class="w-full text-sm text-left text-gray-600">
             <thead class="text-xs text-gray-700 uppercase bg-gray-100 border-b-2 border-black">
-                <tr class="divide-x divide-gray-300">
+                <tr class="divide-x divide-gray-300 text-center">
                     <th class="px-6 py-3">Nama Pengguna</th>
                     <th class="px-6 py-3">Email</th>
                     <th class="px-6 py-3">Role</th>
-                    <th class="px-6 py-3 text-right">Aksi</th>
+                    <th class="px-6 py-3">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($users as $user)
-                    <tr class="border-b hover:bg-gray-50 divide-x divide-gray-200">
+                    <tr class="border-b hover:bg-gray-50 divide-x divide-gray-200 text-center">
                         <td class="px-6 py-4 font-medium text-gray-900">{{ $user->nama_pengguna }}</td>
                         <td class="px-6 py-4">{{ $user->email }}</td>
                         <td class="px-6 py-4">
@@ -58,7 +58,7 @@
                                 <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">{{ $role->display_name }}</span>
                             @endforeach
                         </td>
-                        <td class="px-6 py-4 text-right whitespace-nowrap">
+                        <td class="px-6 py-4 whitespace-nowrap">
                             @if ($user->id !== 1 && auth()->user()->can('assign-role'))
                                 <button @click="showRoleModal = true; selectedUser = {{ $user->id }}; selectedRoles = {{ $user->roles->pluck('id')->first() ?? 'null' }}; actionUrl = '{{ route('users.assign-roles', $user->id) }}'" class="font-medium text-blue-600 hover:text-blue-800">Ubah Role</button>
                             @endif
@@ -89,7 +89,7 @@
     </div>
     <div class="mt-6">{{ $users->links() }}</div>
 
-    {{-- Modal Ubah Role --}}
+
     <div x-show="showRoleModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
         <div @click.away="showRoleModal = false" class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
             <form :action="actionUrl" method="POST" class="p-6">
@@ -97,16 +97,12 @@
                 <h3 class="text-lg font-bold text-gray-900 mb-4">Ubah Role untuk Pengguna</h3>
                 <div class="space-y-3">
                     <p class="text-sm text-gray-600">Pilih satu peran untuk pengguna ini.</p>
-                    {{-- ====================================================== --}}
-                    {{-- PERUBAHAN UTAMA: DARI CHECKBOX MENJADI RADIO BUTTON --}}
-                    {{-- ====================================================== --}}
                     @foreach ($roles as $role)
                         <label class="flex items-center p-3 rounded-md border hover:bg-gray-50 transition-colors cursor-pointer">
                             <input type="radio" name="roles[]" value="{{ $role->id }}" x-model="selectedRoles" class="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300">
                             <span class="ml-3 text-sm font-medium text-gray-800">{{ $role->display_name }}</span>
                         </label>
                     @endforeach
-                    {{-- ====================================================== --}}
                 </div>
                 <div class="mt-6 flex justify-end gap-3">
                     <button type="button" @click="showRoleModal = false" class="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Batal</button>
