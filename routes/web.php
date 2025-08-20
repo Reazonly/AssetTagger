@@ -34,10 +34,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
-    // =====================================================================
-    // PERBAIKAN: RUTE ASET DISUSUN ULANG BERDASARKAN URUTAN PRIORITAS
-    // Rute statis (tanpa parameter) diletakkan di atas rute dinamis.
-    // =====================================================================
+
     Route::prefix('assets')->name('assets.')->group(function() {
         // Rute GET (statis)
         Route::get('/', [AssetController::class, 'index'])->name('index')->middleware('permission:view-asset');
