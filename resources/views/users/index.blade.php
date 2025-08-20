@@ -2,11 +2,11 @@
 @section('title', 'Manajemen Pengguna')
 
 @section('content')
-<div x-data="{ 
-    showRoleModal: false, 
-    selectedUser: null, 
-    selectedRoles: [], 
-    actionUrl: '' 
+<div x-data="{
+    showRoleModal: false,
+    selectedUser: null,
+    selectedRoles: [],
+    actionUrl: ''
 }" class="bg-white rounded-xl shadow-lg p-6 md:p-8">
 
     {{-- Header --}}
@@ -55,12 +55,12 @@
                         <td class="px-6 py-4">{{ $user->email }}</td>
                         <td class="px-6 py-4">
                             @foreach ($user->roles as $role)
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">{{ $role->display_name }}</span>
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 mr-1 mb-1 inline-block">{{ $role->display_name }}</span>
                             @endforeach
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @if ($user->id !== 1 && auth()->user()->can('assign-role'))
-                                <button @click="showRoleModal = true; selectedUser = {{ $user->id }}; selectedRoles = {{ $user->roles->pluck('id')->first() ?? 'null' }}; actionUrl = '{{ route('users.assign-roles', $user->id) }}'" class="font-medium text-blue-600 hover:text-blue-800">Ubah Role</button>
+                                <button @click="showRoleModal = true; selectedUser = {{ $user->id }}; selectedRoles = {{ $user->roles->pluck('id') }}; actionUrl = '{{ route('users.assign-roles', $user->id) }}'" class="font-medium text-blue-600 hover:text-blue-800">Ubah Role</button>
                             @endif
                             @can('manage-roles')
                                 @if ($user->id !== 1)
@@ -90,16 +90,17 @@
     <div class="mt-6">{{ $users->links() }}</div>
 
 
+    {{-- Modal Ubah Role --}}
     <div x-show="showRoleModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
         <div @click.away="showRoleModal = false" class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
             <form :action="actionUrl" method="POST" class="p-6">
                 @csrf
                 <h3 class="text-lg font-bold text-gray-900 mb-4">Ubah Role untuk Pengguna</h3>
                 <div class="space-y-3">
-                    <p class="text-sm text-gray-600">Pilih satu peran untuk pengguna ini.</p>
+                    <p class="text-sm text-gray-600">Pilih satu atau lebih peran untuk pengguna ini.</p>
                     @foreach ($roles as $role)
                         <label class="flex items-center p-3 rounded-md border hover:bg-gray-50 transition-colors cursor-pointer">
-                            <input type="radio" name="roles[]" value="{{ $role->id }}" x-model="selectedRoles" class="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300">
+                            <input type="checkbox" name="roles[]" value="{{ $role->id }}" x-model="selectedRoles" class="h-4 w-4 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300">
                             <span class="ml-3 text-sm font-medium text-gray-800">{{ $role->display_name }}</span>
                         </label>
                     @endforeach
