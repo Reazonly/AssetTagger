@@ -22,61 +22,52 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
         {
             $normalizedRow = $this->normalizeRowKeys($row->toArray());
 
-            // 1. Cari atau buat data master (Logika Company dikembalikan)
-            $category = Category::firstOrCreate(
-                ['name' => $normalizedRow['kategori']],
-                ['code' => substr(strtoupper(Str::slug($normalizedRow['kategori'])), 0, 4), 'slug' => Str::slug($normalizedRow['kategori'])]
-            );
+    
+            $category = !empty($normalizedRow['kategori']) 
+                ? Category::firstOrCreate(['name' => $normalizedRow['kategori']])
+                : null;
+            
+            if (!$category) continue;
 
             $subCategory = ($category && !empty($normalizedRow['sub_kategori'])) 
                 ? SubCategory::firstOrCreate(['name' => $normalizedRow['sub_kategori'], 'category_id' => $category->id]) 
                 : null;
             
-            // Logika untuk mencari perusahaan pemilik berdasarkan kode
             $company = !empty($normalizedRow['perusahaan_pemilik_kode']) 
                 ? Company::where('code', $normalizedRow['perusahaan_pemilik_kode'])->first() 
                 : null;
             
             $assetUser = null;
             if (!empty($normalizedRow['pengguna_aset'])) {
-                // Logika untuk mencari perusahaan pengguna berdasarkan kode
                 $userCompany = !empty($normalizedRow['perusahaan_pengguna_kode']) ? Company::where('code', $normalizedRow['perusahaan_pengguna_kode'])->first() : null;
                 $assetUser = AssetUser::firstOrCreate(
                     ['nama' => $normalizedRow['pengguna_aset']],
                     [
                         'jabatan' => $normalizedRow['jabatan_pengguna'] ?? null, 
                         'departemen' => $normalizedRow['departemen_pengguna'] ?? null,
-                        'company_id' => optional($userCompany)->id // Menetapkan company_id untuk pengguna
+                        'company_id' => optional($userCompany)->id
                     ]
                 );
             }
 
-            // 2. Siapkan data aset
-            $specifications = [];
-            foreach ($normalizedRow as $key => $value) {
-                if (!in_array($key, $this->defaultHeadings()) && !empty($value)) {
-                    $specifications[$key] = $value;
-                }
-            }
-
+           
             $tanggal_pembelian = null;
-            if (!empty($normalizedRow['tanggal_pembelian'])) {
-                try {
-                    if (is_numeric($normalizedRow['tanggal_pembelian'])) {
-                        $tanggal_pembelian = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($normalizedRow['tanggal_pembelian']);
-                    } else {
-                        $tanggal_pembelian = Carbon::parse($normalizedRow['tanggal_pembelian']);
+            try {
+                if (!empty($normalizedRow['tahun_pembelian']) && !empty($normalizedRow['bulan_pembelian']) && !empty($normalizedRow['tanggal_pembelian'])) {
+                    $bulanAngka = $this->getMonthNumber($normalizedRow['bulan_pembelian']);
+                    if ($bulanAngka) {
+                        $tanggal_pembelian = Carbon::create($normalizedRow['tahun_pembelian'], $bulanAngka, $normalizedRow['tanggal_pembelian']);
                     }
-                } catch (\Exception $e) {
-                    $tanggal_pembelian = null;
                 }
+            } catch (\Exception $e) {
+                $tanggal_pembelian = null;
             }
 
             $assetData = [
                 'nama_barang' => $normalizedRow['nama_barang'],
-                'category_id' => optional($category)->id,
+                'category_id' => $category->id,
                 'sub_category_id' => optional($subCategory)->id,
-                'company_id' => optional($company)->id, // Menetapkan company_id untuk aset
+                'company_id' => optional($company)->id,
                 'asset_user_id' => optional($assetUser)->id,
                 'merk' => $normalizedRow['merk'] ?? null,
                 'tipe' => $normalizedRow['tipe'] ?? null,
@@ -94,34 +85,63 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
                 'include_items' => $normalizedRow['item_termasuk'] ?? null,
                 'peruntukan' => $normalizedRow['peruntukan'] ?? null,
                 'keterangan' => $normalizedRow['keterangan'] ?? null,
-                'specifications' => $specifications,
+                'specifications' => $this->getSpecifications($normalizedRow),
             ];
+            // =====================================================================
 
-            // 3. Cari aset untuk diupdate atau buat baru
-            $asset = null;
-            if (!empty($normalizedRow['kode_aset'])) {
-                $asset = Asset::withTrashed()->where('code_asset', $normalizedRow['kode_aset'])->first();
-            } elseif (!empty($normalizedRow['serial_number'])) {
-                $asset = Asset::withTrashed()->where('serial_number', $normalizedRow['serial_number'])->first();
-            }
+            // 3. Cari aset berdasarkan Serial Number untuk diupdate
+            $asset = !empty($assetData['serial_number']) 
+                ? Asset::withTrashed()->where('serial_number', $assetData['serial_number'])->first() 
+                : null;
+
+            $oldUserId = $asset ? $asset->asset_user_id : null;
 
             if ($asset) {
                 if ($asset->trashed()) { $asset->restore(); }
                 $asset->update($assetData);
             } else {
-                $assetData['code_asset'] = $normalizedRow['kode_aset'] ?? ('TEMP-' . uniqid());
+                $assetData['code_asset'] = 'TEMP-' . uniqid();
                 $asset = Asset::create($assetData);
+
+                $newCode = $this->generateAssetCode($normalizedRow, $category, $subCategory, $company, $asset->id);
+                $asset->code_asset = $newCode;
+                $asset->save();
             }
 
-            // 4. Update riwayat pengguna
-            $asset->history()->whereNull('tanggal_selesai')->update(['tanggal_selesai' => now()]);
-            if ($asset->asset_user_id) {
-                $asset->history()->create([
-                    'asset_user_id' => $asset->asset_user_id,
-                    'tanggal_mulai' => now(),
-                ]);
+            $newUserId = $asset->asset_user_id;
+
+            if ($oldUserId != $newUserId) {
+                if ($oldUserId) {
+                    $asset->history()->where('asset_user_id', $oldUserId)->whereNull('tanggal_selesai')->update(['tanggal_selesai' => now()]);
+                }
+                if ($newUserId) {
+                    $asset->history()->create(['asset_user_id' => $newUserId, 'tanggal_mulai' => now()]);
+                }
             }
         }
+    }
+
+    private function generateAssetCode(array $row, Category $category, ?SubCategory $subCategory, ?Company $company, int $assetId): string
+    {
+        $getFourDigits = fn($s) => strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', (string)$s), 0, 4));
+        $getThreeDigits = fn($s) => strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', (string)$s), 0, 3));
+        
+        $companyCode = $getThreeDigits(optional($company)->code);
+        $paddedId = str_pad($assetId, 3, '0', STR_PAD_LEFT);
+
+        if ($category->code === 'ELEC') {
+            $jenisBarangCode = $getFourDigits(optional($subCategory)->name);
+            $merkCode = $getFourDigits($row['merk'] ?? '');
+            return "{$jenisBarangCode}/{$merkCode}/{$companyCode}/{$paddedId}";
+        } elseif ($category->code === 'VEHI') {
+            $jenisBarangCode = $getFourDigits(optional($subCategory)->name);
+            $namaBarangCode = $getFourDigits($row['nama_barang'] ?? '');
+            return "{$jenisBarangCode}/{$namaBarangCode}/{$companyCode}/{$paddedId}";
+        }
+        
+        $kategoriCode = $getFourDigits($category->code);
+        $namaBarangCode = $getFourDigits($row['nama_barang'] ?? '');
+        return "{$namaBarangCode}/{$kategoriCode}/{$companyCode}/{$paddedId}";
     }
 
     public function rules(): array
@@ -131,7 +151,7 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
             '*.kategori' => 'required|string',
         ];
     }
-
+    
     private function normalizeRowKeys(array $row): array
     {
         $normalized = [];
@@ -142,15 +162,36 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
         return $normalized;
     }
 
-    private function defaultHeadings(): array
+    private function getStandardColumns(): array
     {
         return [
-            'kode_aset', 'nama_barang', 'kategori', 'sub_kategori', 'perusahaan_pemilik_kode',
-            'merk', 'tipe', 'serial_number', 'pengguna_aset', 'jabatan_pengguna',
-            'departemen_pengguna', 'perusahaan_pengguna_kode', 'kondisi', 'lokasi', 'jumlah',
-            'satuan', 'tanggal_pembelian', 'harga_total_rp', 'nomor_po', 'nomor_bast',
-            'kode_aktiva', 'sumber_dana', 'item_termasuk', 'peruntukan', 'keterangan',
-            'riwayat_pengguna',
+            'nama_barang', 'kategori', 'sub_kategori', 'perusahaan_pemilik_kode', 'merk', 'tipe', 'serial_number', 'pengguna_aset',
+            'jabatan_pengguna', 'departemen_pengguna', 'perusahaan_pengguna_kode', 'kondisi', 'lokasi', 'jumlah',
+            'satuan', 'harga_total_rp', 'nomor_po', 'nomor_bast', 'kode_aktiva', 'sumber_dana',
+            'item_termasuk', 'peruntukan', 'keterangan', 'kode_aset', 'riwayat_pengguna',
+            'hari_pembelian', 'tanggal_pembelian', 'bulan_pembelian', 'tahun_pembelian'
         ];
+    }
+
+    private function getSpecifications(array $normalizedRow): array
+    {
+        $specifications = [];
+        $standardColumns = $this->getStandardColumns();
+        foreach ($normalizedRow as $key => $value) {
+            if (!in_array($key, $standardColumns) && !empty($value)) {
+                $specifications[Str::title(str_replace('_', ' ', $key))] = $value;
+            }
+        }
+        return $specifications;
+    }
+
+    private function getMonthNumber($monthName): ?int
+    {
+        if (is_numeric($monthName)) return (int)$monthName;
+        $months = [
+            'januari' => 1, 'februari' => 2, 'maret' => 3, 'april' => 4, 'mei' => 5, 'juni' => 6,
+            'juli' => 7, 'agustus' => 8, 'september' => 9, 'oktober' => 10, 'november' => 11, 'desember' => 12,
+        ];
+        return $months[strtolower(trim($monthName))] ?? null;
     }
 }

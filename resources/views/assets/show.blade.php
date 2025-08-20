@@ -48,7 +48,8 @@
                         </dt>
                         <dd class="text-gray-900 mt-1">{{ $asset->nama_barang ?? 'N/A' }}</dd>
                     </div>
-
+                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Merk</dt><dd class="text-gray-900 mt-1">{{ $asset->merk ?? '-' }}</div>
+                    <div class="flex flex-col"><dt class="font-medium text-gray-500">Tipe</dt><dd class="text-gray-900 mt-1">{{ $asset->tipe ?? '-' }}</div>
                     <div class="flex flex-col"><dt class="font-medium text-gray-500">Kategori</dt><dd class="text-gray-900 mt-1">{{ optional($asset->category)->name ?? 'N/A' }}</dd></div>
                     <div class="flex flex-col"><dt class="font-medium text-gray-500">Sub Kategori</dt><dd class="text-gray-900 mt-1">{{ optional($asset->subCategory)->name ?? 'N/A' }}</dd></div>
                     <div class="flex flex-col"><dt class="font-medium text-gray-500">Perusahaan</dt><dd class="text-gray-900 mt-1">{{ optional($asset->company)->name ?? 'N/A' }}</dd></div>
@@ -71,13 +72,12 @@
                     <div class="flex flex-col"><dt class="font-medium text-gray-500">Lokasi Fisik</dt><dd class="text-gray-900 mt-1">{{ $asset->lokasi }}</dd></div>
                     @endif
                     <div class="flex flex-col"><dt class="font-medium text-gray-500">Jumlah</dt><dd class="text-gray-900 mt-1">{{ $asset->jumlah }} {{ $asset->satuan }}</dd></div>
-                    
+                    </div>        
 
-                <div class="sm:col-span-2 md:col-span-3 mt-4 pt-5 border-t  border-black">
-                    <h4 class="text-lg font-semibold text-gray-800 mb-4 ">Informasi Pengguna</h4>
-                    
-                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm">
-                        
+
+             <div class="bg-white p-6 rounded-xl border shadow-sm">
+                    <h3 class="text-xl font-semibold border-b pb-3 mb-6 text-gray-800 border-b-2 border-black">Informasi Pengguna</h3>
+                    <dl class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-5 text-sm">
                         <div class="flex flex-col">
                             <dt class="font-medium text-gray-500">Pengguna Saat Ini</dt>
                             <dd class="text-gray-900 mt-1">{{ optional($asset->assetUser)->nama ?? 'Tidak ada' }}</dd>
@@ -100,9 +100,6 @@
 
                     </dl>
                 </div>
-
-                </dl>
-            </div>
 
             @if($asset->specifications)
             <div class="bg-white p-6 rounded-xl border shadow-sm">
