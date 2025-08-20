@@ -46,16 +46,18 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
 
     public function headings(): array
     {
+       
         $baseHeadings = [
-            'Kode Aset', 'Nama Barang', 'Kategori', 'Sub Kategori', 'Perusahaan Pemilik (Kode)',
+            'Nama Barang', 'Kategori', 'Sub Kategori', 'Perusahaan Pemilik',
             'Merk', 'Tipe', 'Serial Number', 'Pengguna Aset', 'Jabatan Pengguna',
-            'Departemen Pengguna', 'Perusahaan Pengguna (Kode)', 'Kondisi', 'Lokasi', 'Jumlah',
+            'Departemen Pengguna', 'Perusahaan Pengguna', 'Kondisi', 'Lokasi', 'Jumlah',
             'Satuan', 
             'Hari Pembelian', 'Tanggal Pembelian', 'Bulan Pembelian', 'Tahun Pembelian',
             'Harga Total (Rp)', 'Nomor PO', 'Nomor BAST',
             'Kode Aktiva', 'Sumber Dana', 'Item Termasuk', 'Peruntukan', 'Keterangan',
             'Riwayat Pengguna'
         ];
+        // =====================================================================
 
         return array_merge($baseHeadings, $this->specKeys);
     }
@@ -75,19 +77,19 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
         $bulan = $tanggal ? $tanggal->isoFormat('MMMM') : null;
         $tahun = $tanggal ? $tanggal->year : null;
 
+    
         $baseData = [
-            $asset->code_asset,
             $asset->nama_barang,
             optional($asset->category)->name,
             optional($asset->subCategory)->name,
-            optional($asset->company)->code,
+            optional($asset->company)->name, // Diubah dari ->code
             $asset->merk,
             $asset->tipe,
             $asset->serial_number,
             optional($asset->assetUser)->nama,
             optional($asset->assetUser)->jabatan,
             optional($asset->assetUser)->departemen,
-            optional(optional($asset->assetUser)->company)->code,
+            optional(optional($asset->assetUser)->company)->name, // Diubah dari ->code
             $asset->kondisi,
             $asset->lokasi,
             $asset->jumlah,
@@ -106,6 +108,7 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $asset->keterangan,
             $historyString,
         ];
+        // =====================================================================
 
         $specData = [];
         foreach ($this->specKeys as $key) {

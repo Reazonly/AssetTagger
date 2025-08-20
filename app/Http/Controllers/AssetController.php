@@ -14,10 +14,11 @@ use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Log;
 
 class AssetController extends Controller
 {
-    private function getAssetUserIdFromRequest(Request $request): ?int
+   private function getAssetUserIdFromRequest(Request $request): ?int
     {
         if ($request->filled('new_asset_user_name')) {
             $newUser = AssetUser::create([
@@ -28,6 +29,9 @@ class AssetController extends Controller
         return $request->input('asset_user_id');
     }
 
+    /**
+     * Logika baru untuk membuat Kode Aset.
+     */
     private function generateAssetCode(Request $request, Category $category, ?SubCategory $subCategory, int $assetId): string
     {
         $getFourDigits = function ($string) {
@@ -42,27 +46,25 @@ class AssetController extends Controller
         $companyCode = $getThreeDigits(optional($company)->code);
         $paddedId = str_pad($assetId, 3, '0', STR_PAD_LEFT);
 
-        // --- PERBAIKAN LOGIKA DI SINI ---
-        // Skenario 1: Untuk Elektronik
+        
+        if (empty($request->merk) && empty($request->tipe)) {
+            $kategoriCode = $getFourDigits($category->code);
+            $subKategoriCode = $getFourDigits(optional($subCategory)->name);
+            return "{$kategoriCode}/{$subKategoriCode}/{$companyCode}/{$paddedId}";
+        }
+        
         if ($category->code === 'ELEC') {
             $jenisBarangCode = $getFourDigits(optional($subCategory)->name);
             $merkCode = $getFourDigits($request->merk);
             return "{$jenisBarangCode}/{$merkCode}/{$companyCode}/{$paddedId}";
         } 
-        // Skenario 2: Khusus untuk Kendaraan
         elseif ($category->code === 'VEHI') {
             $jenisBarangCode = $getFourDigits(optional($subCategory)->name);
-            $namaBarangCode = $getFourDigits($request->nama_barang); // Menggunakan nama barang (e.g., Avanza)
+            $namaBarangCode = $getFourDigits($request->nama_barang);
             return "{$jenisBarangCode}/{$namaBarangCode}/{$companyCode}/{$paddedId}";
         }
-        // Skenario 3: Khusus untuk Furniture
-        elseif ($category->code === 'FURN') {
-            $jenisBarangCode = $getFourDigits(optional($subCategory)->name);
-            $kategoriCode = $getFourDigits($category->code);
-            return "{$jenisBarangCode}/{$kategoriCode}/{$companyCode}/{$paddedId}";
-        }
         
-        // Skenario 4: Untuk semua kategori lainnya
+        // Format default untuk kategori lainnya
         $kategoriCode = $getFourDigits($category->code);
         $namaBarangCode = $getFourDigits($request->nama_barang);
         return "{$namaBarangCode}/{$kategoriCode}/{$companyCode}/{$paddedId}";
@@ -81,7 +83,7 @@ class AssetController extends Controller
         return $specs;
     }
 
-     public function index(Request $request)
+    public function index(Request $request)
     {
         $query = Asset::with(['assetUser', 'category', 'company', 'subCategory']);
         if ($request->filled('search')) {
@@ -276,9 +278,14 @@ class AssetController extends Controller
 
     public function destroy(Asset $asset)
     {
-        $asset->history()->delete();
-        $asset->delete();
-        return redirect()->route('assets.index')->with('success', 'Aset berhasil dipindahkan ke arsip.');
+        try {
+            $asset->history()->delete();
+            $asset->delete();
+            return redirect()->route('assets.index')->with('success', 'Aset berhasil dihapus secara permanen.');
+        } catch (\Exception $e) {
+            Log::error("Gagal menghapus aset #{$asset->id}: " . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan saat menghapus data.');
+        }
     }
 
     public function publicShow(Asset $asset)

@@ -96,7 +96,18 @@
                         <td class="px-6 py-4">{{ optional($asset->category)->name ?? 'N/A' }}</td>
                         <td class="px-6 py-4">{{ optional($asset->subCategory)->name ?? '-' }}</td>
                         <td class="px-6 py-4">{{ optional($asset->assetUser)->nama ?? 'N/A' }}</td>
-                        <td class="px-6 py-4"><span class="px-2 py-1 text-xs font-semibold rounded-full @if($asset->kondisi == 'Baik') bg-green-100 text-green-800 @elseif($asset->kondisi == 'Rusak') bg-red-100 text-red-800 @else bg-yellow-100 text-yellow-800 @endif">{{ $asset->kondisi }}</span></td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full 
+                                @if(strtolower(trim($asset->kondisi)) == 'baik') 
+                                    bg-green-100 text-green-800 
+                                @elseif(strtolower(trim($asset->kondisi)) == 'rusak') 
+                                    bg-red-100 text-red-800 
+                                @else 
+                                    bg-yellow-100 text-yellow-800 
+                                @endif">
+                                {{ $asset->kondisi }}
+                            </span>
+                        </td>
                         @if(auth()->user()->can('edit-asset') || auth()->user()->can('delete-asset'))
                         <td class="px-6 py-4 text-center whitespace-nowrap">
                             @can('view-asset')
@@ -138,8 +149,8 @@
                 <form action="{{ route('assets.import') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <p class="text-sm text-gray-600 mb-4">
-                        Unggah file Excel. Pastikan kolom header sesuai template export, contohnya: <strong>Nama Barang, Kategori, Sub Kategori, Perusahaan Pemilik(Kode), Merk/Tipe, Serial Number, Pengguna Aset, Jabatan Pengguna, Departemen Pengguna, Perusahaan Pengguna(Kode), Kondisi, Lokasi, Jumlah, Satuan, Hari Pembelian, Tanggal Pembelian, Bulan Pembelian, Tahun Pembelian, Harga Total(Rp), Nomor PO, Nomor BAST, Kode Aktiva, Sumber Dana, Item Termasuk, Peruntukan, Keterangan
-</strong>
+                        Unggah file Excel. Pastikan kolom header sesuai template export berikut : <strong>Nama Barang, Kategori, Sub Kategori, Perusahaan Pemilik, Merk/Tipe, Serial Number, Pengguna Aset, Jabatan Pengguna, Departemen Pengguna, Perusahaan Pengguna, Kondisi, Lokasi, Jumlah, Satuan, Hari Pembelian, Tanggal Pembelian, Bulan Pembelian, Tahun Pembelian, Harga Total(Rp), Nomor PO, Nomor BAST, Kode Aktiva, Sumber Dana, Item Termasuk, Peruntukan, Keterangan, Deskripsi.
+</strong><div class="text-sm text-gray-600 mb-4"><strong> diluar dari template export akan masuk ke dalam detail spesifikasi.</strong></div>
                     </p>
                     <div class="mt-4">
                         <input

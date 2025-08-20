@@ -125,7 +125,9 @@
                     <div><label for="serial_number" class="block text-sm font-medium text-gray-600">Serial Number</label><input type="text" name="serial_number" id="serial_number" value="{{ old('serial_number') }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
                     <div><label for="kondisi" class="block text-sm font-medium text-gray-600">Kondisi</label><select name="kondisi" id="kondisi" required class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"><option value="Baik">Baik</option><option value="Rusak">Rusak</option><option value="Perbaikan">Perbaikan</option></select></div>
                     <div><label for="jumlah" class="block text-sm font-medium text-gray-600">Jumlah</label><input type="number" name="jumlah" id="jumlah" value="{{ old('jumlah', 1) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
-                    <div><label for="satuan" class="block text-sm font-medium text-gray-600">Satuan</label><select name="satuan" id="satuan" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"><template x-for="unit in currentCategory.units" :key="unit.id"><option :value="unit.name" x-text="unit.name"></option></template><option value="Unit" x-show="currentCategory.units.length === 0">Unit</option></select></div>
+                    <div>
+                    <label for="satuan" class="block text-sm font-medium text-gray-700">Satuan</label>
+                    <input type="text" name="satuan" id="satuan" required class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
                     <div class="md:col-span-2"><label for="lokasi" class="block text-sm font-medium text-gray-600">Lokasi Fisik</label><input type="text" name="lokasi" id="lokasi" value="{{ old('lokasi') }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
                 </div>
                 

@@ -22,25 +22,54 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
         {
             $normalizedRow = $this->normalizeRowKeys($row->toArray());
 
+            // =====================================================================
+            // PERBAIKAN LOGIKA MASTER DATA DI SINI
+            // =====================================================================
     
+            // 1. Cari atau BUAT Kategori jika belum ada
             $category = !empty($normalizedRow['kategori']) 
-                ? Category::firstOrCreate(['name' => $normalizedRow['kategori']])
+                ? Category::firstOrCreate(
+                    ['name' => $normalizedRow['kategori']],
+                    ['code' => substr(strtoupper(Str::slug($normalizedRow['kategori'])), 0, 4), 'slug' => Str::slug($normalizedRow['kategori'])]
+                )
                 : null;
             
             if (!$category) continue;
 
+            // 2. Cari atau BUAT Sub-Kategori jika belum ada
             $subCategory = ($category && !empty($normalizedRow['sub_kategori'])) 
-                ? SubCategory::firstOrCreate(['name' => $normalizedRow['sub_kategori'], 'category_id' => $category->id]) 
+                ? SubCategory::firstOrCreate(
+                    ['name' => $normalizedRow['sub_kategori'], 'category_id' => $category->id]
+                ) 
                 : null;
             
-            $company = !empty($normalizedRow['perusahaan_pemilik_kode']) 
-                ? Company::where('code', $normalizedRow['perusahaan_pemilik_kode'])->first() 
-                : null;
+            // 3. Cari atau BUAT Perusahaan Pemilik berdasarkan NAMA LENGKAP
+            $company = null;
+            if (!empty($normalizedRow['perusahaan_pemilik'])) {
+                $companyName = $this->cleanCompanyName($normalizedRow['perusahaan_pemilik']);
+                $companyCode = $this->generateCompanyCode($companyName);
+                // PERBAIKAN: Cari berdasarkan 'code' yang unik, bukan 'name'
+                $company = Company::firstOrCreate(
+                    ['code' => $companyCode],
+                    ['name' => $companyName]
+                );
+            }
             
+            // 4. Cari atau BUAT Pengguna Aset dan Perusahaan Pengguna berdasarkan NAMA LENGKAP
             $assetUser = null;
             if (!empty($normalizedRow['pengguna_aset'])) {
-                $userCompany = !empty($normalizedRow['perusahaan_pengguna_kode']) ? Company::where('code', $normalizedRow['perusahaan_pengguna_kode'])->first() : null;
-                $assetUser = AssetUser::firstOrCreate(
+                $userCompany = null;
+                if (!empty($normalizedRow['perusahaan_pengguna'])) {
+                    $userCompanyName = $this->cleanCompanyName($normalizedRow['perusahaan_pengguna']);
+                    $userCompanyCode = $this->generateCompanyCode($userCompanyName);
+                    // PERBAIKAN: Cari berdasarkan 'code' yang unik, bukan 'name'
+                    $userCompany = Company::firstOrCreate(
+                        ['code' => $userCompanyCode],
+                        ['name' => $userCompanyName]
+                    );
+                }
+
+                $assetUser = AssetUser::updateOrCreate(
                     ['nama' => $normalizedRow['pengguna_aset']],
                     [
                         'jabatan' => $normalizedRow['jabatan_pengguna'] ?? null, 
@@ -49,6 +78,7 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
                     ]
                 );
             }
+            // =====================================================================
 
            
             $tanggal_pembelian = null;
@@ -87,17 +117,14 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
                 'keterangan' => $normalizedRow['keterangan'] ?? null,
                 'specifications' => $this->getSpecifications($normalizedRow),
             ];
-            // =====================================================================
 
-            // 3. Cari aset berdasarkan Serial Number untuk diupdate
             $asset = !empty($assetData['serial_number']) 
-                ? Asset::withTrashed()->where('serial_number', $assetData['serial_number'])->first() 
+                ? Asset::where('serial_number', $assetData['serial_number'])->first() 
                 : null;
 
             $oldUserId = $asset ? $asset->asset_user_id : null;
 
             if ($asset) {
-                if ($asset->trashed()) { $asset->restore(); }
                 $asset->update($assetData);
             } else {
                 $assetData['code_asset'] = 'TEMP-' . uniqid();
@@ -121,6 +148,9 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
         }
     }
 
+    /**
+     * Logika untuk membuat Kode Aset.
+     */
     private function generateAssetCode(array $row, Category $category, ?SubCategory $subCategory, ?Company $company, int $assetId): string
     {
         $getFourDigits = fn($s) => strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', (string)$s), 0, 4));
@@ -129,6 +159,12 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
         $companyCode = $getThreeDigits(optional($company)->code);
         $paddedId = str_pad($assetId, 3, '0', STR_PAD_LEFT);
 
+        if (empty($row['merk']) && empty($row['tipe'])) {
+            $kategoriCode = $getFourDigits($category->code);
+            $subKategoriCode = $getFourDigits(optional($subCategory)->name);
+            return "{$kategoriCode}/{$subKategoriCode}/{$companyCode}/{$paddedId}";
+        }
+      
         if ($category->code === 'ELEC') {
             $jenisBarangCode = $getFourDigits(optional($subCategory)->name);
             $merkCode = $getFourDigits($row['merk'] ?? '');
@@ -138,10 +174,36 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
             $namaBarangCode = $getFourDigits($row['nama_barang'] ?? '');
             return "{$jenisBarangCode}/{$namaBarangCode}/{$companyCode}/{$paddedId}";
         }
-        
+       
         $kategoriCode = $getFourDigits($category->code);
         $namaBarangCode = $getFourDigits($row['nama_barang'] ?? '');
         return "{$namaBarangCode}/{$kategoriCode}/{$companyCode}/{$paddedId}";
+    }
+    /**
+     * Fungsi baru untuk membuat kode perusahaan dari nama lengkap.
+     */
+    private function generateCompanyCode(string $companyName): string
+    {
+        $nameWithoutPt = $this->cleanCompanyName($companyName);
+        
+        $words = explode(' ', $nameWithoutPt);
+        $code = '';
+        
+        foreach ($words as $word) {
+            if (!empty($word)) {
+                $code .= strtoupper($word[0]);
+            }
+        }
+        
+        return $code;
+    }
+
+    /**
+     * Fungsi baru untuk membersihkan nama perusahaan dari awalan seperti "PT.".
+     */
+    private function cleanCompanyName(string $companyName): string
+    {
+        return trim(preg_replace('/^(pt\.?|cv\.?)\s*/i', '', $companyName));
     }
 
     public function rules(): array
@@ -156,7 +218,8 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
     {
         $normalized = [];
         foreach ($row as $key => $value) {
-            $newKey = Str::snake(strtolower(preg_replace('/ \(.+\)/', '', $key)));
+            $cleanKey = preg_replace('/ \(.+\)/', '', $key);
+            $newKey = Str::snake(strtolower($cleanKey));
             $normalized[$newKey] = $value;
         }
         return $normalized;
@@ -165,8 +228,8 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
     private function getStandardColumns(): array
     {
         return [
-            'nama_barang', 'kategori', 'sub_kategori', 'perusahaan_pemilik_kode', 'merk', 'tipe', 'serial_number', 'pengguna_aset',
-            'jabatan_pengguna', 'departemen_pengguna', 'perusahaan_pengguna_kode', 'kondisi', 'lokasi', 'jumlah',
+            'nama_barang', 'kategori', 'sub_kategori', 'perusahaan_pemilik', 'merk', 'tipe', 'serial_number', 'pengguna_aset',
+            'jabatan_pengguna', 'departemen_pengguna', 'perusahaan_pengguna', 'kondisi', 'lokasi', 'jumlah',
             'satuan', 'harga_total_rp', 'nomor_po', 'nomor_bast', 'kode_aktiva', 'sumber_dana',
             'item_termasuk', 'peruntukan', 'keterangan', 'kode_aset', 'riwayat_pengguna',
             'hari_pembelian', 'tanggal_pembelian', 'bulan_pembelian', 'tahun_pembelian'
