@@ -3,7 +3,7 @@
 @section('title', 'Dashboard')
 
 @section('content')
-    {{-- (Bagian header dan kartu statistik biarkan seperti semula) --}}
+
     @isset($dashboardError)
         <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-5 rounded-md shadow" role="alert">
             <p class="font-bold">Error Dashboard</p>
@@ -85,7 +85,7 @@
             return colors;
         };
 
-        // Chart Aset per Kategori
+       
         const categoryData = @json($assetsByCategory ?? []);
         if (categoryData.length > 0) {
             const categoryCtx = document.getElementById('categoryChart').getContext('2d');
@@ -102,7 +102,7 @@
             });
         }
 
-        // Chart Aset per Perusahaan
+
         const companyData = @json($assetsByCompany ?? []);
         if (companyData.length > 0) {
             const companyCtx = document.getElementById('companyChart').getContext('2d');
@@ -119,7 +119,7 @@
             });
         }
 
-        // Chart Alur Aset
+    
         const flowLabels = @json($labels ?? []);
         if (flowLabels.length > 0) {
             const flowCtx = document.getElementById('assetFlowChart').getContext('2d');
@@ -128,7 +128,7 @@
                 data: {
                     labels: flowLabels,
                     datasets: [
-                        // Hapus dataset untuk 'Data Keluar'
+                      
                         { label: 'Aset Masuk', data: @json($dataMasuk ?? []), backgroundColor: 'rgba(59, 130, 246, 0.5)' }
                     ]
                 },
