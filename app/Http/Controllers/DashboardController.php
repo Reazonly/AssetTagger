@@ -20,20 +20,15 @@ class DashboardController extends Controller
             $assetsPerbaikan = Asset::where('kondisi', 'Perbaikan')->count();
             $totalNilaiAset = Asset::sum('harga_total');
 
-            // Data untuk Grafik Aset Masuk/Keluar (6 Bulan Terakhir)
+            // Data untuk Grafik Aset Masuk (6 Bulan Terakhir)
             $labels = [];
             $dataMasuk = [];
-            $dataKeluar = [];
             for ($i = 5; $i >= 0; $i--) {
                 $month = Carbon::now()->subMonths($i);
                 $labels[] = $month->format('M Y');
                 $dataMasuk[] = Asset::whereYear('created_at', $month->year)
                                     ->whereMonth('created_at', $month->month)
                                     ->count();
-                $dataKeluar[] = Asset::onlyTrashed()
-                                     ->whereYear('deleted_at', $month->year)
-                                     ->whereMonth('deleted_at', $month->month)
-                                     ->count();
             }
 
             // Data untuk Grafik Aset per Kategori
@@ -53,7 +48,7 @@ class DashboardController extends Controller
 
             return view('Dashboard.index', compact(
                 'totalAssets', 'assetsBaik', 'assetsRusak', 'assetsPerbaikan', 'totalNilaiAset',
-                'labels', 'dataMasuk', 'dataKeluar',
+                'labels', 'dataMasuk',
                 'assetsByCategory', 'assetsByCompany',
                 'recentAssets'
             ));

@@ -3,7 +3,7 @@
 @section('title', 'Dashboard')
 
 @section('content')
-    {{-- Menampilkan pesan error jika ada masalah saat memuat data --}}
+    {{-- (Bagian header dan kartu statistik biarkan seperti semula) --}}
     @isset($dashboardError)
         <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-5 rounded-md shadow" role="alert">
             <p class="font-bold">Error Dashboard</p>
@@ -23,30 +23,21 @@
         </div>
     </div>
 
-    {{-- Stat Cards --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-        {{-- Total Aset --}}
         <div class="bg-white p-6 rounded-lg shadow-md border"><p class="text-sm text-gray-500">Total Aset</p><p class="text-3xl font-bold text-gray-800">{{ $totalAssets ?? 0 }}</p></div>
-        {{-- Aset Baik --}}
         <div class="bg-white p-6 rounded-lg shadow-md border"><p class="text-sm text-gray-500">Kondisi Baik</p><p class="text-3xl font-bold text-green-600">{{ $assetsBaik ?? 0 }}</p></div>
-        {{-- Aset Rusak --}}
         <div class="bg-white p-6 rounded-lg shadow-md border"><p class="text-sm text-gray-500">Kondisi Rusak</p><p class="text-3xl font-bold text-red-600">{{ $assetsRusak ?? 0 }}</p></div>
-        {{-- Aset Perbaikan --}}
         <div class="bg-white p-6 rounded-lg shadow-md border"><p class="text-sm text-gray-500">Dlm. Perbaikan</p><p class="text-3xl font-bold text-yellow-500">{{ $assetsPerbaikan ?? 0 }}</p></div>
-        {{-- Nilai Aset --}}
         <div class="bg-white p-6 rounded-lg shadow-md border"><p class="text-sm text-gray-500">Total Nilai Aset</p><p class="text-2xl font-bold text-gray-800">Rp {{ number_format($totalNilaiAset ?? 0, 0, ',', '.') }}</p></div>
     </div>
 
-    {{-- Charts Section --}}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-        {{-- Aset per Kategori --}}
         <div class="bg-white p-6 rounded-lg shadow-md border">
             <h2 class="text-xl font-bold text-gray-800 mb-4">Aset per Kategori</h2>
             <div class="relative h-72">
                 <canvas id="categoryChart"></canvas>
             </div>
         </div>
-        {{-- Aset per Perusahaan --}}
         <div class="bg-white p-6 rounded-lg shadow-md border">
             <h2 class="text-xl font-bold text-gray-800 mb-4">Aset per Perusahaan</h2>
             <div class="relative h-72">
@@ -55,10 +46,9 @@
         </div>
     </div>
 
-    {{-- Recent Assets & Flow Chart --}}
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 mt-8">
         <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md border">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">5 Aset Terbaru</h2>
+             <h2 class="text-xl font-bold text-gray-800 mb-4">5 Aset Terbaru</h2>
             <div class="space-y-4">
                 @forelse($recentAssets ?? [] as $asset)
                     <div class="border-b pb-3 last:border-0">
@@ -72,7 +62,7 @@
             </div>
         </div>
         <div class="lg:col-span-3 bg-white p-6 rounded-lg shadow-md border">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">Statistik Aset (6 Bulan Terakhir)</h2>
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Statistik Aset Masuk (6 Bulan Terakhir)</h2>
             <div class="relative h-96">
                 <canvas id="assetFlowChart"></canvas>
             </div>
@@ -138,8 +128,8 @@
                 data: {
                     labels: flowLabels,
                     datasets: [
-                        { label: 'Aset Masuk', data: @json($dataMasuk ?? []), backgroundColor: 'rgba(59, 130, 246, 0.5)' },
-                        { label: 'Aset Keluar (Dihapus)', data: @json($dataKeluar ?? []), backgroundColor: 'rgba(239, 68, 68, 0.5)' }
+                        // Hapus dataset untuk 'Data Keluar'
+                        { label: 'Aset Masuk', data: @json($dataMasuk ?? []), backgroundColor: 'rgba(59, 130, 246, 0.5)' }
                     ]
                 },
                 options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
