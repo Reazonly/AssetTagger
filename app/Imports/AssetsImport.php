@@ -22,11 +22,6 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
         {
             $normalizedRow = $this->normalizeRowKeys($row->toArray());
 
-            // =====================================================================
-            // PERBAIKAN LOGIKA MASTER DATA DI SINI
-            // =====================================================================
-    
-            // 1. Cari atau BUAT Kategori jika belum ada
             $category = !empty($normalizedRow['kategori']) 
                 ? Category::firstOrCreate(
                     ['name' => $normalizedRow['kategori']],
@@ -36,33 +31,28 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
             
             if (!$category) continue;
 
-            // 2. Cari atau BUAT Sub-Kategori jika belum ada
             $subCategory = ($category && !empty($normalizedRow['sub_kategori'])) 
                 ? SubCategory::firstOrCreate(
                     ['name' => $normalizedRow['sub_kategori'], 'category_id' => $category->id]
                 ) 
                 : null;
             
-            // 3. Cari atau BUAT Perusahaan Pemilik berdasarkan NAMA LENGKAP
             $company = null;
             if (!empty($normalizedRow['perusahaan_pemilik'])) {
                 $companyName = $this->cleanCompanyName($normalizedRow['perusahaan_pemilik']);
                 $companyCode = $this->generateCompanyCode($companyName);
-                // PERBAIKAN: Cari berdasarkan 'code' yang unik, bukan 'name'
                 $company = Company::firstOrCreate(
                     ['code' => $companyCode],
                     ['name' => $companyName]
                 );
             }
             
-            // 4. Cari atau BUAT Pengguna Aset dan Perusahaan Pengguna berdasarkan NAMA LENGKAP
             $assetUser = null;
             if (!empty($normalizedRow['pengguna_aset'])) {
                 $userCompany = null;
                 if (!empty($normalizedRow['perusahaan_pengguna'])) {
                     $userCompanyName = $this->cleanCompanyName($normalizedRow['perusahaan_pengguna']);
                     $userCompanyCode = $this->generateCompanyCode($userCompanyName);
-                    // PERBAIKAN: Cari berdasarkan 'code' yang unik, bukan 'name'
                     $userCompany = Company::firstOrCreate(
                         ['code' => $userCompanyCode],
                         ['name' => $userCompanyName]
@@ -78,7 +68,6 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
                     ]
                 );
             }
-            // =====================================================================
 
            
             $tanggal_pembelian = null;
@@ -148,9 +137,6 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
         }
     }
 
-    /**
-     * Logika untuk membuat Kode Aset.
-     */
     private function generateAssetCode(array $row, Category $category, ?SubCategory $subCategory, ?Company $company, int $assetId): string
     {
         $getFourDigits = fn($s) => strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', (string)$s), 0, 4));
@@ -179,9 +165,7 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
         $namaBarangCode = $getFourDigits($row['nama_barang'] ?? '');
         return "{$namaBarangCode}/{$kategoriCode}/{$companyCode}/{$paddedId}";
     }
-    /**
-     * Fungsi baru untuk membuat kode perusahaan dari nama lengkap.
-     */
+    
     private function generateCompanyCode(string $companyName): string
     {
         $nameWithoutPt = $this->cleanCompanyName($companyName);
@@ -198,9 +182,7 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
         return $code;
     }
 
-    /**
-     * Fungsi baru untuk membersihkan nama perusahaan dari awalan seperti "PT.".
-     */
+    
     private function cleanCompanyName(string $companyName): string
     {
         return trim(preg_replace('/^(pt\.?|cv\.?)\s*/i', '', $companyName));

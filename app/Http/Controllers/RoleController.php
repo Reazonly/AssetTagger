@@ -18,7 +18,6 @@ class RoleController extends Controller
     public function create()
     {
         $permissions = Permission::orderBy('display_name')->get()->groupBy(function($item) {
-            // Group permissions by their first word (e.g., 'view', 'create', 'edit')
             return explode('-', $item->name)[0];
         });
         return view('roles.create', compact('permissions'));

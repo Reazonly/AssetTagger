@@ -57,7 +57,6 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             'Kode Aktiva', 'Sumber Dana', 'Item Termasuk', 'Peruntukan', 'Keterangan',
             'Riwayat Pengguna'
         ];
-        // =====================================================================
 
         return array_merge($baseHeadings, $this->specKeys);
     }
@@ -82,14 +81,14 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $asset->nama_barang,
             optional($asset->category)->name,
             optional($asset->subCategory)->name,
-            optional($asset->company)->name, // Diubah dari ->code
+            optional($asset->company)->name,
             $asset->merk,
             $asset->tipe,
             $asset->serial_number,
             optional($asset->assetUser)->nama,
             optional($asset->assetUser)->jabatan,
             optional($asset->assetUser)->departemen,
-            optional(optional($asset->assetUser)->company)->name, // Diubah dari ->code
+            optional(optional($asset->assetUser)->company)->name,
             $asset->kondisi,
             $asset->lokasi,
             $asset->jumlah,
@@ -108,7 +107,6 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $asset->keterangan,
             $historyString,
         ];
-        // =====================================================================
 
         $specData = [];
         foreach ($this->specKeys as $key) {

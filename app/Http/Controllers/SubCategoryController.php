@@ -33,7 +33,6 @@ class SubCategoryController extends Controller
     {
         $query = $category->subCategories();
 
-        // Logika pencarian untuk halaman show
         if ($request->filled('search')) {
             $searchTerm = $request->input('search');
             $query->where('name', 'like', "%{$searchTerm}%");

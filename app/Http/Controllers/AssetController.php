@@ -64,7 +64,6 @@ class AssetController extends Controller
             return "{$jenisBarangCode}/{$namaBarangCode}/{$companyCode}/{$paddedId}";
         }
         
-        // Format default untuk kategori lainnya
         $kategoriCode = $getFourDigits($category->code);
         $namaBarangCode = $getFourDigits($request->nama_barang);
         return "{$namaBarangCode}/{$kategoriCode}/{$companyCode}/{$paddedId}";
