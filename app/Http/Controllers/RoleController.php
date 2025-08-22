@@ -46,8 +46,8 @@ class RoleController extends Controller
 
     public function edit(Role $role)
     {
-        $permissions = Permission::orderBy('display_name')->get()->groupBy(function($item) {
-            return explode('-', $item->name)[0];
+        $permissions = Permission::orderBy('id', 'asc')->get()->groupBy(function($item) {
+        return explode('-', $item->name)[0];
         });
         $role->load('permissions');
         return view('roles.edit', compact('role', 'permissions'));
