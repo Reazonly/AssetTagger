@@ -81,6 +81,9 @@ use Illuminate\Support\Facades\Log;
                 $tanggal_pembelian = null;
             }
 
+            $hargaTotalRaw = $normalizedRow['harga_total_rp'] ?? null;
+            $hargaTotalClean = $hargaTotalRaw ? preg_replace('/[^0-9]/', '', $hargaTotalRaw) : null;
+
             $assetData = [
                 'nama_barang' => $normalizedRow['nama_barang'],
                 'category_id' => $category->id,
@@ -95,7 +98,7 @@ use Illuminate\Support\Facades\Log;
                 'jumlah' => $normalizedRow['jumlah'] ?? 1,
                 'satuan' => $normalizedRow['satuan'] ?? 'Unit',
                 'tanggal_pembelian' => $tanggal_pembelian,
-                'harga_total' => $normalizedRow['harga_total_rp'] ?? null,
+                'harga_total' => $hargaTotalClean,
                 'po_number' => $normalizedRow['nomor_po'] ?? null,
                 'nomor' => $normalizedRow['nomor_bast'] ?? null,
                 'code_aktiva' => $normalizedRow['kode_aktiva'] ?? null,
@@ -111,9 +114,7 @@ use Illuminate\Support\Facades\Log;
             if (!empty($assetData['nomor']) && trim($assetData['nomor']) !== '-') {
                 $asset = Asset::where('nomor', $assetData['nomor'])->first();
             }
-            if (!$asset && !empty($assetData['serial_number']) && trim($assetData['serial_number']) !== '-') {
-                $asset = Asset::where('serial_number', $assetData['serial_number'])->first();
-            }
+           
 
             $oldUserId = $asset ? $asset->asset_user_id : null;
 
@@ -127,7 +128,6 @@ use Illuminate\Support\Facades\Log;
                 $asset->save();
             }
 
-           
             $currentUserId = $asset->fresh()->asset_user_id;
 
             if ($oldUserId != $currentUserId) {

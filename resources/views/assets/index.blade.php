@@ -149,7 +149,7 @@
                 <form action="{{ route('assets.import') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <p class="text-sm text-gray-600 mb-4">
-                        Unggah file Excel. Pastikan kolom header sesuai template export berikut : <strong>Nama Barang, Kategori, Sub Kategori, Perusahaan Pemilik, Merk/Tipe, Serial Number, Pengguna Aset, Jabatan Pengguna, Departemen Pengguna, Perusahaan Pengguna, Kondisi, Lokasi, Jumlah, Satuan, Hari Pembelian, Tanggal Pembelian, Bulan Pembelian, Tahun Pembelian, Harga Total(Rp), Nomor PO, Nomor BAST, Kode Aktiva, Sumber Dana, Item Termasuk, Peruntukan, Keterangan, Deskripsi.
+                        Unggah file Excel. Pastikan kolom header sesuai template export berikut : <strong>Nama Barang, Kategori, Sub Kategori, Perusahaan Pemilik, Merk/Tipe, Serial Number, Pengguna Aset, Jabatan Pengguna, Departemen Pengguna, Perusahaan Pengguna, Kondisi, Lokasi, Jumlah, Satuan, Tanggal Pembelian, Bulan Pembelian, Tahun Pembelian, Harga Total(Rp), Nomor PO, Nomor BAST(WAJIB), Kode Aktiva, Sumber Dana, Item Termasuk, Peruntukan, Keterangan, Deskripsi.
 </strong><div class="text-sm text-gray-600 mb-4"><strong> diluar dari template export akan masuk ke dalam detail spesifikasi.</strong></div>
                     </p>
                     <div class="mt-4">

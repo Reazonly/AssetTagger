@@ -21,12 +21,16 @@
             </div>
         @endif
 
-        <div class="space-y-8" 
+          <div class="space-y-8" 
              x-data="{ 
                 categoriesData: {{ Js::from($categories->keyBy('id')) }},
                 assetUsersData: {{ Js::from($users->keyBy('id')) }},
+                oldSpecs: {{ Js::from(old('spec')) ?? '{}' }},
                 selectedCategoryId: {{ old('category_id') ?? 'null' }},
-                selectedSubCategoryId: {{ old('sub_category_id') ?? 'null' }},
+                
+                // Initialize sub-category as null to prevent race condition
+                selectedSubCategoryId: null, 
+                
                 selectedAssetUserId: {{ old('asset_user_id') ?? 'null' }},
                 useMerk: {{ old('use_merk') ? 'true' : 'false' }},
                 useTipe: {{ old('use_tipe') ? 'true' : 'false' }},
@@ -34,7 +38,13 @@
                 get currentCategory() { return this.categoriesData[this.selectedCategoryId] || {}; },
                 get currentAssetUser() { return this.assetUsersData[this.selectedAssetUserId] || {}; },
                 
-                get subCategories() { return this.currentCategory.sub_categories || []; },
+                get subCategories() { 
+                    const subs = this.currentCategory.sub_categories || [];
+                    if (subs.length > 0) {
+                        console.log('LOG: Sub-category list updated. Found ' + subs.length + ' items.');
+                    }
+                    return subs;
+                },
                 get currentSubCategory() { return this.subCategories.find(sc => sc.id == this.selectedSubCategoryId) || {}; },
                 get hasSubCategories() { return this.subCategories.length > 0; },
                 
@@ -45,7 +55,25 @@
                 
                 get inputType() { return this.currentSubCategory.input_type || 'none'; }
              }"
-             x-init="$watch('selectedCategoryId', () => { selectedSubCategoryId = null })">
+             x-init="
+                console.log('LOG: Alpine component initializing...');
+                console.log('LOG: Initial Category ID from old() is:', selectedCategoryId);
+
+                // Wait for the initial DOM rendering to complete
+                $nextTick(() => {
+                    const oldSubCategoryId = {{ old('sub_category_id') ?? 'null' }};
+                    if (oldSubCategoryId) {
+                        console.log('LOG: Found old Sub-Category ID:', oldSubCategoryId, '. Attempting to set it now.');
+                        selectedSubCategoryId = oldSubCategoryId;
+                    } else {
+                        console.log('LOG: No old Sub-Category ID found.');
+                    }
+                });
+
+                $watch('selectedSubCategoryId', (newValue) => {
+                    console.log('LOG: selectedSubCategoryId is now set to:', newValue);
+                });
+             ">
 
             <div class="bg-white p-8 rounded-lg shadow-md border">
                 <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Utama</h3>
@@ -53,7 +81,9 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label for="category_id" class="block text-sm font-medium text-gray-600">Langkah 1: Pilih Kategori</label>
-                        <select name="category_id" id="category_id" x-model="selectedCategoryId" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">
+                        <select name="category_id" id="category_id" x-model="selectedCategoryId" 
+                                @change="selectedSubCategoryId = null"
+                                class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">
                             <option value="">-- Pilih Kategori --</option>
                             @foreach($categories as $category)
                                 <option value="{{ $category->id }}">{{ $category->name }}</option>
@@ -96,7 +126,7 @@
                 <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Pengguna</h3>
                 <div>
                     <label for="asset_user_id" class="block text-sm font-medium text-gray-700">Pilih Pengguna</label>
-                    <select id="asset_user_id" name="asset_user_id" x-model.number="selectedAssetUserId" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3" required>
+                    <select id="asset_user_id" name="asset_user_id" x-model.number="selectedAssetUserId" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">
                         <option value="">-- Tidak ada pengguna --</option>
                         @foreach($users as $user)
                             <option value="{{ $user->id }}">{{ $user->nama }}</option>
@@ -123,11 +153,11 @@
                 <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Detail & Spesifikasi</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div><label for="serial_number" class="block text-sm font-medium text-gray-600">Serial Number</label><input type="text" name="serial_number" id="serial_number" value="{{ old('serial_number') }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
-                    <div><label for="kondisi" class="block text-sm font-medium text-gray-600">Kondisi</label><select name="kondisi" id="kondisi" required class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"><option value="Baik">Baik</option><option value="Rusak">Rusak</option><option value="Perbaikan">Perbaikan</option></select></div>
+                    <div><label for="kondisi" class="block text-sm font-medium text-gray-600">Kondisi</label><select name="kondisi" id="kondisi" required class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"><option value="Baik" {{ old('kondisi', 'Baik') == 'Baik' ? 'selected' : '' }}>Baik</option><option value="Rusak" {{ old('kondisi') == 'Rusak' ? 'selected' : '' }}>Rusak</option><option value="Perbaikan" {{ old('kondisi') == 'Perbaikan' ? 'selected' : '' }}>Perbaikan</option></select></div>
                     <div><label for="jumlah" class="block text-sm font-medium text-gray-600">Jumlah</label><input type="number" name="jumlah" id="jumlah" value="{{ old('jumlah', 1) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
                     <div>
                     <label for="satuan" class="block text-sm font-medium text-gray-700">Satuan</label>
-                    <input type="text" name="satuan" id="satuan" required class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
+                    <input type="text" name="satuan" id="satuan" value="{{ old('satuan') }}" required class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
                     <div class="md:col-span-2"><label for="lokasi" class="block text-sm font-medium text-gray-600">Lokasi Fisik</label><input type="text" name="lokasi" id="lokasi" value="{{ old('lokasi') }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
                 </div>
                 
@@ -140,6 +170,7 @@
                                     <div>
                                         <label class="block text-sm" x-text="field"></label>
                                         <input type="text" :name="'spec[' + field.toLowerCase().replace(/ /g, '_') + ']'" 
+                                               :value="oldSpecs[field.toLowerCase().replace(/ /g, '_')] || ''"
                                                class="mt-1 w-full border-2 border-gray-400 rounded-md text-sm py-2 px-3">
                                     </div>
                                 </template>
@@ -148,7 +179,7 @@
                                                 
                         <div>
                             <label class="block text-sm">Deskripsi / Spesifikasi Tambahan</label>
-                            <textarea name="spec[deskripsi]" rows="3" class="mt-1 w-full border-2 border-gray-400 rounded-md text-sm py-2 px-3"></textarea>
+                            <textarea name="spec[deskripsi]" rows="3" class="mt-1 w-full border-2 border-gray-400 rounded-md text-sm py-2 px-3">{{ old('spec.deskripsi') }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -158,7 +189,20 @@
                 <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Pembelian & Dokumen</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div><label for="tanggal_pembelian" class="block text-sm font-medium text-gray-600">Tanggal Pembelian</label><input type="date" name="tanggal_pembelian" id="tanggal_pembelian" value="{{ old('tanggal_pembelian') }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
-                    <div><label for="harga_total" class="block text-sm font-medium text-gray-600">Harga Total (Rp)</label><input type="number" name="harga_total" id="harga_total" value="{{ old('harga_total') }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
+                    
+                    <div x-data="{ rawValue: '{{ old('harga_total') }}' }">
+                        <label for="harga_total_display" class="block text-sm font-medium text-gray-600">Harga Total (Rp)</label>
+                        <input
+                            id="harga_total_display"
+                            type="text"
+                            class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"
+                            x-on:input="rawValue = $event.target.value.replace(/[^0-9]/g, '')"
+                            x-bind:value="rawValue === '' || rawValue === null ? '' : 'Rp. ' + parseInt(rawValue, 10).toLocaleString('id-ID')"
+                            placeholder="Rp. 0"
+                        >
+                        <input type="hidden" name="harga_total" x-bind:value="rawValue">
+                    </div>
+
                     <div><label for="po_number" class="block text-sm font-medium text-gray-600">Nomor PO</label><input type="text" name="po_number" id="po_number" value="{{ old('po_number') }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
                     <div><label for="nomor" class="block text-sm font-medium text-gray-600">Nomor BAST</label><input type="text" name="nomor" id="nomor" value="{{ old('nomor') }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
                     <div><label for="code_aktiva" class="block text-sm font-medium text-gray-600">Kode Aktiva</label><input type="text" name="code_aktiva" id="code_aktiva" value="{{ old('code_aktiva') }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>

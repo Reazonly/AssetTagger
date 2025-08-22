@@ -115,8 +115,19 @@
                                    value="{{ old('tanggal_pembelian', optional($asset->tanggal_pembelian)->format('Y-m-d')) }}" 
                                    class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">
                         </div>
-
-                        <div><label for="harga_total" class="block text-sm font-medium text-gray-700">Harga Total</label><input type="number" name="harga_total" id="harga_total" value="{{ old('harga_total', $asset->harga_total) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
+                        
+                        <div x-data="{ rawValue: '{{ old('harga_total', $asset->harga_total) }}' }">
+                            <label for="harga_total_display" class="block text-sm font-medium text-gray-700">Harga Total (Rp)</label>
+                            <input
+                                id="harga_total_display"
+                                type="text"
+                                class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"
+                                x-on:input="rawValue = $event.target.value.replace(/[^0-9]/g, '')"
+                                x-bind:value="rawValue === '' || rawValue === null ? '' : 'Rp. ' + parseInt(rawValue, 10).toLocaleString('id-ID')"
+                                placeholder="Rp. 0"
+                            >
+                            <input type="hidden" name="harga_total" x-bind:value="rawValue">
+                        </div>
                         <div><label for="po_number" class="block text-sm font-medium text-gray-700">Nomor PO</label><input type="text" name="po_number" id="po_number" value="{{ old('po_number', $asset->po_number) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
                         <div><label for="nomor" class="block text-sm font-medium text-gray-700">Nomor BAST</label><input type="text" name="nomor" id="nomor" value="{{ old('nomor', $asset->nomor) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
                         <div><label for="code_aktiva" class="block text-sm font-medium text-gray-700">Kode Aktiva</label><input type="text" name="code_aktiva" id="code_aktiva" value="{{ old('code_aktiva', $asset->code_aktiva) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
