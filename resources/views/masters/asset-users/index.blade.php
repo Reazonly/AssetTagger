@@ -91,7 +91,7 @@
             <form action="{{ route('master-data.asset-users.import') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <p class="text-sm text-gray-600 mb-4">
-                    Unggah file Excel (.xlsx, .xls, .csv) dengan kolom: <strong>nama, jabatan, departemen,dan kode perusahaan</strong>.
+                    Unggah file Excel (.xlsx, .xls, .csv) dengan kolom: <strong>Nama, Jabatan, Departemen,dan Nama Perusahaan</strong>.
                 </p>
                 <input type="file" name="file" required class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"/>
                 <div class="mt-6 flex justify-end gap-3">

@@ -24,111 +24,113 @@
                 get currentAssetUser() { return this.assetUsersData[this.selectedAssetUserId] || {} }
              }">
             
+            {{-- Informasi Utama (Tidak Bisa Diedit) --}}
             <div class="bg-white p-8 rounded-lg shadow-md border">
                 <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Utama</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Nama Barang</label>
-                        <p class="mt-1 text-lg text-gray-900 font-semibold">{{ $asset->nama_barang }}</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Kategori</label>
-                        <p class="mt-1 text-lg text-gray-900 font-semibold">{{ optional($asset->category)->name }}</p>
-                    </div>
-
+                    <div><label class="block text-sm font-medium text-gray-500">Nama Barang</label><p class="mt-1 text-gray-900 font-semibold">{{ $asset->nama_barang }}</p></div>
+                    <div><label class="block text-sm font-medium text-gray-500">Kategori</label><p class="mt-1 text-gray-900 font-semibold">{{ optional($asset->category)->name }}</p></div>
                     @if($asset->subCategory)
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Sub Kategori</label>
-                        <p class="mt-1 text-lg text-gray-900 font-semibold">{{ optional($asset->subCategory)->name }}</p>
-                    </div>
+                    <div><label class="block text-sm font-medium text-gray-500">Sub Kategori</label><p class="mt-1 text-gray-900 font-semibold">{{ optional($asset->subCategory)->name }}</p></div>
                     @endif
-
                     @if($asset->merk)
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Merk</label>
-                        <p class="mt-1 text-lg text-gray-900 font-semibold">{{ $asset->merk }}</p>
-                    </div>
+                    <div><label class="block text-sm font-medium text-gray-500">Merk</label><p class="mt-1 text-gray-900 font-semibold">{{ $asset->merk }}</p></div>
                     @endif
-
                     @if($asset->tipe)
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Tipe</label>
-                        <p class="mt-1 text-lg text-gray-900 font-semibold">{{ $asset->tipe }}</p>
-                    </div>
+                    <div><label class="block text-sm font-medium text-gray-500">Tipe</label><p class="mt-1 text-gray-900 font-semibold">{{ $asset->tipe }}</p></div>
                     @endif
-
                     <div>
-                        <label for="company_id" class="block text-sm font-medium text-gray-700">Perusahaan Pemilik (Dapat Diubah)</label>
-                        <select name="company_id" id="company_id" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">
-                            @foreach($companies as $company)
-                                <option value="{{ $company->id }}" {{ old('company_id', $asset->company_id) == $company->id ? 'selected' : '' }}>
-                                    {{ $company->name }}
-                                </option>
+                        <label class="block text-sm font-medium text-gray-500">Perusahaan Pemilik</label>
+                        <p class="mt-1 text-gray-900 font-semibold">{{ optional($asset->company)->name }}</p>
+                        <input type="hidden" name="company_id" value="{{ $asset->company_id }}">
+                    </div>
+                </div>
+            </div>
+
+            {{-- Sisa Form (Bisa Diedit) --}}
+            <div class="space-y-8">
+                <div class="bg-white p-8 rounded-lg shadow-md border">
+                    <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Pengguna</h3>
+                    <div>
+                        <label for="asset_user_id" class="block text-sm font-medium text-gray-700">Pilih Pengguna (Jika Ada)</label>
+                        <select id="asset_user_id" name="asset_user_id" x-model.number="selectedAssetUserId" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">
+                            <option value="">-- Tidak ada pengguna --</option>
+                            @foreach($users as $user)
+                                <option value="{{ $user->id }}">{{ $user->nama }}</option>
                             @endforeach
                         </select>
                     </div>
-                </div>
-            </div>
-
-            <div class="bg-white p-8 rounded-lg shadow-md border">
-                <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Pengguna</h3>
-                <div>
-                    <label for="asset_user_id" class="block text-sm font-medium text-gray-700">Pilih Pengguna (Jika Ada)</label>
-                    <select id="asset_user_id" name="asset_user_id" x-model.number="selectedAssetUserId" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">
-                        <option value="">-- Tidak ada pengguna --</option>
-                        @foreach($users as $user)
-                            <option value="{{ $user->id }}">{{ $user->nama }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div x-show="selectedAssetUserId" class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-md border" x-cloak>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-500">Jabatan</label>
-                        <p class="mt-1 text-sm text-gray-900" x-text="currentAssetUser.jabatan || '-'"></p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-500">Departemen</label>
-                        <p class="mt-1 text-sm text-gray-900" x-text="currentAssetUser.departemen || '-'"></p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-500">Perusahaan</label>
-                        <p class="mt-1 text-sm text-gray-900" x-text="currentAssetUser.company ? currentAssetUser.company.name : '-'"></p>
+                    <div x-show="selectedAssetUserId" class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-md border" x-cloak>
+                        <div><label class="block text-sm font-medium text-gray-500">Jabatan</label><p class="mt-1 text-sm text-gray-900" x-text="currentAssetUser.jabatan || '-'"></p></div>
+                        <div><label class="block text-sm font-medium text-gray-500">Departemen</label><p class="mt-1 text-sm text-gray-900" x-text="currentAssetUser.departemen || '-'"></p></div>
+                        <div><label class="block text-sm font-medium text-gray-500">Perusahaan</label><p class="mt-1 text-sm text-gray-900" x-text="currentAssetUser.company ? currentAssetUser.company.name : '-'"></p></div>
                     </div>
                 </div>
-            </div>
 
-             <div class="bg-white p-8 rounded-lg shadow-md border">
-                <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Detail & Spesifikasi</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div><label for="serial_number" class="block text-sm font-medium text-gray-700">Serial Number</label><input type="text" name="serial_number" id="serial_number" value="{{ old('serial_number', $asset->serial_number) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
-                    <div><label for="kondisi" class="block text-sm font-medium text-gray-700">Kondisi</label><select name="kondisi" id="kondisi" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"><option value="Baik" {{ old('kondisi', $asset->kondisi) == 'Baik' ? 'selected' : '' }}>Baik</option><option value="Rusak" {{ old('kondisi', $asset->kondisi) == 'Rusak' ? 'selected' : '' }}>Rusak</option><option value="Perbaikan" {{ old('kondisi', $asset->kondisi) == 'Perbaikan' ? 'selected' : '' }}>Perbaikan</option></select></div>
-                    <div><label for="lokasi" class="block text-sm font-medium text-gray-700">Lokasi Fisik</label><input type="text" name="lokasi" id="lokasi" value="{{ old('lokasi', $asset->lokasi) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><label for="jumlah" class="block text-sm font-medium text-gray-700">Jumlah</label><input type="number" name="jumlah" id="jumlah" value="{{ old('jumlah', $asset->jumlah) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
-                        <div><label for="satuan" class="block text-sm font-medium text-gray-700">Satuan</label><input type="text" name="satuan" id="satuan" value="{{ old('satuan', $asset->satuan) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
+                <div class="bg-white p-8 rounded-lg shadow-md border">
+                    <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Detail & Spesifikasi</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div><label for="serial_number" class="block text-sm font-medium text-gray-600">Serial Number</label><input type="text" name="serial_number" id="serial_number" value="{{ old('serial_number', $asset->serial_number) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
+                        <div><label for="kondisi" class="block text-sm font-medium text-gray-600">Kondisi</label><select name="kondisi" id="kondisi" required class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"><option value="Baik" {{ old('kondisi', $asset->kondisi) == 'Baik' ? 'selected' : '' }}>Baik</option><option value="Rusak" {{ old('kondisi', $asset->kondisi) == 'Rusak' ? 'selected' : '' }}>Rusak</option><option value="Perbaikan" {{ old('kondisi', $asset->kondisi) == 'Perbaikan' ? 'selected' : '' }}>Perbaikan</option></select></div>
+                        <div><label for="jumlah" class="block text-sm font-medium text-gray-600">Jumlah</label><input type="number" name="jumlah" id="jumlah" value="{{ old('jumlah', $asset->jumlah) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
+                        <div>
+                        <label for="satuan" class="block text-sm font-medium text-gray-700">Satuan</label>
+                        <input type="text" name="satuan" id="satuan" value="{{ old('satuan', $asset->satuan) }}" required class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
+                        <div class="md:col-span-2"><label for="lokasi" class="block text-sm font-medium text-gray-600">Lokasi Fisik</label><input type="text" name="lokasi" id="lokasi" value="{{ old('lokasi', $asset->lokasi) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
+                    </div>
+                    
+                    <div class="mt-8 pt-6 border-t">
+                        <h4 class="text-lg font-medium text-gray-800 mb-4">Spesifikasi Detail</h4>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                @if($asset->specifications && is_array($asset->specifications))
+                                    @foreach($asset->specifications as $key => $value)
+                                        @if(strtolower($key) !== 'deskripsi')
+                                            <div>
+                                                <label for="spec_{{ Str::slug($key) }}" class="block text-sm font-medium text-gray-600">{{ $key }}</label>
+                                                <input type="text" id="spec_{{ Str::slug($key) }}" name="specifications[{{$key}}]" 
+                                                       value="{{ old('specifications.'.$key, $value) }}"
+                                                       class="mt-1 w-full border-2 border-gray-400 rounded-md text-sm py-2 px-3">
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                @endif
+                            </div>
+                                                    
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600">Deskripsi / Spesifikasi Tambahan</label>
+                                <textarea name="specifications[Deskripsi]" rows="3" class="mt-1 w-full border-2 border-gray-400 rounded-md text-sm py-2 px-3">{{ old('specifications.Deskripsi', $asset->specifications['Deskripsi'] ?? '') }}</textarea>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="bg-white p-8 rounded-lg shadow-md border">
-                <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Pembelian & Dokumen</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div><label for="tanggal_pembelian" class="block text-sm font-medium text-gray-700">Tanggal Pembelian</label><input type="date" name="tanggal_pembelian" id="tanggal_pembelian" value="{{ old('tanggal_pembelian', optional($asset->tanggal_pembelian)->format('Y-m-d')) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
-                    <div><label for="harga_total" class="block text-sm font-medium text-gray-700">Harga Total</label><input type="number" name="harga_total" id="harga_total" value="{{ old('harga_total', $asset->harga_total) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
-                    <div><label for="po_number" class="block text-sm font-medium text-gray-700">Nomor PO</label><input type="text" name="po_number" id="po_number" value="{{ old('po_number', $asset->po_number) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
-                    <div><label for="nomor" class="block text-sm font-medium text-gray-700">Nomor BAST</label><input type="text" name="nomor" id="nomor" value="{{ old('nomor', $asset->nomor) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
-                    <div><label for="code_aktiva" class="block text-sm font-medium text-gray-700">Kode Aktiva</label><input type="text" name="code_aktiva" id="code_aktiva" value="{{ old('code_aktiva', $asset->code_aktiva) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
-                    <div><label for="sumber_dana" class="block text-sm font-medium text-gray-700">Sumber Dana</label><input type="text" name="sumber_dana" id="sumber_dana" value="{{ old('sumber_dana', $asset->sumber_dana) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
+                <div class="bg-white p-8 rounded-lg shadow-md border">
+                    <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Pembelian & Dokumen</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        
+                        <div>
+                            <label for="tanggal_pembelian" class="block text-sm font-medium text-gray-700">Tanggal Pembelian</label>
+                            <input type="date" name="tanggal_pembelian" id="tanggal_pembelian" 
+                                   value="{{ old('tanggal_pembelian', optional($asset->tanggal_pembelian)->format('Y-m-d')) }}" 
+                                   class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">
+                        </div>
+
+                        <div><label for="harga_total" class="block text-sm font-medium text-gray-700">Harga Total</label><input type="number" name="harga_total" id="harga_total" value="{{ old('harga_total', $asset->harga_total) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
+                        <div><label for="po_number" class="block text-sm font-medium text-gray-700">Nomor PO</label><input type="text" name="po_number" id="po_number" value="{{ old('po_number', $asset->po_number) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
+                        <div><label for="nomor" class="block text-sm font-medium text-gray-700">Nomor BAST</label><input type="text" name="nomor" id="nomor" value="{{ old('nomor', $asset->nomor) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
+                        <div><label for="code_aktiva" class="block text-sm font-medium text-gray-700">Kode Aktiva</label><input type="text" name="code_aktiva" id="code_aktiva" value="{{ old('code_aktiva', $asset->code_aktiva) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
+                        <div><label for="sumber_dana" class="block text-sm font-medium text-gray-700">Sumber Dana</label><input type="text" name="sumber_dana" id="sumber_dana" value="{{ old('sumber_dana', $asset->sumber_dana) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3"></div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="bg-white p-8 rounded-lg shadow-md border">
-                <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Tambahan</h3>
-                <div class="space-y-6">
-                    <div><label for="include_items" class="block text-sm font-medium text-gray-600">Item Termasuk</label><textarea name="include_items" id="include_items" rows="3" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">{{ old('include_items', $asset->include_items) }}</textarea></div>
-                    <div><label for="peruntukan" class="block text-sm font-medium text-gray-600">Peruntukan</label><textarea name="peruntukan" id="peruntukan" rows="3" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">{{ old('peruntukan', $asset->peruntukan) }}</textarea></div>
-                    <div><label for="keterangan" class="block text-sm font-medium text-gray-600">Keterangan</label><textarea name="keterangan" id="keterangan" rows="3" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">{{ old('keterangan', $asset->keterangan) }}</textarea></div>
+                <div class="bg-white p-8 rounded-lg shadow-md border">
+                    <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Tambahan</h3>
+                    <div class="space-y-6">
+                        <div><label for="include_items" class="block text-sm font-medium text-gray-600">Item Termasuk</label><textarea name="include_items" id="include_items" rows="3" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">{{ old('include_items', $asset->include_items) }}</textarea></div>
+                        <div><label for="peruntukan" class="block text-sm font-medium text-gray-600">Peruntukan</label><textarea name="peruntukan" id="peruntukan" rows="3" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">{{ old('peruntukan', $asset->peruntukan) }}</textarea></div>
+                        <div><label for="keterangan" class="block text-sm font-medium text-gray-600">Keterangan</label><textarea name="keterangan" id="keterangan" rows="3" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">{{ old('keterangan', $asset->keterangan) }}</textarea></div>
+                    </div>
                 </div>
             </div>
         </div>

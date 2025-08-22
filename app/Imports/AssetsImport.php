@@ -13,8 +13,9 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
-class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
+    class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
 {
     public function collection(Collection $rows)
     {
@@ -22,15 +23,15 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
         {
             $normalizedRow = $this->normalizeRowKeys($row->toArray());
 
-            $category = !empty($normalizedRow['kategori']) 
-                ? Category::firstOrCreate(
-                    ['name' => $normalizedRow['kategori']],
-                    ['code' => substr(strtoupper(Str::slug($normalizedRow['kategori'])), 0, 4), 'slug' => Str::slug($normalizedRow['kategori'])]
-                )
-                : null;
-            
-            if (!$category) continue;
+            if (empty($normalizedRow['nama_barang']) || empty($normalizedRow['kategori'])) {
+                continue;
+            }
 
+            $category = Category::firstOrCreate(
+                ['name' => $normalizedRow['kategori']],
+                ['code' => substr(strtoupper(Str::slug($normalizedRow['kategori'])), 0, 4)]
+            );
+            
             $subCategory = ($category && !empty($normalizedRow['sub_kategori'])) 
                 ? SubCategory::firstOrCreate(
                     ['name' => $normalizedRow['sub_kategori'], 'category_id' => $category->id]
@@ -40,10 +41,9 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
             $company = null;
             if (!empty($normalizedRow['perusahaan_pemilik'])) {
                 $companyName = $this->cleanCompanyName($normalizedRow['perusahaan_pemilik']);
-                $companyCode = $this->generateCompanyCode($companyName);
                 $company = Company::firstOrCreate(
-                    ['code' => $companyCode],
-                    ['name' => $companyName]
+                    ['name' => $companyName],
+                    ['code' => $this->generateUniqueCompanyCode($companyName)]
                 );
             }
             
@@ -52,10 +52,9 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
                 $userCompany = null;
                 if (!empty($normalizedRow['perusahaan_pengguna'])) {
                     $userCompanyName = $this->cleanCompanyName($normalizedRow['perusahaan_pengguna']);
-                    $userCompanyCode = $this->generateCompanyCode($userCompanyName);
                     $userCompany = Company::firstOrCreate(
-                        ['code' => $userCompanyCode],
-                        ['name' => $userCompanyName]
+                        ['name' => $userCompanyName],
+                        ['code' => $this->generateUniqueCompanyCode($userCompanyName)]
                     );
                 }
 
@@ -68,14 +67,14 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
                     ]
                 );
             }
+            $newAssetUserId = optional($assetUser)->id;
 
-           
             $tanggal_pembelian = null;
             try {
                 if (!empty($normalizedRow['tahun_pembelian']) && !empty($normalizedRow['bulan_pembelian']) && !empty($normalizedRow['tanggal_pembelian'])) {
                     $bulanAngka = $this->getMonthNumber($normalizedRow['bulan_pembelian']);
                     if ($bulanAngka) {
-                        $tanggal_pembelian = Carbon::create($normalizedRow['tahun_pembelian'], $bulanAngka, $normalizedRow['tanggal_pembelian']);
+                        $tanggal_pembelian = Carbon::create((int)$normalizedRow['tahun_pembelian'], $bulanAngka, (int)$normalizedRow['tanggal_pembelian']);
                     }
                 }
             } catch (\Exception $e) {
@@ -87,7 +86,7 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
                 'category_id' => $category->id,
                 'sub_category_id' => optional($subCategory)->id,
                 'company_id' => optional($company)->id,
-                'asset_user_id' => optional($assetUser)->id,
+                'asset_user_id' => $newAssetUserId,
                 'merk' => $normalizedRow['merk'] ?? null,
                 'tipe' => $normalizedRow['tipe'] ?? null,
                 'serial_number' => $normalizedRow['serial_number'] ?? null,
@@ -107,9 +106,14 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
                 'specifications' => $this->getSpecifications($normalizedRow),
             ];
 
-            $asset = !empty($assetData['serial_number']) 
-                ? Asset::where('serial_number', $assetData['serial_number'])->first() 
-                : null;
+          
+            $asset = null;
+            if (!empty($assetData['nomor']) && trim($assetData['nomor']) !== '-') {
+                $asset = Asset::where('nomor', $assetData['nomor'])->first();
+            }
+            if (!$asset && !empty($assetData['serial_number']) && trim($assetData['serial_number']) !== '-') {
+                $asset = Asset::where('serial_number', $assetData['serial_number'])->first();
+            }
 
             $oldUserId = $asset ? $asset->asset_user_id : null;
 
@@ -118,25 +122,37 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
             } else {
                 $assetData['code_asset'] = 'TEMP-' . uniqid();
                 $asset = Asset::create($assetData);
-
                 $newCode = $this->generateAssetCode($normalizedRow, $category, $subCategory, $company, $asset->id);
                 $asset->code_asset = $newCode;
                 $asset->save();
             }
 
-            $newUserId = $asset->asset_user_id;
+           
+            $currentUserId = $asset->fresh()->asset_user_id;
 
-            if ($oldUserId != $newUserId) {
+            if ($oldUserId != $currentUserId) {
                 if ($oldUserId) {
                     $asset->history()->where('asset_user_id', $oldUserId)->whereNull('tanggal_selesai')->update(['tanggal_selesai' => now()]);
                 }
-                if ($newUserId) {
-                    $asset->history()->create(['asset_user_id' => $newUserId, 'tanggal_mulai' => now()]);
+                if ($currentUserId) {
+                    $currentUser = AssetUser::find($currentUserId);
+                    $asset->history()->create([
+                        'asset_user_id' => $currentUserId,
+                        'historical_user_name' => $currentUser->nama,
+                        'tanggal_mulai' => now(),
+                    ]);
                 }
+            } elseif ($currentUserId && $asset->history()->count() == 0) {
+                 $currentUser = AssetUser::find($currentUserId);
+                 $asset->history()->create([
+                    'asset_user_id' => $currentUserId,
+                    'historical_user_name' => $currentUser->nama,
+                    'tanggal_mulai' => now(),
+                ]);
             }
         }
     }
-
+    
     private function generateAssetCode(array $row, Category $category, ?SubCategory $subCategory, ?Company $company, int $assetId): string
     {
         $getFourDigits = fn($s) => strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', (string)$s), 0, 4));
@@ -145,47 +161,57 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
         $companyCode = $getThreeDigits(optional($company)->code);
         $paddedId = str_pad($assetId, 3, '0', STR_PAD_LEFT);
 
-        if (empty($row['merk']) && empty($row['tipe'])) {
-            $kategoriCode = $getFourDigits($category->code);
-            $subKategoriCode = $getFourDigits(optional($subCategory)->name);
-            return "{$kategoriCode}/{$subKategoriCode}/{$companyCode}/{$paddedId}";
-        }
-      
         if ($category->code === 'ELEC') {
-            $jenisBarangCode = $getFourDigits(optional($subCategory)->name);
-            $merkCode = $getFourDigits($row['merk'] ?? '');
-            return "{$jenisBarangCode}/{$merkCode}/{$companyCode}/{$paddedId}";
+            $part1 = $getFourDigits(optional($subCategory)->name);
+            $part2 = $getFourDigits($row['merk'] ?: $row['nama_barang']);
+            return "{$part1}/{$part2}/{$companyCode}/{$paddedId}";
         } elseif ($category->code === 'VEHI') {
-            $jenisBarangCode = $getFourDigits(optional($subCategory)->name);
-            $namaBarangCode = $getFourDigits($row['nama_barang'] ?? '');
-            return "{$jenisBarangCode}/{$namaBarangCode}/{$companyCode}/{$paddedId}";
+            $part1 = $getFourDigits(optional($subCategory)->name);
+            $part2 = $getFourDigits($row['nama_barang']);
+            return "{$part1}/{$part2}/{$companyCode}/{$paddedId}";
+        } elseif ($category->code === 'FURN') {
+            $part1 = $getFourDigits(optional($subCategory)->name);
+            $part2 = $getFourDigits($category->code);
+            return "{$part1}/{$part2}/{$companyCode}/{$paddedId}";
         }
        
-        $kategoriCode = $getFourDigits($category->code);
-        $namaBarangCode = $getFourDigits($row['nama_barang'] ?? '');
-        return "{$namaBarangCode}/{$kategoriCode}/{$companyCode}/{$paddedId}";
+        $part1 = $getFourDigits($row['nama_barang']);
+        $part2 = $getFourDigits($category->code);
+        return "{$part1}/{$part2}/{$companyCode}/{$paddedId}";
     }
-    
-    private function generateCompanyCode(string $companyName): string
-    {
-        $nameWithoutPt = $this->cleanCompanyName($companyName);
-        
-        $words = explode(' ', $nameWithoutPt);
-        $code = '';
-        
-        foreach ($words as $word) {
-            if (!empty($word)) {
-                $code .= strtoupper($word[0]);
-            }
-        }
-        
-        return $code;
-    }
-
     
     private function cleanCompanyName(string $companyName): string
     {
         return trim(preg_replace('/^(pt\.?|cv\.?)\s*/i', '', $companyName));
+    }
+
+    private function generateUniqueCompanyCode(string $companyName): string
+    {
+        $cleanName = $this->cleanCompanyName($companyName);
+        $words = array_values(array_filter(explode(' ', $cleanName)));
+        
+        $code = '';
+        foreach ($words as $word) {
+            $code .= strtoupper(substr($word, 0, 1));
+        }
+        $code = substr($code, 0, 10);
+
+        if (Company::where('code', $code)->where('name', '!=', $cleanName)->exists()) {
+            if (count($words) > 1 && strlen($words[1]) > 1) {
+                $altCode = strtoupper(substr($words[0], 0, 1) . substr($words[1], 1, 1));
+                $altCode = substr($altCode, 0, 10);
+                if (!Company::where('code', $altCode)->exists()) {
+                    return $altCode;
+                }
+            }
+            $i = 2;
+            $baseCode = $code;
+            while (Company::where('code', $code)->exists()) {
+                $code = substr($baseCode, 0, 9) . $i;
+                $i++;
+            }
+        }
+        return $code;
     }
 
     public function rules(): array
@@ -200,8 +226,7 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
     {
         $normalized = [];
         foreach ($row as $key => $value) {
-            $cleanKey = preg_replace('/ \(.+\)/', '', $key);
-            $newKey = Str::snake(strtolower($cleanKey));
+            $newKey = str_replace(['harga_total_rp', ' spesifikasi_deskripsi_lainnya'], ['harga_total_rp', 'deskripsi'], Str::snake(strtolower($key)));
             $normalized[$newKey] = $value;
         }
         return $normalized;

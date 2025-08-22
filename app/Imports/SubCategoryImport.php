@@ -17,24 +17,39 @@ class SubCategoryImport implements ToModel, WithHeadingRow, WithUpserts
     {
         $this->category = $category;
     }
+    
+    private function findValueByAliases(array $row, array $aliases): ?string
+    {
+        foreach ($aliases as $alias) {
+            if (isset($row[$alias]) && !empty($row[$alias])) {
+                return $row[$alias];
+            }
+        }
+        return null;
+    }
 
     public function model(array $row)
     {
         $normalizedRow = $this->normalizeRowKeys($row);
 
-        $inputType = $normalizedRow['tipe_input'] ?? 'none';
+       
+        $name = $this->findValueByAliases($normalizedRow, ['nama_sub_kategori', 'sub_kategori', 'nama']);
+        $inputType = $this->findValueByAliases($normalizedRow, ['tipe_input', 'input']) ?? 'none';
+        
+        
+        if (!$name) {
+            return null;
+        }
+
         $formattedInputType = strtolower(str_replace(' ', '_', $inputType));
-
-
         if (!in_array($formattedInputType, ['merk', 'tipe', 'merk_dan_tipe', 'none'])) {
             $formattedInputType = 'none';
         }
        
-
         return new SubCategory([
             'category_id' => $this->category->id,
-            'name'        => $normalizedRow['nama_sub_kategori'],
-            'slug'        => Str::slug($normalizedRow['nama_sub_kategori']),
+            'name'        => $name,
+            'slug'        => Str::slug($name),
             'input_type'  => $formattedInputType, 
         ]);
     }

@@ -10,14 +10,33 @@ use Illuminate\Support\Str;
 
 class CategoryImport implements ToModel, WithHeadingRow, WithUpserts
 {
+    private function findValueByAliases(array $row, array $aliases): ?string
+    {
+        foreach ($aliases as $alias) {
+            if (isset($row[$alias]) && !empty($row[$alias])) {
+                return $row[$alias];
+            }
+        }
+        return null;
+    }
+
     public function model(array $row)
     {
         $normalizedRow = $this->normalizeRowKeys($row);
 
+     
+        $name = $this->findValueByAliases($normalizedRow, ['nama_kategori', 'kategori', 'nama']);
+        $code = $this->findValueByAliases($normalizedRow, ['kode_kategori', 'kode']);
+
+        
+        if (!$name || !$code) {
+            return null;
+        }
+
         return new Category([
-            'name' => $normalizedRow['nama_kategori'],
-            'code' => $normalizedRow['kode_kategori'],
-            'slug' => Str::slug($normalizedRow['nama_kategori']),
+            'name' => $name,
+            'code' => $code,
+            'slug' => Str::slug($name),
         ]);
     }
 
@@ -26,8 +45,6 @@ class CategoryImport implements ToModel, WithHeadingRow, WithUpserts
         return 'code';
     }
 
-    /**
-     */
     private function normalizeRowKeys(array $row): array
     {
         $normalized = [];

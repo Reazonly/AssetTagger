@@ -29,9 +29,7 @@ class AssetController extends Controller
         return $request->input('asset_user_id');
     }
 
-    /**
-     * Logika baru untuk membuat Kode Aset.
-     */
+    
     private function generateAssetCode(Request $request, Category $category, ?SubCategory $subCategory, int $assetId): string
     {
         $getFourDigits = function ($string) {
@@ -46,27 +44,27 @@ class AssetController extends Controller
         $companyCode = $getThreeDigits(optional($company)->code);
         $paddedId = str_pad($assetId, 3, '0', STR_PAD_LEFT);
 
-        
-        if (empty($request->merk) && empty($request->tipe)) {
-            $kategoriCode = $getFourDigits($category->code);
-            $subKategoriCode = $getFourDigits(optional($subCategory)->name);
-            return "{$kategoriCode}/{$subKategoriCode}/{$companyCode}/{$paddedId}";
+        switch ($category->code) {
+            case 'ELEC':
+                $part1 = $getFourDigits(optional($subCategory)->name);
+                $part2 = $getFourDigits($request->merk ?: $request->nama_barang);
+                return "{$part1}/{$part2}/{$companyCode}/{$paddedId}";
+            
+            case 'VEHI':
+                $part1 = $getFourDigits(optional($subCategory)->name);
+                $part2 = $getFourDigits($request->nama_barang);
+                return "{$part1}/{$part2}/{$companyCode}/{$paddedId}";
+            
+            case 'FURN':
+                $part1 = $getFourDigits(optional($subCategory)->name);
+                $part2 = $getFourDigits($category->code);
+                return "{$part1}/{$part2}/{$companyCode}/{$paddedId}";
+            
+            default:
+                $part1 = $getFourDigits($request->nama_barang);
+                $part2 = $getFourDigits($category->code);
+                return "{$part1}/{$part2}/{$companyCode}/{$paddedId}";
         }
-        
-        if ($category->code === 'ELEC') {
-            $jenisBarangCode = $getFourDigits(optional($subCategory)->name);
-            $merkCode = $getFourDigits($request->merk);
-            return "{$jenisBarangCode}/{$merkCode}/{$companyCode}/{$paddedId}";
-        } 
-        elseif ($category->code === 'VEHI') {
-            $jenisBarangCode = $getFourDigits(optional($subCategory)->name);
-            $namaBarangCode = $getFourDigits($request->nama_barang);
-            return "{$jenisBarangCode}/{$namaBarangCode}/{$companyCode}/{$paddedId}";
-        }
-        
-        $kategoriCode = $getFourDigits($category->code);
-        $namaBarangCode = $getFourDigits($request->nama_barang);
-        return "{$namaBarangCode}/{$kategoriCode}/{$companyCode}/{$paddedId}";
     }
 
     private function collectSpecificationsFromRequest(Request $request): array
@@ -152,13 +150,13 @@ class AssetController extends Controller
             'tipe' => $tipeRule,
             'jumlah' => 'required|integer|min:1',
             'satuan' => 'required|string|max:50',
-            'serial_number' => 'nullable|string|max:255|unique:assets,serial_number',
+            'serial_number' => 'nullable|string|max:255',
+            'nomor' => 'nullable|string|max:255|unique:assets,nomor',
             'kondisi' => 'required|string|in:Baik,Rusak,Perbaikan',
             'lokasi' => 'nullable|string|max:255',
             'tanggal_pembelian' => 'nullable|date',
             'harga_total' => 'nullable|numeric|min:0',
             'po_number' => 'nullable|string|max:255',
-            'nomor' => 'nullable|string|max:255',
             'code_aktiva' => 'nullable|string|max:255',
             'sumber_dana' => 'nullable|string|max:255',
             'include_items' => 'nullable|string',
@@ -186,9 +184,10 @@ class AssetController extends Controller
         $asset->save();
 
         if ($asset->asset_user_id) {
+            $currentUser = AssetUser::find($asset->asset_user_id);
             $asset->history()->create([
                 'asset_user_id' => $asset->asset_user_id,
-                'tanggal_mulai' => now(),
+                'historical_user_name' => $currentUser->nama,
             ]);
         }
 
@@ -224,7 +223,8 @@ class AssetController extends Controller
             'company_id' => 'required|exists:companies,id',
             'asset_user_id' => 'nullable|exists:asset_users,id',
             'new_asset_user_name' => 'nullable|string|max:255',
-            'serial_number' => 'nullable|string|max:255|unique:assets,serial_number,' . $asset->id,
+            'serial_number' => 'nullable|string|max:255',
+            'nomor' => 'nullable|string|max:255|unique:assets,nomor,' . $asset->id,
             'jumlah' => 'required|integer|min:1',
             'satuan' => 'required|string|max:50',
             'kondisi' => 'required|string|in:Baik,Rusak,Perbaikan',
@@ -232,12 +232,12 @@ class AssetController extends Controller
             'tanggal_pembelian' => 'nullable|date',
             'harga_total' => 'nullable|numeric|min:0',
             'po_number' => 'nullable|string|max:255',
-            'nomor' => 'nullable|string|max:255',
             'code_aktiva' => 'nullable|string|max:255',
             'sumber_dana' => 'nullable|string|max:255',
             'include_items' => 'nullable|string',
             'peruntukan' => 'nullable|string',
             'keterangan' => 'nullable|string',
+            'spec' => 'nullable|array',
         ]);
         
         $oldAssetUserId = $asset->asset_user_id;
@@ -245,6 +245,7 @@ class AssetController extends Controller
         $updateData = $validatedData;
         $newAssetUserId = $this->getAssetUserIdFromRequest($request);
         $updateData['asset_user_id'] = $newAssetUserId;
+        $updateData['specifications'] = $this->collectSpecificationsFromRequest($request);
 
         if ($request->filled('tanggal_pembelian')) {
             $updateData['thn_pembelian'] = Carbon::parse($request->tanggal_pembelian)->format('Y');
@@ -253,7 +254,7 @@ class AssetController extends Controller
             $updateData['thn_pembelian'] = null;
         }
 
-        unset($updateData['new_asset_user_name']);
+        unset($updateData['spec'], $updateData['new_asset_user_name']);
 
         $asset->update($updateData);
 
@@ -265,9 +266,10 @@ class AssetController extends Controller
                       ->update(['tanggal_selesai' => now()]);
             }
             if ($newAssetUserId) {
+                $newUser = AssetUser::find($newAssetUserId);
                 $asset->history()->create([
                     'asset_user_id' => $newAssetUserId,
-                    'tanggal_mulai' => now(),
+                    'historical_user_name' => $newUser->nama,
                 ]);
             }
         }
