@@ -25,10 +25,10 @@ class PermissionSeeder extends Seeder
 
             ['name' => 'view-user', 'display_name' => 'Lihat Pengguna'],
             ['name' => 'assign-role', 'display_name' => 'Tetapkan Role Pengguna'],
-            
+             ['name' => 'manage-roles', 'display_name' => 'Kelola Roles & Permissions'],
             ['name' => 'manage-master-data', 'display_name' => 'Kelola Master Data'],
 
-            ['name' => 'manage-roles', 'display_name' => 'Kelola Roles & Permissions'],
+        
         ];
 
         foreach ($permissions as $permission) {
