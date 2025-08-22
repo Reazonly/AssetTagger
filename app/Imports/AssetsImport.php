@@ -14,6 +14,8 @@ use Maatwebsite\Excel\Concerns\WithValidation;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+
 
     class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
 {
@@ -109,12 +111,10 @@ use Illuminate\Support\Facades\Log;
                 'specifications' => $this->getSpecifications($normalizedRow),
             ];
 
-          
             $asset = null;
             if (!empty($assetData['nomor']) && trim($assetData['nomor']) !== '-') {
                 $asset = Asset::where('nomor', $assetData['nomor'])->first();
             }
-           
 
             $oldUserId = $asset ? $asset->asset_user_id : null;
 
@@ -153,32 +153,20 @@ use Illuminate\Support\Facades\Log;
         }
     }
     
+    // --- METHOD INI DIMODIFIKASI ---
     private function generateAssetCode(array $row, Category $category, ?SubCategory $subCategory, ?Company $company, int $assetId): string
     {
-        $getFourDigits = fn($s) => strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', (string)$s), 0, 4));
-        $getThreeDigits = fn($s) => strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', (string)$s), 0, 3));
-        
-        $companyCode = $getThreeDigits(optional($company)->code);
-        $paddedId = str_pad($assetId, 3, '0', STR_PAD_LEFT);
+        $companyCode = optional($company)->code ?? 'N/A';
+        $categoryCode = $category->code ?? 'N/A';
 
-        if ($category->code === 'ELEC') {
-            $part1 = $getFourDigits(optional($subCategory)->name);
-            $part2 = $getFourDigits($row['merk'] ?: $row['nama_barang']);
-            return "{$part1}/{$part2}/{$companyCode}/{$paddedId}";
-        } elseif ($category->code === 'VEHI') {
-            $part1 = $getFourDigits(optional($subCategory)->name);
-            $part2 = $getFourDigits($row['nama_barang']);
-            return "{$part1}/{$part2}/{$companyCode}/{$paddedId}";
-        } elseif ($category->code === 'FURN') {
-            $part1 = $getFourDigits(optional($subCategory)->name);
-            $part2 = $getFourDigits($category->code);
-            return "{$part1}/{$part2}/{$companyCode}/{$paddedId}";
-        }
-       
-        $part1 = $getFourDigits($row['nama_barang']);
-        $part2 = $getFourDigits($category->code);
-        return "{$part1}/{$part2}/{$companyCode}/{$paddedId}";
+        $itemName = preg_replace('/[^a-zA-Z0-9]/', '', (string) $row['nama_barang']);
+        $itemNamePart = strtoupper(substr($itemName, 0, 4));
+
+        $paddedId = str_pad($assetId, 5, '0', STR_PAD_LEFT);
+
+        return "{$companyCode}/{$categoryCode}/{$itemNamePart}/{$paddedId}";
     }
+    // --- AKHIR MODIFIKASI ---
     
     private function cleanCompanyName(string $companyName): string
     {

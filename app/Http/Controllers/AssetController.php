@@ -30,42 +30,22 @@ class AssetController extends Controller
     }
 
     
+    // --- METHOD INI DIMODIFIKASI ---
     private function generateAssetCode(Request $request, Category $category, ?SubCategory $subCategory, int $assetId): string
     {
-        $getFourDigits = function ($string) {
-            $cleaned = preg_replace('/[^a-zA-Z0-9]/', '', (string) $string);
-            return strtoupper(substr($cleaned, 0, 4));
-        };
-        $getThreeDigits = function ($string) {
-            $cleaned = preg_replace('/[^a-zA-Z0-9]/', '', (string) $string);
-            return strtoupper(substr($cleaned, 0, 3));
-        };
         $company = Company::find($request->company_id);
-        $companyCode = $getThreeDigits(optional($company)->code);
-        $paddedId = str_pad($assetId, 3, '0', STR_PAD_LEFT);
+        
+        $companyCode = optional($company)->code ?? 'N/A';
+        $categoryCode = $category->code ?? 'N/A';
+        
+        $itemName = preg_replace('/[^a-zA-Z0-9]/', '', (string) $request->nama_barang);
+        $itemNamePart = strtoupper(substr($itemName, 0, 4));
 
-        switch ($category->code) {
-            case 'ELEC':
-                $part1 = $getFourDigits(optional($subCategory)->name);
-                $part2 = $getFourDigits($request->merk ?: $request->nama_barang);
-                return "{$part1}/{$part2}/{$companyCode}/{$paddedId}";
-            
-            case 'VEHI':
-                $part1 = $getFourDigits(optional($subCategory)->name);
-                $part2 = $getFourDigits($request->nama_barang);
-                return "{$part1}/{$part2}/{$companyCode}/{$paddedId}";
-            
-            case 'FURN':
-                $part1 = $getFourDigits(optional($subCategory)->name);
-                $part2 = $getFourDigits($category->code);
-                return "{$part1}/{$part2}/{$companyCode}/{$paddedId}";
-            
-            default:
-                $part1 = $getFourDigits($request->nama_barang);
-                $part2 = $getFourDigits($category->code);
-                return "{$part1}/{$part2}/{$companyCode}/{$paddedId}";
-        }
+        $paddedId = str_pad($assetId, 5, '0', STR_PAD_LEFT);
+
+        return "{$companyCode}/{$categoryCode}/{$itemNamePart}/{$paddedId}";
     }
+    // --- AKHIR MODIFIKASI ---
 
     private function collectSpecificationsFromRequest(Request $request): array
     {
