@@ -7,20 +7,34 @@
     </div>
 
     <div class="space-y-8">
+        {{-- Informasi Umum --}}
         <div class="bg-white p-6 rounded-xl border">
             <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b-2 border-gray-800 pb-2">Informasi Umum</h3>
+            @php
+                $generalInfo = [
+                    'Kategori'      => optional($asset->category)->name,
+                    'Sub Kategori'  => optional($asset->subCategory)->name,
+                    'Perusahaan'    => optional($asset->company)->name,
+                    'Merk'          => $asset->merk,
+                    'Tipe'          => $asset->tipe,
+                    'Serial Number' => $asset->serial_number,
+                    'Kondisi'       => $asset->kondisi,
+                    'Lokasi Fisik'  => $asset->lokasi,
+                ];
+            @endphp
             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm mt-4">
-                <div class="flex flex-col"><dt class="font-medium text-gray-500">Kategori</dt><dd class="text-gray-900 mt-1">{{ optional($asset->category)->name ?? 'N/A' }}</dd></div>
-                <div class="flex flex-col"><dt class="font-medium text-gray-500">Sub Kategori</dt><dd class="text-gray-900 mt-1">{{ optional($asset->subCategory)->name ?? 'N/A' }}</dd></div>
-                <div class="flex flex-col"><dt class="font-medium text-gray-500">Perusahaan</dt><dd class="text-gray-900 mt-1">{{ optional($asset->company)->name ?? 'N/A' }}</dd></div>
-                @if($asset->merk)<div class="flex flex-col"><dt class="font-medium text-gray-500">Merk</dt><dd class="text-gray-900 mt-1">{{ $asset->merk }}</dd></div>@endif
-                @if($asset->tipe)<div class="flex flex-col"><dt class="font-medium text-gray-500">Tipe</dt><dd class="text-gray-900 mt-1">{{ $asset->tipe }}</dd></div>@endif
-                @if($asset->serial_number)<div class="flex flex-col"><dt class="font-medium text-gray-500">Serial Number</dt><dd class="text-gray-900 mt-1">{{ $asset->serial_number }}</dd></div>@endif
-                @if($asset->kondisi)<div class="flex flex-col"><dt class="font-medium text-gray-500">Kondisi</dt><dd class="text-gray-900 mt-1">{{ $asset->kondisi }}</dd></div>@endif
-                @if($asset->lokasi)<div class="flex flex-col"><dt class="font-medium text-gray-500">Lokasi Fisik</dt><dd class="text-gray-900 mt-1">{{ $asset->lokasi }}</dd></div>@endif
+                @foreach($generalInfo as $label => $value)
+                    @if(!empty($value))
+                        <div class="flex flex-col">
+                            <dt class="font-medium text-gray-500">{{ $label }}</dt>
+                            <dd class="text-gray-900 mt-1">{{ $value }}</dd>
+                        </div>
+                    @endif
+                @endforeach
             </dl>
         </div>
 
+        {{-- Informasi Pengguna --}}
         <div class="bg-white p-6 rounded-xl border">
             <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b-2 border-gray-800 pb-2">Informasi Pengguna</h3>
             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm mt-4">
@@ -31,6 +45,7 @@
             </dl>
         </div>
 
+        {{-- Spesifikasi --}}
         @if($asset->specifications && count($asset->specifications) > 0)
             <div class="bg-white p-6 rounded-xl border">
                 <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b-2 border-gray-800 pb-2">Spesifikasi & Deskripsi</h3>
@@ -45,6 +60,33 @@
             </div>
         @endif
         
+        {{-- BAGIAN BARU: INFORMASI PEMBELIAN --}}
+        <div class="bg-white p-6 rounded-xl border">
+            <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b-2 border-gray-800 pb-2">Informasi Pembelian</h3>
+             @php
+                $purchaseInfo = [
+                    'Tanggal Pembelian' => $asset->tanggal_pembelian ? \Carbon\Carbon::parse($asset->tanggal_pembelian)->format('d M Y') : null,
+                    'Harga Total'       => $asset->harga_total ? 'Rp ' . number_format($asset->harga_total, 0, ',', '.') : null,
+                    'Sumber Dana'       => $asset->sumber_dana,
+                    'Nomor PO'          => $asset->po_number,
+                    'Nomor BAST'        => $asset->nomor,
+                    'Kode Aktiva'       => $asset->code_aktiva,
+                ];
+            @endphp
+             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm mt-4">
+                @foreach($purchaseInfo as $label => $value)
+                    @if(!empty($value))
+                        <div class="flex flex-col">
+                            <dt class="font-medium text-gray-500">{{ $label }}</dt>
+                            <dd class="text-gray-900 mt-1">{{ $value }}</dd>
+                        </div>
+                    @endif
+                @endforeach
+            </dl>
+        </div>
+        {{-- AKHIR BAGIAN BARU --}}
+
+        {{-- Histori Pengguna --}}
         <div class="bg-white p-6 rounded-xl border">
             <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b-2 border-gray-800 pb-2">Histori Pengguna</h3>
             <ul class="space-y-4 text-sm max-h-96 overflow-y-auto pt-4">
