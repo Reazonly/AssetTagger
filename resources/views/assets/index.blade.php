@@ -53,27 +53,27 @@
             </form>
         
         {{-- Filter Kategori & Tombol Reset --}}
-        <div class="w-full md:w-auto flex items-center gap-2">
-             <form action="{{ route('assets.index') }}" method="GET" id="categoryFilterForm">
-                <select name="category_id" onchange="this.form.submit()" class="w-full md:w-64 border-2 border-gray-300 rounded-lg shadow-sm py-2 px-3">
-                    <option value="">Semua Kategori</option>
-                    @foreach($categories as $category)
-                        <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
-                            {{ $category->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </form>
-            {{-- Tombol Reset dengan Ikon Baru --}}
-            <button @click="resetPage()" class="p-2 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-100" title="Reset Filter & Pilihan">
-    <svg xmlns="http://www.w3.org/2000/svg" 
-         viewBox="0 0 512 512" 
-         fill="currentColor" 
-         class="h-5 w-5 text-gray-600">
-        <path d="M256 48C141.1 48 48 141.1 48 256s93.1 208 208 208c87.3 0 163.1-52.7 194.5-128h-49.2c-27.8 47.6-79.1 80-145.3 80-88.4 0-160-71.6-160-160s71.6-160 160-160c43.7 0 83.4 17.7 112.1 46.4L304 224h160V64l-55.7 55.7C373.9 86.1 317.6 48 256 48z"/>
-    </svg>
-</button>
-        </div>
+        <div class="w-full md:w-auto flex items-center gap-3">
+    <form action="{{ route('assets.index') }}" method="GET" id="categoryFilterForm">
+        <select name="category_id" onchange="this.form.submit()" class="w-full md:w-64 border-2 border-gray-300 rounded-lg shadow-sm py-2 px-3">
+            <option value="">Semua Kategori</option>
+            @foreach($categories as $category)
+                <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                    {{ $category->name }}
+                </option>
+            @endforeach
+        </select>
+    </form>
+    
+    <button @click="resetPage()" class="p-2 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-100" title="Reset Filter & Pilihan">
+        <svg xmlns="http://www.w3.org/2000/svg" 
+             viewBox="0 0 512 512" 
+             fill="currentColor" 
+             class="h-5 w-5 text-gray-600">
+            <path d="M256 48C141.1 48 48 141.1 48 256s93.1 208 208 208c87.3 0 163.1-52.7 194.5-128h-49.2c-27.8 47.6-79.1 80-145.3 80-88.4 0-160-71.6-160-160s71.6-160 160-160c43.7 0 83.4 17.7 112.1 46.4L304 224h160V64l-55.7 55.7C373.9 86.1 317.6 48 256 48z"/>
+        </svg>
+    </button>
+</div>
     </div>
 
     {{-- GRUP KANAN: AKSI MASSAL --}}

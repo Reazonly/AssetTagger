@@ -179,7 +179,6 @@ public function create()
     {
         $asset->load(['assetUser', 'category', 'company', 'subCategory']);
         
-        // --- PERBAIKAN DI SINI: Memuat relasi subCategories dengan benar ---
         $categories = Category::with('subCategories')->orderBy('name')->get();
         
         $assetUsers = AssetUser::with('company')->orderBy('nama')->get();
