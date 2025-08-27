@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class AssetController extends Controller
 {
@@ -29,32 +30,17 @@ class AssetController extends Controller
         return $request->input('asset_user_id');
     }
 
+   
     
-    // --- METHOD INI DIMODIFIKASI ---
-    private function generateAssetCode(Request $request, Category $category, ?SubCategory $subCategory, int $assetId): string
-    {
-        $company = Company::find($request->company_id);
-        
-        $companyCode = optional($company)->code ?? 'N/A';
-        $categoryCode = $category->code ?? 'N/A';
-        
-        $itemName = preg_replace('/[^a-zA-Z0-9]/', '', (string) $request->nama_barang);
-        $itemNamePart = strtoupper(substr($itemName, 0, 4));
-
-        $paddedId = str_pad($assetId, 5, '0', STR_PAD_LEFT);
-
-        return "{$companyCode}/{$categoryCode}/{$itemNamePart}/{$paddedId}";
-    }
-    // --- AKHIR MODIFIKASI ---
-
     private function collectSpecificationsFromRequest(Request $request): array
     {
         $specs = [];
         if (!$request->has('spec')) return $specs;
+        
         $allSpecInputs = $request->input('spec', []);
         foreach ($allSpecInputs as $field => $value) {
-            if (!empty($value)) {
-                $specs[$field] = $value;
+            if (!is_null($value) && $value !== '') {
+                $specs[Str::title(str_replace('_', ' ', $field))] = $value;
             }
         }
         return $specs;
@@ -62,118 +48,127 @@ class AssetController extends Controller
 
     public function index(Request $request)
     {
-        $query = Asset::with(['assetUser', 'category', 'company', 'subCategory']);
+        $query = Asset::query()->with(['assetUser', 'category', 'company', 'subCategory']);
+
         if ($request->filled('search')) {
             $searchTerm = $request->input('search');
-            $query->where(function ($subQuery) use ($searchTerm) {
-                $subQuery->where('code_asset', 'like', "%{$searchTerm}%")
-                         ->orWhere('nama_barang', 'like', "%{$searchTerm}%")
-                         ->orWhere('serial_number', 'like', "%{$searchTerm}%")
-                         ->orWhereHas('assetUser', function ($userQuery) use ($searchTerm) {
-                             $userQuery->where('nama', 'like', "%{$searchTerm}%");
-                         });
+            $keywords = explode(' ', $searchTerm);
+
+            $query->where(function ($q) use ($keywords) {
+                foreach ($keywords as $keyword) {
+                    if (empty($keyword)) continue;
+                    
+                    $q->where(function ($subQuery) use ($keyword) {
+                        $subQuery->where('code_asset', 'like', '%' . $keyword . '%')
+                                 ->orWhere('nama_barang', 'like', '%' . $keyword . '%')
+                                 ->orWhere('serial_number', 'like', '%' . $keyword . '%')
+                                 ->orWhereHas('assetUser', function ($userQuery) use ($keyword) {
+                                     $userQuery->where('nama', 'like', '%' . $keyword . '%');
+                                 })
+                                 ->orWhereHas('category', function ($catQuery) use ($keyword) {
+                                     $catQuery->where('name', 'like', '%' . $keyword . '%');
+                                 })
+                                 ->orWhereHas('subCategory', function ($subCatQuery) use ($keyword) {
+                                     $subCatQuery->where('name', 'like', '%' . $keyword . '%');
+                                 });
+                    });
+                }
             });
         }
+
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->input('category_id'));
         }
-        $assets = $query->latest()->paginate(15);
+        
+        // atau seperti ini
+        $assets = $query->orderBy('updated_at', 'desc')->paginate(15);
+
         $categories = Category::orderBy('name')->get();
         return view('assets.index', compact('assets', 'categories'));
     }
 
-    public function create()
-    {
-        $categories = Category::with(['subCategories' => function ($query) {
-            $query->latest();
-        }, 'units'])->orderBy('name')->get();
+    // app/Http/Controllers/AssetController.php
 
-        $assetUsers = AssetUser::with('company')->orderBy('nama')->get();
-        return view('assets.create', [
-            'categories' => $categories,
-            'companies' => Company::orderBy('name')->get(),
-            'users' => $assetUsers,
-        ]);
-    }
+public function create()
+{
+    // PASTIKAN BARIS INI MENGGUNAKAN with('subCategories')
+    $categories = Category::with('subCategories')->orderBy('name')->get();
+
+    $assetUsers = AssetUser::with('company')->orderBy('nama')->get();
+    return view('assets.create', [
+        'categories' => $categories,
+        'companies' => Company::orderBy('name')->get(),
+        'users' => $assetUsers,
+    ]);
+}
 
     public function store(Request $request)
-    {
-        $subCategory = SubCategory::find($request->sub_category_id);
-        $inputType = optional($subCategory)->input_type ?? 'none';
-        
-        $merkRule = 'nullable|string|max:255';
-        $tipeRule = 'nullable|string|max:255';
+{
+    // 1. Logika untuk menentukan aturan validasi dinamis (INI SUDAH BENAR)
+    $subCategory = SubCategory::find($request->sub_category_id);
+    $inputType = optional($subCategory)->input_type ?? 'none';
+    
+    $merkRule = 'nullable|string|max:255';
+    $tipeRule = 'nullable|string|max:255';
 
-        if ($inputType === 'merk') {
-            $merkRule = 'required|string|max:255';
-        }
-        if ($inputType === 'tipe') {
-            $tipeRule = 'required|string|max:255';
-        }
-        if ($inputType === 'merk_dan_tipe') {
-            if ($request->has('use_merk')) {
-                $merkRule = 'required|string|max:255';
-            }
-            if ($request->has('use_tipe')) {
-                $tipeRule = 'required|string|max:255';
-            }
-        }
-        
-        $validatedData = $request->validate([
-            'nama_barang' => 'required|string|max:255',
-            'category_id' => 'required|exists:categories,id',
-            'company_id' => 'required|exists:companies,id',
-            'sub_category_id' => 'nullable|exists:sub_categories,id',
-            'asset_user_id' => 'nullable|exists:asset_users,id',
-            'new_asset_user_name' => 'nullable|string|max:255',
-            'merk' => $merkRule,
-            'tipe' => $tipeRule,
-            'jumlah' => 'required|integer|min:1',
-            'satuan' => 'required|string|max:50',
-            'serial_number' => 'nullable|string|max:255',
-            'nomor' => 'nullable|string|max:255|unique:assets,nomor',
-            'kondisi' => 'required|string|in:Baik,Rusak,Perbaikan',
-            'lokasi' => 'nullable|string|max:255',
-            'tanggal_pembelian' => 'nullable|date',
-            'harga_total' => 'nullable|numeric|min:0',
-            'po_number' => 'nullable|string|max:255',
-            'code_aktiva' => 'nullable|string|max:255',
-            'sumber_dana' => 'nullable|string|max:255',
-            'include_items' => 'nullable|string',
-            'peruntukan' => 'nullable|string',
-            'keterangan' => 'nullable|string',
-            'spec' => 'nullable|array',
-        ]);
+    if ($inputType === 'merk') { $merkRule = 'required|string|max:255'; }
+    if ($inputType === 'tipe') { $tipeRule = 'required|string|max:255'; }
+    if ($inputType === 'merk_dan_tipe') {
+        if ($request->boolean('use_merk')) { $merkRule = 'required|string|max:255'; }
+        if ($request->boolean('use_tipe')) { $tipeRule = 'required|string|max:255'; }
+    }
+    
+    // 2. Lakukan validasi SEKALI SAJA menggunakan aturan dinamis (INI SUDAH BENAR)
+    $validatedData = $request->validate([
+        'nama_barang' => 'required|string|max:255', 
+        'category_id' => 'required|exists:categories,id', 
+        'company_id' => 'required|exists:companies,id', 
+        'sub_category_id' => 'nullable|exists:sub_categories,id', 
+        'asset_user_id' => 'required_without:new_asset_user_name|nullable|exists:asset_users,id', 
+        'new_asset_user_name' => 'required_without:asset_user_id|nullable|string|max:255', 
+        'merk' => $merkRule, // Menggunakan aturan dinamis
+        'tipe' => $tipeRule, // Menggunakan aturan dinamis
+        'jumlah' => 'required|integer|min:1', 
+        'satuan' => 'required|string|max:50', 
+        'serial_number' => 'nullable|string|max:255', 
+        'nomor' => 'nullable|string|max:255|unique:assets,nomor', 
+        'kondisi' => 'required|string|in:Baik,Rusak,Perbaikan', 
+        'lokasi' => 'nullable|string|max:255', 
+        'tanggal_pembelian' => 'nullable|date', 
+        'harga_total' => 'nullable|numeric|min:0', 
+        'po_number' => 'nullable|string|max:255', 
+        'code_aktiva' => 'nullable|string|max:255', 
+        'sumber_dana' => 'nullable|string|max:255', 
+        'include_items' => 'nullable|string', 
+        'peruntukan' => 'nullable|string', 
+        'keterangan' => 'nullable|string', 
+        'spec' => 'nullable|array',
+    ]);
 
-        $data = $validatedData;
-        $data['specifications'] = $this->collectSpecificationsFromRequest($request);
+    // BLOK VALIDASI KEDUA YANG SALAH SUDAH DIHAPUS DARI SINI
 
-        if ($request->filled('tanggal_pembelian')) {
-            $data['thn_pembelian'] = Carbon::parse($request->tanggal_pembelian)->format('Y');
-        }
-        
-        $data['asset_user_id'] = $this->getAssetUserIdFromRequest($request);
-        
-        unset($data['spec'], $data['new_asset_user_name']);
-        
-        $data['code_asset'] = 'PENDING-' . time();
-        $asset = Asset::create($data);
-        
-        $category = Category::find($request->category_id);
-        $asset->code_asset = $this->generateAssetCode($request, $category, $subCategory, $asset->id);
-        $asset->save();
+    // 3. Lanjutkan proses (INI SEMUA SUDAH BENAR)
+    $data = $validatedData;
+    $data['specifications'] = $this->collectSpecificationsFromRequest($request);
+    $data['asset_user_id'] = $this->getAssetUserIdFromRequest($request);
+    
+    unset($data['spec'], $data['new_asset_user_name'], $data['new_asset_user_jabatan'], $data['new_asset_user_departemen']);
+    
+    $company = Company::find($request->company_id);
+    $category = Category::find($request->category_id);
+    $data['code_asset'] = Asset::generateNextCode(
+        $company, $category, $request->nama_barang, $request->merk, $request->tipe, $request->nomor
+    );
+    
+    $asset = Asset::create($data);
 
-        if ($asset->asset_user_id) {
-            $currentUser = AssetUser::find($asset->asset_user_id);
-            $asset->history()->create([
-                'asset_user_id' => $asset->asset_user_id,
-                'historical_user_name' => $currentUser->nama,
-            ]);
-        }
-
-        return redirect()->route('assets.show', $asset)->with('success', 'Aset baru berhasil ditambahkan: ' . $asset->code_asset);
+    if ($asset->asset_user_id) {
+        $currentUser = AssetUser::find($asset->asset_user_id);
+        $asset->history()->create([ 'asset_user_id' => $asset->asset_user_id, 'historical_user_name' => $currentUser->nama ]);
     }
 
+    return redirect()->route('assets.show', $asset)->with('success', 'Aset baru berhasil ditambahkan: ' . $asset->code_asset);
+}
     public function show(Asset $asset)
     {
         $asset->load(['assetUser.company', 'category', 'company', 'subCategory', 'history.assetUser.company']);
@@ -184,9 +179,8 @@ class AssetController extends Controller
     {
         $asset->load(['assetUser', 'category', 'company', 'subCategory']);
         
-        $categories = Category::with(['subCategories' => function ($query) {
-            $query->latest();
-        }, 'units'])->orderBy('name')->get();
+        // --- PERBAIKAN DI SINI: Memuat relasi subCategories dengan benar ---
+        $categories = Category::with('subCategories')->orderBy('name')->get();
         
         $assetUsers = AssetUser::with('company')->orderBy('nama')->get();
         return view('assets.edit', [
@@ -273,11 +267,6 @@ class AssetController extends Controller
     {
         $asset->load(['assetUser.company', 'category', 'company', 'subCategory', 'history.assetUser.company']);
         return view('assets.public-show', compact('asset'));
-    }
-
-    public function getUnits(Category $category)
-    {
-        return response()->json($category->units);
     }
 
     public function import(Request $request)

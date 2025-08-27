@@ -53,32 +53,40 @@
                 </tr>
             </thead>
             <tbody class="bg-white divide-y">
-                @forelse ($subCategories as $subCategory)
-                    <tr class="border-b hover:bg-gray-50 divide-x divide-gray-200 text-center">
-                        <td class="px-6 py-4 font-medium text-gray-900">{{ $subCategory->name }}</td>
-                        <td class="px-6 py-4">
-                            @if(!empty($subCategory->spec_fields))
-                                @foreach($subCategory->spec_fields as $field)
-                                    <span class="inline-block bg-gray-200 rounded-full px-3 py-1 text-xs font-semibold text-gray-700 mr-2 mb-2">{{ $field }}</span>
-                                @endforeach
-                            @else
-                                <span class="text-gray-400 text-xs italic">-</span>
-                            @endif
-                        </td>
-                        <td class="px-6 py-4 text-center">
-                            <div class="flex items-center justify-center gap-4">
-                                <a href="{{ route('master-data.sub-categories.edit', $subCategory->id) }}" class="font-medium text-blue-600 hover:text-blue-800">Edit</a>
-                                <form action="{{ route('master-data.sub-categories.destroy', $subCategory->id) }}" method="POST" onsubmit="return confirm('Yakin hapus?');">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="font-medium text-red-600 hover:text-red-800">Hapus</button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                @empty
-                    <tr><td colspan="3" class="text-center py-10 text-gray-500">Belum ada sub-kategori untuk kategori ini.</td></tr>
-                @endforelse
-            </tbody>
+    @forelse ($subCategories as $subCategory)
+        <tr class="border-b hover:bg-gray-50 divide-x divide-gray-200 text-center">
+            <td class="px-6 py-4 font-medium text-gray-900">{{ $subCategory->name }}</td>
+            <td class="px-6 py-4">
+                @if(!empty($subCategory->spec_fields))
+                    @foreach($subCategory->spec_fields as $field)
+                        {{-- PERBAIKAN: Tampilkan $field['name'] bukan $field --}}
+                        <span class="inline-block bg-gray-200 rounded-full px-3 py-1 text-xs font-semibold text-gray-700 mr-2 mb-2">
+                            {{ $field['name'] ?? 'N/A' }}
+                        </span>
+                    @endforeach
+                @else
+                    <span class="text-gray-400 text-xs italic">-</span>
+                @endif
+            </td>
+            <td class="px-6 py-4 text-center">
+                <div class="flex items-center justify-center gap-4">
+                    <a href="{{ route('master-data.sub-categories.edit', $subCategory->id) }}" class="font-medium text-blue-600 hover:text-blue-800">Edit</a>
+                    <form action="{{ route('master-data.sub-categories.destroy', $subCategory->id) }}" method="POST" onsubmit="return confirm('Yakin hapus?');">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="font-medium text-red-600 hover:text-red-800">Hapus</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+    @empty
+        <tr>
+            <td colspan="3" class="text-center py-10 text-gray-500">
+                <h3 class="text-sm font-medium text-gray-900">Belum ada Sub-Kategori</h3>
+                <p class="mt-1 text-sm text-gray-500">Anda bisa menambahkan sub-kategori baru untuk kategori ini.</p>
+            </td>
+        </tr>
+    @endforelse
+</tbody>
         </table>
     </div>
 

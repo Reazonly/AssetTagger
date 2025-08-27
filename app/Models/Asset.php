@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 
 class Asset extends Model
@@ -53,5 +54,58 @@ class Asset extends Model
     public function history(): HasMany
     {
         return $this->hasMany(AssetHistory::class)->orderBy('tanggal_mulai', 'desc');
+    }
+
+    public static function generateNextCode(Company $company, Category $category, string $itemName, ?string $merk, ?string $tipe, ?string $nomorBast): string
+    {
+        $companyCode = $company->code ?? 'N/A';
+        $categoryCode = $category->code ?? 'N/A';
+
+        // --- BAGIAN BARU: Logika penentuan middle part kode ---
+        $sourceForCode = '';
+        $length = 5; // Default panjang 5 digit
+
+        if (!empty($merk)) {
+            $sourceForCode = $merk;
+            $length = 5;
+        } elseif (!empty($tipe)) {
+            $sourceForCode = $tipe;
+            $length = 5;
+        } elseif (!empty($nomorBast)) {
+            $sourceForCode = $nomorBast;
+            $length = 3; // Panjang 3 digit khusus untuk BAST
+        } else {
+            $sourceForCode = $itemName; // Fallback jika semua kosong
+            $length = 5;
+        }
+        
+        $cleanSource = preg_replace('/[^a-zA-Z0-9]/', '', $sourceForCode);
+        $middlePart = strtoupper(substr($cleanSource, 0, $length));
+        // --- AKHIR BAGIAN BARU ---
+
+        $prefix = "{$companyCode}/{$categoryCode}/{$middlePart}/";
+
+        // MENCARI NOMOR SECARA GLOBAL (Logika ini tetap sama)
+        $existingNumbers = DB::table('assets')
+            ->whereNotNull('code_asset')
+            ->pluck('code_asset')
+            ->map(function ($code) {
+                return (int) substr($code, strrpos($code, '/') + 1);
+            })
+            ->sort()
+            ->values();
+
+        $nextNumber = 1;
+        foreach ($existingNumbers as $number) {
+            if ($number == $nextNumber) {
+                $nextNumber++;
+            } else {
+                break; // Ditemukan nomor kosong
+            }
+        }
+
+        $paddedNumber = str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+
+        return $prefix . $paddedNumber;
     }
 }

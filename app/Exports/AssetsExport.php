@@ -20,9 +20,14 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
     public function __construct(Builder $query)
     {
         $this->query = $query;
+        // Mengambil semua key spesifikasi yang unik dari data yang akan diekspor
         $this->specKeys = $this->getUniqueSpecKeys();
     }
 
+    /**
+     * Fungsi untuk mengumpulkan semua nama kolom spesifikasi yang ada
+     * agar bisa ditambahkan sebagai header secara dinamis.
+     */
     private function getUniqueSpecKeys()
     {
         $assets = (clone $this->query)->get();
@@ -33,6 +38,7 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             }
         }
         
+        // Menghapus key yang tidak diinginkan jika ada
         $unwantedKeys = ['perusahaan_pemilik', 'perusahaan_pengguna'];
         $uniqueKeys = array_unique($keys);
         
@@ -41,43 +47,48 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
 
     public function query()
     {
-        return $this->query->with(['category', 'subCategory', 'company', 'assetUser.company', 'history.assetUser']);
+        // Memastikan relasi di-load untuk menghindari query N+1
+        return $this->query->with(['category', 'subCategory', 'company', 'assetUser.company']);
     }
 
+    /**
+     * Mendefinisikan judul kolom (header).
+     * Urutan ini sudah disesuaikan agar bisa diimpor kembali.
+     */
     public function headings(): array
     {
-       
         $baseHeadings = [
+            'Kode Aset', // --- DITAMBAHKAN ---
             'Nama Barang', 'Kategori', 'Sub Kategori', 'Perusahaan Pemilik',
             'Merk', 'Tipe', 'Serial Number', 'Pengguna Aset', 'Jabatan Pengguna',
             'Departemen Pengguna', 'Perusahaan Pengguna', 'Kondisi', 'Lokasi', 'Jumlah',
             'Satuan', 
-            'Hari Pembelian', 'Tanggal Pembelian', 'Bulan Pembelian', 'Tahun Pembelian',
+            // Kolom tanggal disesuaikan untuk format impor
+            'Tanggal Pembelian', 'Bulan Pembelian', 'Tahun Pembelian',
             'Harga Total (Rp)', 'Nomor PO', 'Nomor BAST',
             'Kode Aktiva', 'Sumber Dana', 'Item Termasuk', 'Peruntukan', 'Keterangan',
-            'Riwayat Pengguna'
+            // Riwayat Pengguna dihapus dari ekspor karena tidak digunakan saat impor
         ];
 
+        // Menggabungkan header dasar dengan header spesifikasi dinamis
         return array_merge($baseHeadings, $this->specKeys);
     }
 
+    /**
+     * Memetakan data dari setiap aset ke dalam kolom yang sesuai.
+     * @param Asset $asset
+     * @return array
+     */
     public function map($asset): array
     {
-        $historyString = $asset->history->map(function ($h) {
-            $startDate = Carbon::parse($h->tanggal_mulai)->format('d M Y');
-            $endDate = $h->tanggal_selesai ? Carbon::parse($h->tanggal_selesai)->format('d M Y') : 'Sekarang';
-            $userName = optional($h->assetUser)->nama ?? 'N/A';
-            return "{$userName} ({$startDate} - {$endDate})";
-        })->implode('; ');
-
+        // Mengambil dan memformat data tanggal
         $tanggal = $asset->tanggal_pembelian ? Carbon::parse($asset->tanggal_pembelian)->locale('id') : null;
-        $hari = $tanggal ? $tanggal->isoFormat('dddd') : null;
         $tgl = $tanggal ? $tanggal->day : null;
-        $bulan = $tanggal ? $tanggal->isoFormat('MMMM') : null;
+        $bulan = $tanggal ? $tanggal->isoFormat('MMMM') : null; // e.g., "Agustus"
         $tahun = $tanggal ? $tanggal->year : null;
 
-    
         $baseData = [
+            $asset->code_asset, // --- DITAMBAHKAN ---
             $asset->nama_barang,
             optional($asset->category)->name,
             optional($asset->subCategory)->name,
@@ -93,21 +104,20 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $asset->lokasi,
             $asset->jumlah,
             $asset->satuan,
-            $hari,
             $tgl,
             $bulan,
             $tahun,
             $asset->harga_total,
             $asset->po_number,
-            $asset->nomor,
+            $asset->nomor, // Ini adalah Nomor BAST
             $asset->code_aktiva,
             $asset->sumber_dana,
             $asset->include_items,
             $asset->peruntukan,
             $asset->keterangan,
-            $historyString,
         ];
 
+        // Mengisi data untuk kolom spesifikasi dinamis
         $specData = [];
         foreach ($this->specKeys as $key) {
             $specData[] = $asset->specifications[$key] ?? '';
@@ -116,17 +126,22 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
         return array_merge($baseData, $specData);
     }
 
+    /**
+     * Menerapkan style ke file Excel (misalnya, membuat header tebal).
+     */
     public function styles(Worksheet $sheet)
     {
         $columnCount = count($this->headings());
         $lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($columnCount);
 
         return [
+            // Style untuk baris pertama (header)
             1 => [
                 'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
                 'fill' => ['fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => '28A745']],
                 'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
             ],
+            // Style untuk semua sel
             'A:' . $lastColumn => [
                 'alignment' => [
                     'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
