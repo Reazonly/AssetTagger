@@ -28,29 +28,65 @@ class SubCategoryImport implements ToModel, WithHeadingRow, WithUpserts
         return null;
     }
 
+    /**
+     * [LOGIKA BARU] Fungsi ini sekarang mencari pasangan kolom
+     * 'spek_1' dengan 'tipe_input_1', 'spek_2' dengan 'tipe_input_2', dst.
+     */
+    private function processSpecFieldsFromRow(array $row): array
+    {
+        $specFields = [];
+        // Mencari hingga 10 pasang field spesifikasi
+        for ($i = 1; $i <= 10; $i++) {
+            $nameKey = 'spek_' . $i;
+            $typeKey = 'tipe_input_' . $i;
+
+            // Cek apakah ada data di kolom 'spek_...'
+            if (isset($row[$nameKey]) && !empty($row[$nameKey])) {
+                
+                // Ambil nama field dari isi sel 'spek_...'
+                $fieldName = $row[$nameKey];
+                
+                // Ambil tipe data dari isi sel 'tipe_input_...'
+                // Jika kolom tipe input tidak ada atau kosong, default ke 'text'
+                $fieldType = strtolower(trim($row[$typeKey] ?? 'text'));
+                if (!in_array($fieldType, ['text', 'number', 'textarea'])) {
+                    $fieldType = 'text'; // Keamanan jika tipe tidak valid
+                }
+
+                $specFields[] = [
+                    'name' => $fieldName,
+                    'type' => $fieldType,
+                ];
+            }
+        }
+        return $specFields;
+    }
+
     public function model(array $row)
     {
         $normalizedRow = $this->normalizeRowKeys($row);
 
-       
         $name = $this->findValueByAliases($normalizedRow, ['nama_sub_kategori', 'sub_kategori', 'nama']);
         $inputType = $this->findValueByAliases($normalizedRow, ['tipe_input', 'input']) ?? 'none';
         
-        
         if (!$name) {
-            return null;
+            return null; // Lewati baris jika tidak ada nama
         }
 
         $formattedInputType = strtolower(str_replace(' ', '_', $inputType));
         if (!in_array($formattedInputType, ['merk', 'tipe', 'merk_dan_tipe', 'none'])) {
             $formattedInputType = 'none';
         }
+
+        // Memanggil fungsi baru yang sudah disesuaikan
+        $specFields = $this->processSpecFieldsFromRow($normalizedRow);
        
         return new SubCategory([
             'category_id' => $this->category->id,
             'name'        => $name,
             'slug'        => Str::slug($name),
-            'input_type'  => $formattedInputType, 
+            'input_type'  => $formattedInputType,
+            'spec_fields' => $specFields,
         ]);
     }
 
@@ -63,6 +99,7 @@ class SubCategoryImport implements ToModel, WithHeadingRow, WithUpserts
     {
         $normalized = [];
         foreach ($row as $key => $value) {
+            // Normalisasi key: 'Spek 1' menjadi 'spek_1'
             $newKey = Str::snake(strtolower($key));
             $normalized[$newKey] = $value;
         }

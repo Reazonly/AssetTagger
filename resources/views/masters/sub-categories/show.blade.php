@@ -97,7 +97,8 @@
             <form action="{{ route('master-data.sub-categories.import', $category->id) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <p class="text-sm text-gray-600 mb-4">
-                    Unggah file Excel dengan kolom: <strong>nama sub kategori dan tipe input</strong>.
+                    Unggah file Excel dengan kolom: <strong>Nama Sub Kategori, Tipe Input(Merk/Tipe/Merk dan Tipe), Spek 1, dan Tipe Input 1(Number/Text)</strong>.
+                    <div class="text-sm text-gray-600 mb-4"> Untuk spek dan tipe input maximal ada 10</div>
                 </p>
                 <input type="file" name="file" required class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"/>
                 <div class="mt-6 flex justify-end gap-3">
