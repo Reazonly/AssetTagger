@@ -31,9 +31,9 @@
         <div class="flex items-center gap-2 mb-2">
             
             {{-- PERBAIKAN: Atribut 'name' dan 'x-model' diubah --}}
-            <input type="text" :name="`spec_fields[${index}][name]`" x-model="field.name" placeholder="Nama Field (Contoh: Ukuran Layar)" class="flex-grow border-gray-300 rounded-md shadow-sm py-2 px-3">
+            <input type="text" :name="`spec_fields[${index}][name]`" x-model="field.name" placeholder="Nama Field (Contoh: Ukuran Layar)" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">
             
-            <select :name="`spec_fields[${index}][type]`" x-model="field.type" class="border-gray-300 rounded-md shadow-sm py-2 px-3">
+            <select :name="`spec_fields[${index}][type]`" x-model="field.type" class="border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">
                 <option value="text">Teks</option>
                 <option value="number">Angka</option>
                 <option value="textarea">Area Teks</option>
