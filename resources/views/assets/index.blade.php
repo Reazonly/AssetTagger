@@ -46,7 +46,7 @@
                        name="search"
                        value="{{ request('search') }}"
                        placeholder="Cari kode, nama, sn..." 
-                       class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                       class="w-full pl-10 pr-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
@@ -55,7 +55,7 @@
         {{-- Filter Kategori & Tombol Reset --}}
         <div class="w-full md:w-auto flex items-center gap-2">
              <form action="{{ route('assets.index') }}" method="GET" id="categoryFilterForm">
-                <select name="category_id" onchange="this.form.submit()" class="w-full md:w-64 border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:border-emerald-500 focus:ring-emerald-500">
+                <select name="category_id" onchange="this.form.submit()" class="w-full md:w-64 border-2 border-gray-300 rounded-lg shadow-sm py-2 px-3">
                     <option value="">Semua Kategori</option>
                     @foreach($categories as $category)
                         <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
@@ -65,7 +65,7 @@
                 </select>
             </form>
             {{-- Tombol Reset dengan Ikon Baru --}}
-            <button @click="resetPage()" class="p-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-100" title="Reset Filter & Pilihan">
+            <button @click="resetPage()" class="p-2 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-100" title="Reset Filter & Pilihan">
     <svg xmlns="http://www.w3.org/2000/svg" 
          viewBox="0 0 512 512" 
          fill="currentColor" 

@@ -72,35 +72,36 @@
                         <div class="md:col-span-2"><label for="lokasi" class="block text-sm font-medium text-gray-600">Lokasi Fisik</label><input type="text" name="lokasi" id="lokasi" value="{{ old('lokasi', $asset->lokasi) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3 text-sm"></div>
                     </div>
                     
-                    <div class="mt-8 pt-6 border-t" x-show="allSpecFields.length > 0" x-cloak>
+                    <div class="mt-8 pt-6 border-t">
                         <h4 class="text-lg font-medium text-gray-800 mb-4">Spesifikasi Detail</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <template x-for="field in allSpecFields" :key="field.key">
-                                <div x-show="field.name && field.name.trim() !== ''">
-                                    <label class="block text-sm font-medium text-gray-600 capitalize" x-text="field.name"></label>
-                                    
-                                    <template x-if="field.type === 'textarea'">
-                                        <textarea :name="'spec[' + field.key + ']'"
-                                                  x-model="specValues[field.key]"
-                                                  rows="3"
-                                                  class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3 text-sm"></textarea>
-                                    </template>
-                                    
-                                    <template x-if="field.type !== 'textarea'">
-                                        <input :type="field.type || 'text'" 
-                                               :name="'spec[' + field.key + ']'"
-                                               x-model="specValues[field.key]"
-                                               class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3 text-sm">
-                                    </template>
-                                </div>
-                            </template>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <template x-for="field in allSpecFields" :key="field.key">
+                                    <div x-show="field.name && field.name.trim() !== ''">
+                                        <label class="block text-sm font-medium text-gray-600" x-text="field.name"></label>
+                                        
+                                        <template x-if="field.type === 'textarea'">
+                                            <textarea :name="'spec[' + field.key + ']'"
+                                                      x-model="specValues[field.key]"
+                                                      rows="3"
+                                                      class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3 text-sm"></textarea>
+                                        </template>
+                                        
+                                        <template x-if="field.type !== 'textarea'">
+                                            <input :type="field.type || 'text'" 
+                                                   :name="'spec[' + field.key + ']'"
+                                                   x-model="specValues[field.key]"
+                                                   class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3 text-sm">
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                            
+                            <div>
+                                <label for="spec_deskripsi" class="block text-sm">Deskripsi / Spesifikasi Tambahan</label>
+                                <textarea name="spec[deskripsi]" id="spec_deskripsi" rows="3" class="mt-1 w-full border-2 border-gray-400 rounded-md text-sm py-2 px-3">{{ old('spec.deskripsi', $asset->specifications['Deskripsi'] ?? ($asset->specifications['deskripsi'] ?? '')) }}</textarea>
+                            </div>
                         </div>
-                    </div>
-                    
-                    {{-- POSISI BARU UNTUK KETERANGAN/DESKRIPSI --}}
-                    <div class="mt-6 pt-6 border-t">
-                        <label for="keterangan" class="block text-sm font-medium text-gray-600">Keterangan / Deskripsi</label>
-                        <textarea name="keterangan" id="keterangan" rows="3" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3 text-sm">{{ old('keterangan', $asset->keterangan ?? ($asset->specifications['Deskripsi'] ?? ($asset->specifications['Keterangan'] ?? ''))) }}</textarea>
                     </div>
                 </div>
 
@@ -119,7 +120,7 @@
                                 id="harga_total_display" type="text"
                                 class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3 text-sm"
                                 x-on:input="rawValue = $event.target.value.replace(/[^0-9]/g, '')"
-                                x-bind:value="rawValue === '' || rawValue === null ? '' : 'Rp. ' + parseInt(rawValue, 10).toLocaleString('id-ID')"
+                                x-bind:value="rawValue === '' || rawValue === null ? '' : 'Rp. ' + (parseInt(rawValue, 10) || 0).toLocaleString('id-ID')"
                                 placeholder="Rp. 0">
                             <input type="hidden" name="harga_total" x-bind:value="rawValue">
                         </div>
@@ -135,6 +136,10 @@
                     <div class="space-y-6">
                         <div><label for="include_items" class="block text-sm font-medium text-gray-600">Item Termasuk</label><textarea name="include_items" id="include_items" rows="3" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3 text-sm">{{ old('include_items', $asset->include_items) }}</textarea></div>
                         <div><label for="peruntukan" class="block text-sm font-medium text-gray-600">Peruntukan</label><textarea name="peruntukan" id="peruntukan" rows="3" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3 text-sm">{{ old('peruntukan', $asset->peruntukan) }}</textarea></div>
+                        <div>
+                            <label for="keterangan" class="block text-sm font-medium text-gray-600">Keterangan</label>
+                            <textarea name="keterangan" id="keterangan" rows="3" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3 text-sm">{{ old('keterangan', $asset->keterangan) }}</textarea>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -149,20 +154,23 @@
 <script>
 function assetEditForm() {
     return {
-        // Data
+        // Data mentah dari Controller
         categoriesData: @json($categories->keyBy('id')),
         assetUsersData: @json($users->keyBy('id')),
+        
+        // Data asli dari database
+        assetSpecs: @json($asset->specifications) ?? {},
+        
+        // Data dari form jika ada error validasi
+        oldSpecValues: @json(old('spec')) ?? {},
+
+        // State untuk komponen
         selectedAssetUserId: {{ old('asset_user_id', $asset->asset_user_id) ?? 'null' }},
-        specValues: @json(old('specifications', $asset->specifications)) ?? {},
         allSpecFields: [],
+        specValues: {},
 
         get currentAssetUser() { return this.assetUsersData[this.selectedAssetUserId] || {} },
         
-        toStudlyCase(str) {
-            if (!str) return '';
-            return str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('');
-        },
-
         init() {
             const categoryId = '{{ $asset->category_id }}';
             const subCategoryId = '{{ $asset->sub_category_id }}';
@@ -171,11 +179,11 @@ function assetEditForm() {
             const subCategory = subCategories.find(sc => sc.id == subCategoryId);
 
             let finalFields = new Map();
-            let definedFields = (subCategory && subCategory.fields) ? subCategory.fields.filter(f => f.name && f.name.trim() !== '') : [];
-
+            
             // 1. Tambahkan field yang terdefinisi di sub-kategori
+            let definedFields = (subCategory && subCategory.spec_fields) ? subCategory.spec_fields.filter(f => f.name && f.name.trim() !== '') : [];
             definedFields.forEach(field => {
-                const key = this.toStudlyCase(field.name);
+                const key = field.name.toLowerCase().replace(/ /g, '_');
                 finalFields.set(key, {
                     key: key,
                     name: field.name,
@@ -183,25 +191,49 @@ function assetEditForm() {
                 });
             });
 
-            // 2. Tambahkan field dari data yang sudah tersimpan (hasil impor)
-            for (const key in this.specValues) {
-                if (key.toLowerCase() === 'keterangan' || key.toLowerCase() === 'deskripsi') {
+            // 2. Tambahkan field dari data yang sudah tersimpan (hasil impor/data lama)
+            for (const name in this.assetSpecs) {
+                const key = name.toLowerCase().replace(/ /g, '_');
+                if (key === 'keterangan' || key === 'deskripsi') {
                     continue;
                 }
-
                 if (!finalFields.has(key)) {
-                    const name = key.replace(/([A-Z])/g, ' $1').trim();
-                    const value = this.specValues[key];
-                    let type = 'text';
+                    // =================================================================
+                    // ==== PERBAIKAN: Logika untuk mendeteksi tipe data number ====
+                    // =================================================================
+                    const value = this.assetSpecs[name];
+                    let type = 'text'; // Default ke text
+                    // Cek jika nilainya adalah angka dan bukan string kosong
                     if (!isNaN(parseFloat(value)) && isFinite(value) && String(value).trim() !== '') {
                         type = 'number';
                     }
+                    // =================================================================
+                    // ======================= AKHIR PERBAIKAN =========================
+                    // =================================================================
                     
-                    finalFields.set(key, { key: key, name: name, type: type });
+                    finalFields.set(key, { 
+                        key: key, 
+                        name: name, 
+                        type: type // Gunakan tipe yang sudah dideteksi
+                    });
                 }
             }
-
+            
             this.allSpecFields = Array.from(finalFields.values());
+
+            // 3. Isi nilai `specValues` dengan prioritas
+            this.allSpecFields.forEach(field => {
+                const key = field.key;
+                const name = field.name;
+
+                if (this.oldSpecValues && this.oldSpecValues.hasOwnProperty(key)) {
+                    this.specValues[key] = this.oldSpecValues[key];
+                } else if (this.assetSpecs && this.assetSpecs.hasOwnProperty(name)) {
+                    this.specValues[key] = this.assetSpecs[name];
+                } else {
+                    this.specValues[key] = '';
+                }
+            });
         }
     }
 }
