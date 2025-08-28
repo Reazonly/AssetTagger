@@ -2,6 +2,22 @@
 @section('title', 'Aset')
 
 @section('content')
+
+{{-- ================================================================= --}}
+{{-- NOTIFIKASI ERROR VALIDASI DIPINDAHKAN KE SINI --}}
+{{-- ================================================================= --}}
+@if ($errors->any())
+    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-md" role="alert">
+        <p class="font-bold">Terjadi Kesalahan</p>
+        <ul class="mt-2 list-disc list-inside">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+{{-- ================================================================= --}}
+
 <div x-data="assetIndex({{ json_encode($assets->items()) }})" class="bg-white rounded-xl shadow-lg p-6 md:p-8">
     
     {{-- Header dan Tombol Aksi --}}
@@ -31,6 +47,7 @@
             </a>
         </div>
     </div>
+
 
 {{-- Filter dan Aksi Massal --}}
 <div class="grid grid-cols-1 md:grid-cols-2 items-center mb-6 gap-4">
