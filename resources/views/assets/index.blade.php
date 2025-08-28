@@ -17,7 +17,7 @@
                     Export
                 </button>
                 <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20" x-cloak>
-                    <a href="{{ route('assets.export', request()->query()) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Export Semua (Hasil Filter)</a>
+                    <a href="{{ route('assets.export', request()->query()) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Export Semua</a>
                     <a href="#" @click.prevent="showExportCategoryModal = true; open = false" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Export per Kategori</a>
                 </div>
             </div>
@@ -192,7 +192,7 @@
         <div @click.away="showExportCategoryModal = false" class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
             <h3 class="text-lg font-bold text-gray-900 mb-4">Export Berdasarkan Kategori</h3>
             <form action="{{ route('assets.export') }}" method="GET">
-                <select name="category_id_export" class="w-full border-gray-300 rounded-lg shadow-sm py-2 px-3">
+                <select name="category_id_export" class="w-full border-2 border-gray-300 rounded-lg shadow-sm py-2 px-3">
                     @foreach($categories as $category)
                         <option value="{{ $category->id }}">{{ $category->name }}</option>
                     @endforeach
