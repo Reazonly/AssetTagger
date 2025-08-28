@@ -75,7 +75,6 @@ class AssetsImport implements ToCollection, WithHeadingRow, WithValidation
                 $asset->update($assetData);
                 $this->logs[] = "🔄 Baris {$rowCount}: Data diperbarui untuk aset dengan nomor BAST '{$asset->nomor}'. Kode Aset: {$asset->code_asset}";
             } else {
-                // --- LOGIKA PEMBUATAN KODE BARU SESUAI ATURAN ---
                 $companyCode = optional($company)->code ?? 'N/A';
                 $categoryCode = $category->code ?? 'N/A';
 

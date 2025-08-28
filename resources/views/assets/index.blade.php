@@ -3,9 +3,7 @@
 
 @section('content')
 
-{{-- ================================================================= --}}
-{{-- NOTIFIKASI ERROR VALIDASI DIPINDAHKAN KE SINI --}}
-{{-- ================================================================= --}}
+
 @if ($errors->any())
     <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-md" role="alert">
         <p class="font-bold">Terjadi Kesalahan</p>
@@ -16,7 +14,6 @@
         </ul>
     </div>
 @endif
-{{-- ================================================================= --}}
 
 <div x-data="assetIndex({{ json_encode($assets->items()) }})" class="bg-white rounded-xl shadow-lg p-6 md:p-8">
     
@@ -264,12 +261,10 @@
                 });
             },
 
-            // --- FUNGSI BARU UNTUK TOMBOL RESET ---
+         
             resetPage() {
-                // 1. Hapus semua pilihan
                 this.selectedAssets = [];
                 this.saveSelected();
-                // 2. Kembali ke halaman utama (menghapus filter kategori)
                 window.location.href = '{{ route('assets.index') }}';
             },
 

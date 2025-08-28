@@ -20,7 +20,7 @@
         <div class="space-y-8" 
              x-data="assetEditForm()">
             
-            {{-- Informasi Utama (Tidak Bisa Diedit) --}}
+           
             <div class="bg-white p-8 rounded-lg shadow-md border">
                 <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Informasi Utama</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">

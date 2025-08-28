@@ -164,17 +164,13 @@
                 <div class="mt-8 pt-6 border-t">
                     <h4 class="text-lg font-medium text-gray-800 mb-4">Spesifikasi Detail</h4>
                     <div class="space-y-4">
-                        {{-- =================================== --}}
-                        {{-- ==== BLOK KODE YANG DIPERBAIKI ==== --}}
-                        {{-- =================================== --}}
+                 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <template x-if="currentSubCategory && currentSubCategory.spec_fields">
                                 <template x-for="field in currentSubCategory.spec_fields" :key="field.name">
-                                    {{-- Hanya tampilkan jika field.name tidak kosong --}}
+                                 
                                     <div x-show="field.name && field.name.trim() !== ''">
                                         <label class="block text-sm" x-text="field.name"></label>
-                                        
-                                        {{-- Logika untuk memilih tipe input: input biasa atau textarea --}}
                                         <template x-if="field.type !== 'textarea'">
                                             <input :type="field.type || 'text'" 
                                                    :name="'spec[' + field.name.toLowerCase().replace(/ /g, '_') + ']'"
@@ -190,11 +186,7 @@
                                     </div>
                                 </template>
                             </template>
-                        </div>
-                        {{-- =================================== --}}
-                        {{-- ====== AKHIR BLOK PERBAIKAN ====== --}}
-                        {{-- =================================== --}}
-                                                
+                        </div>              
                         <div>
                             <label class="block text-sm">Deskripsi / Spesifikasi Tambahan</label>
                             <textarea name="spec[deskripsi]" rows="3" class="mt-1 w-full border-2 border-gray-400 rounded-md text-sm py-2 px-3">{{ old('spec.deskripsi') }}</textarea>
