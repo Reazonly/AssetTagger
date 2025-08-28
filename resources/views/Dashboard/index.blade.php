@@ -28,7 +28,7 @@
         <div class="bg-white p-6 rounded-lg shadow-md border"><p class="text-sm text-gray-500">Kondisi Baik</p><p class="text-3xl font-bold text-green-600">{{ $assetsBaik ?? 0 }}</p></div>
         <div class="bg-white p-6 rounded-lg shadow-md border"><p class="text-sm text-gray-500">Kondisi Rusak</p><p class="text-3xl font-bold text-red-600">{{ $assetsRusak ?? 0 }}</p></div>
         <div class="bg-white p-6 rounded-lg shadow-md border"><p class="text-sm text-gray-500">Dlm. Perbaikan</p><p class="text-3xl font-bold text-yellow-500">{{ $assetsPerbaikan ?? 0 }}</p></div>
-        <div class="bg-white p-6 rounded-lg shadow-md border"><p class="text-sm text-gray-500">Total Nilai Aset</p><p class="text-xl font-bold text-gray-800">Rp {{ number_format($totalNilaiAset ?? 0, 0, ',', '.') }}</p></div>
+        <div class="bg-white p-6 rounded-lg shadow-md border"><p class="text-sm text-gray-500">Total Nilai Aset</p><p class="[font-size:15px] font-bold text-gray-800">Rp {{ number_format($totalNilaiAset ?? 0, 0, ',', '.') }}</p></div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
