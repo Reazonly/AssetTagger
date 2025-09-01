@@ -13,22 +13,22 @@
             <div class="space-y-6">
                 <div>
                     <label for="nama" class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
-                    <input type="text" name="nama" id="nama" value="{{ old('nama', $assetUser->nama) }}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3 @error('nama') border-red-500 @enderror">
+                    <input type="text" name="nama" id="nama" value="{{ old('nama', $assetUser->nama) }}" required class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3 @error('name') border-red-500 @enderror">
                     @error('nama') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label for="jabatan" class="block text-sm font-medium text-gray-700">Jabatan (Opsional)</label>
-                    <input type="text" name="jabatan" id="jabatan" value="{{ old('jabatan', $assetUser->jabatan) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3 @error('jabatan') border-red-500 @enderror">
+                    <input type="text" name="jabatan" id="jabatan" value="{{ old('jabatan', $assetUser->jabatan) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3 @error('name') border-red-500 @enderror">
                     @error('jabatan') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label for="departemen" class="block text-sm font-medium text-gray-700">Departemen (Opsional)</label>
-                    <input type="text" name="departemen" id="departemen" value="{{ old('departemen', $assetUser->departemen) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3 @error('departemen') border-red-500 @enderror">
+                    <input type="text" name="departemen" id="departemen" value="{{ old('departemen', $assetUser->departemen) }}" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3 @error('name') border-red-500 @enderror">
                     @error('departemen') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
                  <div>
                     <label for="company_id" class="block text-sm font-medium text-gray-700">Perusahaan (Opsional)</label>
-                    <select name="company_id" id="company_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm py-2 px-3 @error('company_id') border-red-500 @enderror">
+                    <select name="company_id" id="company_id" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3 @error('name') border-red-500 @enderror">
                         <option value="">-- Pilih Perusahaan --</option>
                         @foreach($companies as $company)
                             <option value="{{ $company->id }}" {{ old('company_id', $assetUser->company_id) == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
