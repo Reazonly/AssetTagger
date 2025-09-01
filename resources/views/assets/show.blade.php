@@ -131,6 +131,16 @@
                     @endif
                 </div>
             </div>
+
+            @if($asset->image_path)
+            <div class="bg-white p-8 rounded-lg shadow-md border">
+                <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Gambar Aset</h3>
+                <div class="flex justify-center items-center">
+                    <img src="{{ Storage::url($asset->image_path) }}" alt="Gambar Aset: {{ $asset->nama_barang }}" class="max-w-lg max-h-96 rounded-md border">
+                </div>
+            </div>
+        @endif
+
         </div>
 
         <div class="lg:col-span-1 space-y-6">
@@ -171,15 +181,8 @@
                 </ul>
             </div>
 
-            @if($asset->image_path)
-            <div class="bg-white p-8 rounded-lg shadow-md border">
-                <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Gambar Aset</h3>
-                <div class="flex justify-center items-center">
-                    <img src="{{ Storage::url($asset->image_path) }}" alt="Gambar Aset: {{ $asset->nama_barang }}" class="max-w-lg max-h-96 rounded-md border">
-                </div>
-            </div>
-        @endif
-        
+            
+
         </div>
     </div>
 @endsection
