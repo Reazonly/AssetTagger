@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Edit Aset - ' . $asset->code_asset)
 @section('content')
-    <form action="{{ route('assets.update', $asset->id) }}" method="POST">
+    <form action="{{ route('assets.update', $asset->id) }}" method="POST" enctype="multipart/form-data">       
         @csrf
         @method('PUT')
 
@@ -142,6 +142,29 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="bg-white p-8 rounded-lg shadow-md border">
+            <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Gambar Aset</h3>
+            @if($asset->image_path)
+                <div class="mb-4">
+                    <p class="block text-sm font-medium text-gray-600 mb-2">Gambar Saat Ini:</p>
+                    <img src="{{ Storage::url($asset->image_path) }}" alt="Gambar Aset" class="max-w-xs max-h-48 rounded-md border bg-gray-50">
+                    <div class="mt-2">
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" name="remove_image" value="1" class="rounded border-gray-300 text-red-600 shadow-sm focus:ring-red-500">
+                            <span class="ml-2 text-sm text-red-600">Hapus gambar saat ini</span>
+                        </label>
+                    </div>
+                </div>
+            @endif
+            <div>
+                <label for="image" class="block text-sm font-medium text-gray-600">Unggah Gambar Baru (Opsional)</label>
+                <input type="file" name="image" id="image" class="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"/>
+                <p class="mt-1 text-xs text-gray-500">Jika Anda mengunggah gambar baru, gambar yang lama akan otomatis diganti.</p>
+            </div>
+        </div>
+
+
             </div>
         </div>
         

@@ -89,6 +89,15 @@
             </table>
         </div>
 
+        @if($asset->image_path && file_exists(public_path('storage/' . $asset->image_path)))
+    <div class="section">
+        <h3>Gambar Aset</h3>
+        <div style="text-align: center;">
+            <img src="{{ public_path('storage/' . $asset->image_path) }}" style="max-width: 80%; max-height: 300px; border: 1px solid #eee; padding: 5px; border-radius: 5px;">
+        </div>
+    </div>
+@endif
+
     </div>
 </body>
 </html>

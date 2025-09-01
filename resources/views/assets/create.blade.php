@@ -3,7 +3,7 @@
 @section('title', 'Tambah Aset Baru')
 
 @section('content')
-    <form action="{{ route('assets.store') }}" method="POST">
+    <form action="{{ route('assets.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
         <div class="mb-6">
             <h1 class="text-3xl font-bold text-gray-800">Tambah Aset Baru</h1>
@@ -228,6 +228,15 @@
                     <div><label for="keterangan" class="block text-sm font-medium text-gray-600">Keterangan</label><textarea name="keterangan" id="keterangan" rows="3" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">{{ old('keterangan') }}</textarea></div>
                 </div>
             </div>
+            <div class="bg-white p-8 rounded-lg shadow-md border">
+            <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Gambar Aset</h3>
+            <div>
+                <label for="image" class="block text-sm font-medium text-gray-600">Unggah Gambar (Opsional)</label>
+                <input type="file" name="image" id="image" class="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"/>
+                <p class="mt-1 text-xs text-gray-500">Format yang didukung: JPG, PNG, GIF, SVG. Maksimal 2MB.</p>
+            </div>
+        </div>
+
         </div>
 
         <div class="mt-8 pt-6 border-t flex justify-end items-center gap-3">

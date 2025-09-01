@@ -7,8 +7,8 @@ use App\Models\Company;
 use App\Models\Category;
 use App\Models\SubCategory;
 use App\Models\AssetUser;
-use App\Imports\AssetsImport;
 use App\Exports\AssetsExport;
+use App\Imports\AssetsImport;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
@@ -16,6 +16,7 @@ use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage; // Pastikan ini ada
 
 class AssetController extends Controller
 {
@@ -30,7 +31,57 @@ class AssetController extends Controller
         return $request->input('asset_user_id');
     }
 
-   
+    private function generateAssetCode(Request $request, Company $company, Category $category): string
+    {
+        $year = now()->year;
+        $companyCode = $company->code ?? 'N/A';
+        $categoryCode = $category->code ?? 'N/A';
+        
+        $sourceForCode = '';
+        $length = 5;
+
+        if ($request->filled('merk')) {
+            $sourceForCode = $request->merk;
+            $length = 5;
+        } elseif ($request->filled('tipe')) {
+            $sourceForCode = $request->tipe;
+            $length = 5;
+        } elseif ($request->filled('nomor')) {
+            $sourceForCode = $request->nomor;
+            $length = 3;
+        } else {
+            $sourceForCode = $request->nama_barang;
+            $length = 5;
+        }
+        
+        $cleanSource = preg_replace('/[^a-zA-Z0-9]/', '', $sourceForCode);
+        $middlePart = strtoupper(substr($cleanSource, 0, $length));
+
+        $nextNumber = DB::transaction(function () use ($companyCode, $categoryCode, $year) {
+            $prefix = "{$companyCode}/{$categoryCode}/{$year}";
+            
+            $counter = DB::table('asset_code_counters')
+                ->where('prefix', $prefix)
+                ->lockForUpdate()
+                ->first();
+
+            if ($counter) {
+                $newNumber = $counter->last_number + 1;
+                DB::table('asset_code_counters')->where('id', $counter->id)->update(['last_number' => $newNumber]);
+                return $newNumber;
+            } else {
+                DB::table('asset_code_counters')->insert([
+                    'prefix' => $prefix,
+                    'last_number' => 1
+                ]);
+                return 1;
+            }
+        });
+
+        $paddedNumber = str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+
+        return "{$companyCode}/{$categoryCode}/{$middlePart}/{$year}/{$paddedNumber}";
+    }
     
     private function collectSpecificationsFromRequest(Request $request): array
     {
@@ -80,95 +131,91 @@ class AssetController extends Controller
             $query->where('category_id', $request->input('category_id'));
         }
         
-        // atau seperti ini
-        $assets = $query->orderBy('updated_at', 'desc')->paginate(15);
+        $assets = $query->orderBy('code_asset', 'desc')->paginate(15);
+        $assets->withQueryString();
 
         $categories = Category::orderBy('name')->get();
         return view('assets.index', compact('assets', 'categories'));
     }
 
-    // app/Http/Controllers/AssetController.php
-
-public function create()
-{
-    // PASTIKAN BARIS INI MENGGUNAKAN with('subCategories')
-    $categories = Category::with('subCategories')->orderBy('name')->get();
-
-    $assetUsers = AssetUser::with('company')->orderBy('nama')->get();
-    return view('assets.create', [
-        'categories' => $categories,
-        'companies' => Company::orderBy('name')->get(),
-        'users' => $assetUsers,
-    ]);
-}
+    public function create()
+    {
+        $categories = Category::with('subCategories')->orderBy('name')->get();
+        $assetUsers = AssetUser::with('company')->orderBy('nama')->get();
+        return view('assets.create', [
+            'categories' => $categories,
+            'companies' => Company::orderBy('name')->get(),
+            'users' => $assetUsers,
+        ]);
+    }
 
     public function store(Request $request)
-{
-    // 1. Logika untuk menentukan aturan validasi dinamis (INI SUDAH BENAR)
-    $subCategory = SubCategory::find($request->sub_category_id);
-    $inputType = optional($subCategory)->input_type ?? 'none';
-    
-    $merkRule = 'nullable|string|max:255';
-    $tipeRule = 'nullable|string|max:255';
+    {
+        $validatedData = $request->validate([
+            'nama_barang' => 'required|string|max:255',
+            'category_id' => 'required|exists:categories,id',
+            'company_id' => 'required|exists:companies,id',
+            'sub_category_id' => 'nullable|exists:sub_categories,id',
+            'asset_user_id' => 'nullable|exists:asset_users,id',
+            'new_asset_user_name' => 'nullable|string|max:255',
+            'merk' => 'nullable|string|max:255',
+            'tipe' => 'nullable|string|max:255',
+            'jumlah' => 'required|integer|min:1',
+            'satuan' => 'required|string|max:50',
+            'serial_number' => 'nullable|string|max:255',
+            'nomor' => 'nullable|string|max:255|unique:assets,nomor',
+            'kondisi' => 'required|string|in:Baik,Rusak,Perbaikan',
+            'lokasi' => 'nullable|string|max:255',
+            'tanggal_pembelian' => 'nullable|date',
+            'harga_total' => 'nullable|numeric|min:0',
+            'po_number' => 'nullable|string|max:255',
+            'code_aktiva' => 'nullable|string|max:255',
+            'sumber_dana' => 'nullable|string|max:255',
+            'include_items' => 'nullable|string',
+            'peruntukan' => 'nullable|string',
+            'keterangan' => 'nullable|string',
+            'spec' => 'nullable|array',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
 
-    if ($inputType === 'merk') { $merkRule = 'required|string|max:255'; }
-    if ($inputType === 'tipe') { $tipeRule = 'required|string|max:255'; }
-    if ($inputType === 'merk_dan_tipe') {
-        if ($request->boolean('use_merk')) { $merkRule = 'required|string|max:255'; }
-        if ($request->boolean('use_tipe')) { $tipeRule = 'required|string|max:255'; }
+        $data = $validatedData;
+        $data['specifications'] = $this->collectSpecificationsFromRequest($request);
+
+        if ($request->filled('tanggal_pembelian')) {
+            $data['thn_pembelian'] = Carbon::parse($request->tanggal_pembelian)->format('Y');
+        }
+        
+        $data['asset_user_id'] = $this->getAssetUserIdFromRequest($request);
+        
+        unset($data['spec'], $data['new_asset_user_name']);
+        
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('asset_images', 'public');
+            $data['image_path'] = $path;
+        }
+
+        // --- PERBAIKAN: Hapus key 'image' agar tidak coba disimpan ke DB ---
+        unset($data['image']);
+        
+        $data['code_asset'] = 'PENDING-' . time();
+        $asset = Asset::create($data);
+        
+        $company = Company::find($request->company_id);
+        $category = Category::find($request->category_id);
+        $asset->code_asset = $this->generateAssetCode($request, $company, $category);
+        $asset->save();
+
+        if ($asset->asset_user_id) {
+            $currentUser = AssetUser::find($asset->asset_user_id);
+            $asset->history()->create([
+                'asset_user_id' => $asset->asset_user_id,
+                'historical_user_name' => $currentUser->nama,
+            ]);
+        }
+
+        return redirect()->route('assets.show', $asset)->with('success', 'Aset baru berhasil ditambahkan: ' . $asset->code_asset);
     }
-    
-    // 2. Lakukan validasi SEKALI SAJA menggunakan aturan dinamis (INI SUDAH BENAR)
-    $validatedData = $request->validate([
-        'nama_barang' => 'required|string|max:255', 
-        'category_id' => 'required|exists:categories,id', 
-        'company_id' => 'required|exists:companies,id', 
-        'sub_category_id' => 'nullable|exists:sub_categories,id', 
-        'asset_user_id' => 'required_without:new_asset_user_name|nullable|exists:asset_users,id', 
-        'new_asset_user_name' => 'required_without:asset_user_id|nullable|string|max:255', 
-        'merk' => $merkRule, // Menggunakan aturan dinamis
-        'tipe' => $tipeRule, // Menggunakan aturan dinamis
-        'jumlah' => 'required|integer|min:1', 
-        'satuan' => 'required|string|max:50', 
-        'serial_number' => 'nullable|string|max:255', 
-        'nomor' => 'nullable|string|max:255|unique:assets,nomor', 
-        'kondisi' => 'required|string|in:Baik,Rusak,Perbaikan', 
-        'lokasi' => 'nullable|string|max:255', 
-        'tanggal_pembelian' => 'nullable|date', 
-        'harga_total' => 'nullable|numeric|min:0', 
-        'po_number' => 'nullable|string|max:255', 
-        'code_aktiva' => 'nullable|string|max:255', 
-        'sumber_dana' => 'nullable|string|max:255', 
-        'include_items' => 'nullable|string', 
-        'peruntukan' => 'nullable|string', 
-        'keterangan' => 'nullable|string', 
-        'spec' => 'nullable|array',
-    ]);
 
-    // BLOK VALIDASI KEDUA YANG SALAH SUDAH DIHAPUS DARI SINI
-
-    // 3. Lanjutkan proses (INI SEMUA SUDAH BENAR)
-    $data = $validatedData;
-    $data['specifications'] = $this->collectSpecificationsFromRequest($request);
-    $data['asset_user_id'] = $this->getAssetUserIdFromRequest($request);
-    
-    unset($data['spec'], $data['new_asset_user_name'], $data['new_asset_user_jabatan'], $data['new_asset_user_departemen']);
-    
-    $company = Company::find($request->company_id);
-    $category = Category::find($request->category_id);
-    $data['code_asset'] = Asset::generateNextCode(
-        $company, $category, $request->nama_barang, $request->merk, $request->tipe, $request->nomor
-    );
-    
-    $asset = Asset::create($data);
-
-    if ($asset->asset_user_id) {
-        $currentUser = AssetUser::find($asset->asset_user_id);
-        $asset->history()->create([ 'asset_user_id' => $asset->asset_user_id, 'historical_user_name' => $currentUser->nama ]);
-    }
-
-    return redirect()->route('assets.show', $asset)->with('success', 'Aset baru berhasil ditambahkan: ' . $asset->code_asset);
-}
     public function show(Asset $asset)
     {
         $asset->load(['assetUser.company', 'category', 'company', 'subCategory', 'history.assetUser.company']);
@@ -178,9 +225,7 @@ public function create()
     public function edit(Asset $asset)
     {
         $asset->load(['assetUser', 'category', 'company', 'subCategory']);
-        
         $categories = Category::with('subCategories')->orderBy('name')->get();
-        
         $assetUsers = AssetUser::with('company')->orderBy('nama')->get();
         return view('assets.edit', [
             'asset' => $asset,
@@ -211,14 +256,28 @@ public function create()
             'peruntukan' => 'nullable|string',
             'keterangan' => 'nullable|string',
             'spec' => 'nullable|array',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'remove_image' => 'nullable|boolean',
         ]);
         
         $oldAssetUserId = $asset->asset_user_id;
-
         $updateData = $validatedData;
         $newAssetUserId = $this->getAssetUserIdFromRequest($request);
         $updateData['asset_user_id'] = $newAssetUserId;
         $updateData['specifications'] = $this->collectSpecificationsFromRequest($request);
+
+        if ($request->hasFile('image')) {
+            if ($asset->image_path) {
+                Storage::disk('public')->delete($asset->image_path);
+            }
+            $path = $request->file('image')->store('asset_images', 'public');
+            $updateData['image_path'] = $path;
+        } elseif ($request->input('remove_image')) {
+            if ($asset->image_path) {
+                Storage::disk('public')->delete($asset->image_path);
+            }
+            $updateData['image_path'] = null;
+        }
 
         if ($request->filled('tanggal_pembelian')) {
             $updateData['thn_pembelian'] = Carbon::parse($request->tanggal_pembelian)->format('Y');
@@ -228,6 +287,9 @@ public function create()
         }
 
         unset($updateData['spec'], $updateData['new_asset_user_name']);
+
+        // --- PERBAIKAN: Hapus key 'image' dan 'remove_image' ---
+        unset($updateData['image'], $updateData['remove_image']);
 
         $asset->update($updateData);
 
@@ -252,6 +314,10 @@ public function create()
 
     public function destroy(Asset $asset)
     {
+        if ($asset->image_path) {
+            Storage::disk('public')->delete($asset->image_path);
+        }
+        
         try {
             $asset->history()->delete();
             $asset->delete();
@@ -328,3 +394,4 @@ public function create()
         return $pdf->download('asset-detail-' . $safeFileName . '.pdf');
     }
 }
+
