@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage; // Pastikan ini ada
+use Illuminate\Support\Facades\Storage;
 
 class AssetController extends Controller
 {
@@ -31,57 +31,7 @@ class AssetController extends Controller
         return $request->input('asset_user_id');
     }
 
-    private function generateAssetCode(Request $request, Company $company, Category $category): string
-    {
-        $year = now()->year;
-        $companyCode = $company->code ?? 'N/A';
-        $categoryCode = $category->code ?? 'N/A';
-        
-        $sourceForCode = '';
-        $length = 5;
-
-        if ($request->filled('merk')) {
-            $sourceForCode = $request->merk;
-            $length = 5;
-        } elseif ($request->filled('tipe')) {
-            $sourceForCode = $request->tipe;
-            $length = 5;
-        } elseif ($request->filled('nomor')) {
-            $sourceForCode = $request->nomor;
-            $length = 3;
-        } else {
-            $sourceForCode = $request->nama_barang;
-            $length = 5;
-        }
-        
-        $cleanSource = preg_replace('/[^a-zA-Z0-9]/', '', $sourceForCode);
-        $middlePart = strtoupper(substr($cleanSource, 0, $length));
-
-        $nextNumber = DB::transaction(function () use ($companyCode, $categoryCode, $year) {
-            $prefix = "{$companyCode}/{$categoryCode}/{$year}";
-            
-            $counter = DB::table('asset_code_counters')
-                ->where('prefix', $prefix)
-                ->lockForUpdate()
-                ->first();
-
-            if ($counter) {
-                $newNumber = $counter->last_number + 1;
-                DB::table('asset_code_counters')->where('id', $counter->id)->update(['last_number' => $newNumber]);
-                return $newNumber;
-            } else {
-                DB::table('asset_code_counters')->insert([
-                    'prefix' => $prefix,
-                    'last_number' => 1
-                ]);
-                return 1;
-            }
-        });
-
-        $paddedNumber = str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
-
-        return "{$companyCode}/{$categoryCode}/{$middlePart}/{$year}/{$paddedNumber}";
-    }
+    // Method generateAssetCode() yang lama sudah dihapus karena tidak lagi digunakan.
     
     private function collectSpecificationsFromRequest(Request $request): array
     {
@@ -99,6 +49,7 @@ class AssetController extends Controller
 
     public function index(Request $request)
     {
+        // ... (Logika index tidak berubah) ...
         $query = Asset::query()->with(['assetUser', 'category', 'company', 'subCategory']);
 
         if ($request->filled('search')) {
@@ -140,6 +91,7 @@ class AssetController extends Controller
 
     public function create()
     {
+        // ... (Logika create tidak berubah) ...
         $categories = Category::with('subCategories')->orderBy('name')->get();
         $assetUsers = AssetUser::with('company')->orderBy('nama')->get();
         return view('assets.create', [
@@ -187,23 +139,24 @@ class AssetController extends Controller
         
         $data['asset_user_id'] = $this->getAssetUserIdFromRequest($request);
         
-        unset($data['spec'], $data['new_asset_user_name']);
+        unset($data['spec'], $data['new_asset_user_name'], $data['image']);
         
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('asset_images', 'public');
             $data['image_path'] = $path;
         }
-
-        // --- PERBAIKAN: Hapus key 'image' agar tidak coba disimpan ke DB ---
-        unset($data['image']);
-        
-        $data['code_asset'] = 'PENDING-' . time();
-        $asset = Asset::create($data);
-        
         $company = Company::find($request->company_id);
         $category = Category::find($request->category_id);
-        $asset->code_asset = $this->generateAssetCode($request, $company, $category);
-        $asset->save();
+
+        $data['code_asset'] = Asset::generateNextCode(
+            $company,
+            $category,
+            $request->nama_barang,
+            $request->merk,
+            $request->tipe,
+            $request->nomor 
+        );
+        $asset = Asset::create($data);
 
         if ($asset->asset_user_id) {
             $currentUser = AssetUser::find($asset->asset_user_id);
@@ -218,12 +171,14 @@ class AssetController extends Controller
 
     public function show(Asset $asset)
     {
+        // ... (Logika show tidak berubah) ...
         $asset->load(['assetUser.company', 'category', 'company', 'subCategory', 'history.assetUser.company']);
         return view('assets.show', compact('asset'));
     }
 
     public function edit(Asset $asset)
     {
+        // ... (Logika edit tidak berubah) ...
         $asset->load(['assetUser', 'category', 'company', 'subCategory']);
         $categories = Category::with('subCategories')->orderBy('name')->get();
         $assetUsers = AssetUser::with('company')->orderBy('nama')->get();
@@ -237,6 +192,7 @@ class AssetController extends Controller
 
     public function update(Request $request, Asset $asset)
     {
+        // ... (Logika update tidak berubah, karena kode aset tidak diubah saat update) ...
         $validatedData = $request->validate([
             'company_id' => 'required|exists:companies,id',
             'asset_user_id' => 'nullable|exists:asset_users,id',
@@ -286,10 +242,7 @@ class AssetController extends Controller
             $updateData['thn_pembelian'] = null;
         }
 
-        unset($updateData['spec'], $updateData['new_asset_user_name']);
-
-        // --- PERBAIKAN: Hapus key 'image' dan 'remove_image' ---
-        unset($updateData['image'], $updateData['remove_image']);
+        unset($updateData['spec'], $updateData['new_asset_user_name'], $updateData['image'], $updateData['remove_image']);
 
         $asset->update($updateData);
 
@@ -314,6 +267,7 @@ class AssetController extends Controller
 
     public function destroy(Asset $asset)
     {
+        // ... (Logika destroy tidak berubah) ...
         if ($asset->image_path) {
             Storage::disk('public')->delete($asset->image_path);
         }
@@ -330,12 +284,14 @@ class AssetController extends Controller
 
     public function publicShow(Asset $asset)
     {
+        // ... (Logika publicShow tidak berubah) ...
         $asset->load(['assetUser.company', 'category', 'company', 'subCategory', 'history.assetUser.company']);
         return view('assets.public-show', compact('asset'));
     }
 
     public function import(Request $request)
     {
+        // ... (Logika import tidak berubah) ...
         $request->validate(['file' => 'required|mimes:xls,xlsx,csv']);
         Excel::import(new AssetsImport, $request->file('file'));
         return redirect()->route('assets.index')->with('success', 'Data aset berhasil diimpor.');
@@ -343,6 +299,7 @@ class AssetController extends Controller
 
     public function print(Request $request)
     {
+        // ... (Logika print tidak berubah) ...
         $assetIds = $request->query('ids');
         if ($assetIds && is_array($assetIds) && count($assetIds) > 0) {
             $assets = Asset::with('assetUser')->whereIn('id', $assetIds)->get();
@@ -353,6 +310,7 @@ class AssetController extends Controller
 
     public function export(Request $request)
     {
+        // ... (Logika export tidak berubah) ...
         $selectedIds = $request->query('ids'); 
         $categoryId = $request->query('category_id_export');
         $search = $request->query('search');
@@ -388,6 +346,7 @@ class AssetController extends Controller
 
     public function downloadPDF(Asset $asset)
     {
+        // ... (Logika downloadPDF tidak berubah) ...
         $asset->load(['assetUser', 'category', 'company', 'subCategory', 'history.assetUser']);
         $pdf = Pdf::loadView('assets.pdf', ['asset' => $asset]);
         $safeFileName = str_replace('/', '-', $asset->code_asset);

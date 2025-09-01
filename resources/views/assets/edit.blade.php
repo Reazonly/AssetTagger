@@ -143,31 +143,95 @@
                     </div>
                 </div>
 
-                <div class="bg-white p-8 rounded-lg shadow-md border">
-            <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Gambar Aset</h3>
-            @if($asset->image_path)
-                <div class="mb-4">
-                    <p class="block text-sm font-medium text-gray-600 mb-2">Gambar Saat Ini:</p>
-                    <img src="{{ Storage::url($asset->image_path) }}" alt="Gambar Aset" class="max-w-xs max-h-48 rounded-md border bg-gray-50">
-                    <div class="mt-2">
-                        <label class="inline-flex items-center">
-                            <input type="checkbox" name="remove_image" value="1" class="rounded border-gray-300 text-red-600 shadow-sm focus:ring-red-500">
-                            <span class="ml-2 text-sm text-red-600">Hapus gambar saat ini</span>
-                        </label>
-                    </div>
+
+
+                {{-- Bagian Gambar Aset --}}
+<div class="bg-white p-8 rounded-lg shadow-md border">
+    <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Gambar Aset</h3>
+
+    <div x-data="{ 
+        imageUrl: '{{ $asset->image_path ? asset('storage/' . $asset->image_path) : '' }}',
+        isDragging: false,
+        handleDrop(event) {
+            this.isDragging = false;
+            if (event.dataTransfer.files.length > 0) {
+                const file = event.dataTransfer.files[0];
+                if (file.type.startsWith('image/')) {
+                    this.imageUrl = URL.createObjectURL(file);
+                    this.$refs.imageInput.files = event.dataTransfer.files;
+                } else {
+                    alert('Hanya file gambar yang diizinkan!');
+                }
+            }
+        },
+        handleFileSelect(event) {
+            if (event.target.files.length > 0) {
+                this.imageUrl = URL.createObjectURL(event.target.files[0]);
+            }
+        }
+    }">
+        <label for="image" class="block text-sm font-medium text-gray-600 mb-2">Unggah Gambar (Opsional)</label>
+        
+        <input 
+            type="file" 
+            name="image" 
+            id="image" 
+            class="hidden"
+            x-ref="imageInput"
+            @change="handleFileSelect($event)"
+            accept="image/*"
+        >
+
+        {{-- Area Upload: HANYA MUNCUL JIKA TIDAK ADA GAMBAR --}}
+        <div 
+            x-show="!imageUrl"
+            x-cloak
+            class="mt-1 flex justify-center items-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md h-64 transition-colors"
+            :class="{ 'border-sky-400 bg-sky-50': isDragging }"
+            @dragover.prevent="isDragging = true"
+            @dragleave.prevent="isDragging = false"
+            @drop.prevent="handleDrop($event)"
+        >
+            <div class="space-y-1 text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <div class="flex text-sm text-gray-600">
+                    <label for="image" class="relative cursor-pointer bg-white rounded-md font-medium text-sky-600 hover:text-sky-500 focus-within:outline-none">
+                        <span>Unggah sebuah file</span>
+                    </label>
+                    <p class="pl-1">atau seret dan lepas di sini</p>
                 </div>
-            @endif
-            <div>
-                <label for="image" class="block text-sm font-medium text-gray-600">Unggah Gambar Baru (Opsional)</label>
-                <input type="file" name="image" id="image" class="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"/>
-                <p class="mt-1 text-xs text-gray-500">Jika Anda mengunggah gambar baru, gambar yang lama akan otomatis diganti.</p>
-            </div>
-        </div>
-
-
+                <p class="text-xs text-gray-500">PNG, JPG, GIF, SVG hingga 2MB</p>
             </div>
         </div>
         
+        {{-- Pratinjau Gambar & Tombol Aksi: HANYA MUNCUL JIKA SUDAH ADA GAMBAR --}}
+        <div x-show="imageUrl" x-cloak class="mt-2">
+            <div class="relative">
+                 <img :src="imageUrl" alt="Preview Gambar" class="w-full h-64 object-cover rounded-md">
+            </div>
+            <div class="mt-3 flex items-center gap-4">
+                <button 
+                    type="button" 
+                    @click="$refs.imageInput.click()"
+                    class="px-4 py-2 text-sm font-semibold text-sky-700 bg-sky-100 rounded-md hover:bg-sky-200"
+                >
+                    Ganti Gambar
+                </button>
+                <button 
+                    type="button" 
+                    @click="imageUrl = ''; $refs.imageInput.value = null;" 
+                    class="px-4 py-2 text-sm font-semibold text-red-700 bg-red-100 rounded-md hover:bg-red-200"
+                >
+                    Hapus Gambar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+            
+</div>
         <div class="mt-8 pt-6 border-t flex justify-end items-center gap-3">
             <a href="{{ route('assets.show', $asset->id) }}" class="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors py-2 px-4 rounded-lg bg-gray-200 hover:bg-gray-300">Batal</a>
             <button type="submit" class="bg-sky-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-sky-700">Simpan Perubahan</button>

@@ -228,14 +228,86 @@
                     <div><label for="keterangan" class="block text-sm font-medium text-gray-600">Keterangan</label><textarea name="keterangan" id="keterangan" rows="3" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">{{ old('keterangan') }}</textarea></div>
                 </div>
             </div>
+
             <div class="bg-white p-8 rounded-lg shadow-md border">
             <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Gambar Aset</h3>
-            <div>
-                <label for="image" class="block text-sm font-medium text-gray-600">Unggah Gambar (Opsional)</label>
-                <input type="file" name="image" id="image" class="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"/>
-                <p class="mt-1 text-xs text-gray-500">Format yang didukung: JPG, PNG, GIF, SVG. Maksimal 2MB.</p>
+            
+            {{-- KOMPONEN UPLOAD GAMBAR BARU --}}
+            <div x-data="{ 
+                imageUrl: '',
+                isDragging: false,
+                handleDrop(event) {
+                    this.isDragging = false; // Reset dragging state
+                    if (event.dataTransfer.files.length > 0) {
+                        const file = event.dataTransfer.files[0];
+                        if (file.type.startsWith('image/')) { // Pastikan yang didrop adalah gambar
+                            this.imageUrl = URL.createObjectURL(file);
+                            // Secara manual memasukkan file ke input agar bisa dikirim bersama form
+                            this.$refs.imageInput.files = event.dataTransfer.files;
+                        } else {
+                            alert('Hanya file gambar yang diizinkan!');
+                        }
+                    }
+                },
+                handleFileSelect(event) {
+                    if (event.target.files.length > 0) {
+                        this.imageUrl = URL.createObjectURL(event.target.files[0]);
+                    }
+                }
+            }">
+                <label for="image" class="block text-sm font-medium text-gray-600 mb-2">Unggah Gambar (Opsional)</label>
+                
+                <input 
+                    type="file" 
+                    name="image" 
+                    id="image" 
+                    class="hidden"
+                    x-ref="imageInput" {{-- Tambahkan x-ref untuk referensi --}}
+                    @change="handleFileSelect($event)"
+                    accept="image/*"
+                >
+
+                <div 
+                    class="mt-1 flex justify-center items-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md h-64 transition-colors"
+                    :class="{ 'border-sky-400 bg-sky-50': isDragging }" {{-- Efek visual saat drag --}}
+                    x-show="!imageUrl"
+                    {{-- Perintah untuk menangani drag-and-drop --}}
+                    @dragover.prevent="isDragging = true"
+                    @dragleave.prevent="isDragging = false"
+                    @drop.prevent="handleDrop($event)"
+                    style="display: none;" {{-- Sembunyikan secara default oleh Alpine --}}
+                >
+                    <div class="space-y-1 text-center">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <div class="flex text-sm text-gray-600">
+                            <label for="image" class="relative cursor-pointer bg-white rounded-md font-medium text-sky-600 hover:text-sky-500 focus-within:outline-none">
+                                <span>Unggah sebuah file</span>
+                            </label>
+                            <p class="pl-1">atau seret dan lepas di sini</p>
+                        </div>
+                        <p class="text-xs text-gray-500">PNG, JPG, GIF, SVG hingga 2MB</p>
+                    </div>
+                </div>
+                
+                <div x-show="imageUrl" class="mt-4 relative" style="display: none;">
+                    <img :src="imageUrl" alt="Preview Gambar" class="w-full h-64 object-cover rounded-md">
+                    <button 
+                        type="button" 
+                        @click="imageUrl = ''; $refs.imageInput.value = null;" 
+                        class="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md hover:bg-gray-100"
+                        title="Hapus gambar"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
             </div>
-        </div>
+
+            
+</div>
 
         </div>
 
