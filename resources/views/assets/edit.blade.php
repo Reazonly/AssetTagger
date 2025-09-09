@@ -146,98 +146,93 @@
 
 
                 {{-- Bagian Gambar Aset --}}
-<div class="bg-white p-8 rounded-lg shadow-md border">
-    <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Gambar Aset</h3>
+                <div class="bg-white p-8 rounded-lg shadow-md border">
+                    <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Gambar Aset</h3>
 
-    <div x-data="{ 
-        imageUrl: '{{ $asset->image_path ? asset('storage/' . $asset->image_path) : '' }}',
-        isDragging: false,
-        handleDrop(event) {
-            this.isDragging = false;
-            if (event.dataTransfer.files.length > 0) {
-                const file = event.dataTransfer.files[0];
-                if (file.type.startsWith('image/')) {
-                    this.imageUrl = URL.createObjectURL(file);
-                    this.$refs.imageInput.files = event.dataTransfer.files;
-                } else {
-                    alert('Hanya file gambar yang diizinkan!');
-                }
-            }
-        },
-        handleFileSelect(event) {
-            if (event.target.files.length > 0) {
-                this.imageUrl = URL.createObjectURL(event.target.files[0]);
-            }
-        }
-    }">
-        <label for="image" class="block text-sm font-medium text-gray-600 mb-2">Unggah Gambar (Opsional)</label>
-        
-        <input 
-            type="file" 
-            name="image" 
-            id="image" 
-            class="hidden"
-            x-ref="imageInput"
-            @change="handleFileSelect($event)"
-            accept="image/*"
-        >
+                    <div x-data="{ 
+                        imageUrl: '{{ $asset->image_path ? asset('storage/' . $asset->image_path) : '' }}',
+                        removeCurrentImage: {{ old('remove_image', '0') == '1' ? 'true' : 'false' }},
+                        isDragging: false,
 
-        {{-- Area Upload: HANYA MUNCUL JIKA TIDAK ADA GAMBAR --}}
-        <div 
-            x-show="!imageUrl"
-            x-cloak
-            class="mt-1 flex justify-center items-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md h-64 transition-colors"
-            :class="{ 'border-sky-400 bg-sky-50': isDragging }"
-            @dragover.prevent="isDragging = true"
-            @dragleave.prevent="isDragging = false"
-            @drop.prevent="handleDrop($event)"
-        >
-            <div class="space-y-1 text-center">
-                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
-                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                <div class="flex text-sm text-gray-600">
-                    <label for="image" class="relative cursor-pointer bg-white rounded-md font-medium text-sky-600 hover:text-sky-500 focus-within:outline-none">
-                        <span>Unggah sebuah file</span>
-                    </label>
-                    <p class="pl-1">atau seret dan lepas di sini</p>
+                        init() {
+                            if(this.removeCurrentImage) {
+                                this.imageUrl = '';
+                            }
+                        },
+
+                        handleFileSelect(event) {
+                            if (event.target.files.length > 0) {
+                                this.imageUrl = URL.createObjectURL(event.target.files[0]);
+                                this.removeCurrentImage = false;
+                            }
+                        },
+                        handleDrop(event) {
+                            this.isDragging = false;
+                            if (event.dataTransfer.files.length > 0) {
+                                const file = event.dataTransfer.files[0];
+                                if (file.type.startsWith('image/')) {
+                                    this.imageUrl = URL.createObjectURL(file);
+                                    this.$refs.imageInput.files = event.dataTransfer.files;
+                                    this.removeCurrentImage = false;
+                                } else {
+                                    alert('Hanya file gambar yang diizinkan!');
+                                }
+                            }
+                        },
+                        clearImage() {
+                            this.imageUrl = '';
+                            this.$refs.imageInput.value = null;
+                            this.removeCurrentImage = true;
+                        }
+                    }">
+                        <label for="image" class="block text-sm font-medium text-gray-600 mb-2">Unggah Gambar (Opsional)</label>
+                        
+                        <input type="file" name="image" id="image" class="hidden" x-ref="imageInput" @change="handleFileSelect($event)" accept="image/*">
+                        <input type="hidden" name="remove_image" :value="removeCurrentImage ? 1 : 0">
+
+                        <div x-show="!imageUrl" x-cloak class="mt-1 flex justify-center items-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md h-64 transition-colors" :class="{ 'border-sky-400 bg-sky-50': isDragging }" @dragover.prevent="isDragging = true" @dragleave.prevent="isDragging = false" @drop.prevent="handleDrop($event)">
+                            <div class="space-y-1 text-center">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <div class="flex text-sm text-gray-600">
+                                    <label for="image" class="relative cursor-pointer bg-white rounded-md font-medium text-sky-600 hover:text-sky-500 focus-within:outline-none">
+                                        <span>Unggah sebuah file</span>
+                                    </label>
+                                    <p class="pl-1">atau seret dan lepas di sini</p>
+                                </div>
+                                <p class="text-xs text-gray-500">PNG, JPG, GIF, SVG hingga 2MB</p>
+                            </div>
+                        </div>
+                        
+                        <div x-show="imageUrl" x-cloak class="mt-2">
+                            <div class="relative">
+                                 <img :src="imageUrl" alt="Preview Gambar" class="w-full h-64 object-cover rounded-md">
+                            </div>
+                            <div class="mt-3 flex items-center gap-4">
+                                <button type="button" @click="$refs.imageInput.click()" class="px-4 py-2 text-sm font-semibold text-sky-700 bg-sky-100 rounded-md hover:bg-sky-200">
+                                    Ganti Gambar
+                                </button>
+                                <button type="button" @click="clearImage()" class="px-4 py-2 text-sm font-semibold text-red-700 bg-red-100 rounded-md hover:bg-red-200">
+                                    Hapus Gambar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <p class="text-xs text-gray-500">PNG, JPG, GIF, SVG hingga 2MB</p>
+            
             </div>
         </div>
         
-        {{-- Pratinjau Gambar & Tombol Aksi: HANYA MUNCUL JIKA SUDAH ADA GAMBAR --}}
-        <div x-show="imageUrl" x-cloak class="mt-2">
-            <div class="relative">
-                 <img :src="imageUrl" alt="Preview Gambar" class="w-full h-64 object-cover rounded-md">
-            </div>
-            <div class="mt-3 flex items-center gap-4">
-                <button 
-                    type="button" 
-                    @click="$refs.imageInput.click()"
-                    class="px-4 py-2 text-sm font-semibold text-sky-700 bg-sky-100 rounded-md hover:bg-sky-200"
-                >
-                    Ganti Gambar
-                </button>
-                <button 
-                    type="button" 
-                    @click="imageUrl = ''; $refs.imageInput.value = null;" 
-                    class="px-4 py-2 text-sm font-semibold text-red-700 bg-red-100 rounded-md hover:bg-red-200"
-                >
-                    Hapus Gambar
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-            
-</div>
         <div class="mt-8 pt-6 border-t flex justify-end items-center gap-3">
             <a href="{{ route('assets.show', $asset->id) }}" class="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors py-2 px-4 rounded-lg bg-gray-200 hover:bg-gray-300">Batal</a>
             <button type="submit" class="bg-sky-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-sky-700">Simpan Perubahan</button>
         </div>
     </form>
 
+{{-- ======================================================= --}}
+{{-- ============== BLOK SCRIPT DIPERBARUI =============== --}}
+{{-- ======================================================= --}}
 <script>
 function assetEditForm() {
     return {
@@ -245,20 +240,30 @@ function assetEditForm() {
         categoriesData: @json($categories->keyBy('id')),
         assetUsersData: @json($users->keyBy('id')),
         
-        // Data asli dari database
-        assetSpecs: @json($asset->specifications) ?? {},
+        // Data asli dari database. Pastikan ini selalu object
+        assetSpecs: @json($asset->specifications ?? new \stdClass()),
         
-        // Data dari form jika ada error validasi
-        oldSpecValues: @json(old('spec')) ?? {},
+        // Data dari form jika ada error validasi. Pastikan ini juga selalu object.
+        oldSpecValues: @json(old('spec') ?? new \stdClass()),
 
         // State untuk komponen
         selectedAssetUserId: {{ old('asset_user_id', $asset->asset_user_id) ?? 'null' }},
         allSpecFields: [],
-        specValues: {},
+        specValues: {}, // Ini akan menampung nilai yang sebenarnya ditampilkan di input
 
         get currentAssetUser() { return this.assetUsersData[this.selectedAssetUserId] || {} },
         
+        // Helper function untuk menormalisasi key
+        normalizeKey(str) {
+            if (!str) return '';
+            return str.toLowerCase().replace(/[\s()]/g, '_').replace(/_+/g, '_').replace(/_$/, '');
+        },
+
         init() {
+            console.log(" Alpine Init Start ");
+            console.log("Data dari DB (assetSpecs):", JSON.parse(JSON.stringify(this.assetSpecs)));
+            console.log("Data dari Old Input (oldSpecValues):", JSON.parse(JSON.stringify(this.oldSpecValues)));
+
             const categoryId = '{{ $asset->category_id }}';
             const subCategoryId = '{{ $asset->sub_category_id }}';
             const category = this.categoriesData[categoryId];
@@ -270,7 +275,7 @@ function assetEditForm() {
             // 1. Tambahkan field yang terdefinisi di sub-kategori
             let definedFields = (subCategory && subCategory.spec_fields) ? subCategory.spec_fields.filter(f => f.name && f.name.trim() !== '') : [];
             definedFields.forEach(field => {
-                const key = field.name.toLowerCase().replace(/ /g, '_');
+                const key = this.normalizeKey(field.name);
                 finalFields.set(key, {
                     key: key,
                     name: field.name,
@@ -280,47 +285,51 @@ function assetEditForm() {
 
             // 2. Tambahkan field dari data yang sudah tersimpan (hasil impor/data lama)
             for (const name in this.assetSpecs) {
-                const key = name.toLowerCase().replace(/ /g, '_');
-                if (key === 'keterangan' || key === 'deskripsi') {
-                    continue;
-                }
+                const key = this.normalizeKey(name);
+                if (key === 'deskripsi') continue;
+                
                 if (!finalFields.has(key)) {
-                    // =================================================================
-                    // ==== PERBAIKAN: Logika untuk mendeteksi tipe data number ====
-                    // =================================================================
                     const value = this.assetSpecs[name];
-                    let type = 'text'; // Default ke text
-                    // Cek jika nilainya adalah angka dan bukan string kosong
+                    let type = 'text';
                     if (!isNaN(parseFloat(value)) && isFinite(value) && String(value).trim() !== '') {
                         type = 'number';
                     }
-                    // =================================================================
-                    // ======================= AKHIR PERBAIKAN =========================
-                    // =================================================================
-                    
-                    finalFields.set(key, { 
-                        key: key, 
-                        name: name, 
-                        type: type // Gunakan tipe yang sudah dideteksi
-                    });
+                    finalFields.set(key, { key: key, name: name, type: type });
                 }
             }
-            
             this.allSpecFields = Array.from(finalFields.values());
+            console.log("Final Gabungan Fields (allSpecFields):", JSON.parse(JSON.stringify(this.allSpecFields)));
+            
+            // 3. Buat Peta Nilai dari Database dengan Kunci yang Dinormalisasi
+            const dbValueMap = {};
+            for (const originalName in this.assetSpecs) {
+                const normalizedKey = this.normalizeKey(originalName);
+                dbValueMap[normalizedKey] = this.assetSpecs[originalName];
+            }
+             console.log("Peta Nilai DB (dbValueMap):", dbValueMap);
 
-            // 3. Isi nilai `specValues` dengan prioritas
+            // 4. Isi nilai `specValues` dengan prioritas yang benar
+            console.log(" Mengisi Nilai Input (specValues)... ");
             this.allSpecFields.forEach(field => {
-                const key = field.key;
-                const name = field.name;
+                const key = field.key; // e.g., 'ram_gb'
+                let assignedValue = '';
+                let source = 'Default (Kosong)';
 
+                // Prioritas 1: Ambil dari old() input jika ada
                 if (this.oldSpecValues && this.oldSpecValues.hasOwnProperty(key)) {
-                    this.specValues[key] = this.oldSpecValues[key];
-                } else if (this.assetSpecs && this.assetSpecs.hasOwnProperty(name)) {
-                    this.specValues[key] = this.assetSpecs[name];
-                } else {
-                    this.specValues[key] = '';
+                    assignedValue = this.oldSpecValues[key];
+                    source = 'Old Input';
+                // Prioritas 2: Ambil dari peta nilai database yang sudah dibuat
+                } else if (dbValueMap.hasOwnProperty(key)) {
+                    assignedValue = dbValueMap[key];
+                    source = 'Database';
                 }
+                
+                this.specValues[key] = assignedValue;
+                console.log(`-> Field '${field.name}' (key: ${key}) | Nilai: '${assignedValue}' | Sumber: ${source}`);
             });
+            console.log("Final Input Values (specValues):", JSON.parse(JSON.stringify(this.specValues)));
+            console.log(" Alpine Init End ");
         }
     }
 }
