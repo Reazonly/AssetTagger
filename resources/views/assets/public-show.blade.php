@@ -1,13 +1,13 @@
 @extends('layouts.public')
 @section('title', 'Detail Aset - ' . $asset->code_asset)
 @section('content')
-    <div class="border-b-2 border-gray-800 pb-4 mb-8 text-center">
+    <div class="border-b-2 border-gray-800 pb-4 mb-8">
         <h1 class="text-3xl font-bold text-gray-800">{{ $asset->nama_barang }}</h1>
-        <p class="text-lg text-emerald-600 font-mono tracking-wider mt-1">{{ $asset->code_asset }}</p>
+        <p class="text-lg text-emerald-600 font-mono tracking-wider">{{ $asset->code_asset }}</p>
     </div>
 
     <div class="space-y-8">
-        {{-- Card 1: Informasi Umum --}}
+        {{-- Informasi Umum --}}
         <div class="bg-white p-6 rounded-xl border">
             <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b-2 border-gray-800 pb-2">Informasi Umum</h3>
             @php
@@ -15,7 +15,6 @@
                     'Kategori'      => optional($asset->category)->name,
                     'Sub Kategori'  => optional($asset->subCategory)->name,
                     'Perusahaan'    => optional($asset->company)->name,
-                    'Pengguna Saat Ini' => optional($asset->assetUser)->nama,
                     'Merk'          => $asset->merk,
                     'Tipe'          => $asset->tipe,
                     'Serial Number' => $asset->serial_number,
@@ -26,51 +25,75 @@
             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm mt-4">
                 @foreach($generalInfo as $label => $value)
                     @if(!empty($value))
-                        <div>
+                        <div class="flex flex-col">
                             <dt class="font-medium text-gray-500">{{ $label }}</dt>
-                            <dd class="mt-1 text-gray-900 font-semibold">{{ $value }}</dd>
+                            <dd class="text-gray-900 mt-1">{{ $value }}</dd>
                         </div>
                     @endif
                 @endforeach
             </dl>
         </div>
 
-        {{-- Card 2: Spesifikasi Detail --}}
-        @if(!empty($asset->specifications) && count(array_filter($asset->specifications)) > 0)
+        {{-- Informasi Pengguna --}}
+        <div class="bg-white p-6 rounded-xl border">
+            <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b-2 border-gray-800 pb-2">Informasi Pengguna</h3>
+            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm mt-4">
+                <div class="flex flex-col"><dt class="font-medium text-gray-500">Pengguna Saat Ini</dt><dd class="text-gray-900 mt-1">{{ optional($asset->assetUser)->nama ?? 'Tidak Ditetapkan' }}</dd></div>
+                <div class="flex flex-col"><dt class="font-medium text-gray-500">Jabatan</dt><dd class="text-gray-900 mt-1">{{ optional($asset->assetUser)->jabatan ?? 'N/A' }}</dd></div>
+                <div class="flex flex-col"><dt class="font-medium text-gray-500">Departemen</dt><dd class="text-gray-900 mt-1">{{ optional($asset->assetUser)->departemen ?? 'N/A' }}</dd></div>
+                <div class="flex flex-col"><dt class="font-medium text-gray-500">Perusahaan</dt><dd class="text-gray-900 mt-1">{{ optional(optional($asset->assetUser)->company)->name ?? 'N/A' }}</dd></div>
+            </dl>
+        </div>
+
+        {{-- Spesifikasi --}}
+        @if($asset->specifications && count($asset->specifications) > 0)
             <div class="bg-white p-6 rounded-xl border">
-                <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b-2 border-gray-800 pb-2">Spesifikasi Detail</h3>
+                <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b-2 border-gray-800 pb-2">Spesifikasi & Deskripsi</h3>
                 <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm mt-4">
                     @foreach($asset->specifications as $key => $value)
-                        @if(!empty($value))
-                            <div>
-                                <dt class="font-medium text-gray-500 capitalize">{{ str_replace('_', ' ', $key) }}</dt>
-                                <dd class="mt-1 text-gray-900 font-semibold">{{ $value }}</dd>
-                            </div>
-                        @endif
+                        <div class="flex flex-col">
+                            <dt class="font-medium text-gray-500">{{ Str::title(str_replace('_', ' ', $key)) }}</dt>
+                            <dd class="text-gray-900 mt-1">{{ $value }}</dd>
+                        </div>
                     @endforeach
                 </dl>
             </div>
         @endif
         
-        {{-- Card Gambar Aset (Pindah ke sini) --}}
-        @if($asset->image_path)
-            <div class="bg-white p-6 rounded-xl border">
-                <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b-2 border-gray-800 pb-2">Gambar Aset</h3>
-                <div class="mt-4 flex justify-center items-center">
-                    {{-- Menggunakan Storage::url() untuk path yang benar --}}
-                    <img src="{{ Storage::url($asset->image_path) }}" alt="Gambar Aset: {{ $asset->nama_barang }}" class="max-w-full md:max-w-lg max-h-96 rounded-md border bg-gray-50">
-                </div>
-            </div>
-        @endif
-
-        {{-- Card 3: Riwayat Pengguna --}}
+        {{-- BAGIAN BARU: INFORMASI PEMBELIAN --}}
         <div class="bg-white p-6 rounded-xl border">
-            <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b-2 border-gray-800 pb-2">Riwayat Pengguna</h3>
-            <ul class="mt-4 space-y-4">
+            <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b-2 border-gray-800 pb-2">Informasi Pembelian</h3>
+             @php
+                $purchaseInfo = [
+                    'Tanggal Pembelian' => $asset->tanggal_pembelian ? \Carbon\Carbon::parse($asset->tanggal_pembelian)->format('d M Y') : null,
+                    'Harga Total'       => $asset->harga_total ? 'Rp ' . number_format($asset->harga_total, 0, ',', '.') : null,
+                    'Sumber Dana'       => $asset->sumber_dana,
+                    'Nomor PO'          => $asset->po_number,
+                    'Nomor BAST'        => $asset->nomor,
+                    'Kode Aktiva'       => $asset->code_aktiva,
+                ];
+            @endphp
+             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm mt-4">
+                @foreach($purchaseInfo as $label => $value)
+                    @if(!empty($value))
+                        <div class="flex flex-col">
+                            <dt class="font-medium text-gray-500">{{ $label }}</dt>
+                            <dd class="text-gray-900 mt-1">{{ $value }}</dd>
+                        </div>
+                    @endif
+                @endforeach
+            </dl>
+        </div>
+        {{-- AKHIR BAGIAN BARU --}}
+
+        {{-- Histori Pengguna --}}
+        <div class="bg-white p-6 rounded-xl border">
+            <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b-2 border-gray-800 pb-2">Histori Pengguna</h3>
+            <ul class="space-y-4 text-sm max-h-96 overflow-y-auto pt-4">
                 @forelse ($asset->history as $h)
-                    <li class="p-4 bg-gray-50 rounded-lg border">
+                    <li class="border-b border-gray-300 pb-3 last:border-b-0">
                         <div class="flex justify-between items-center">
-                            <p class="font-semibold text-gray-800">{{ $h->historical_user_name ?? 'Pengguna Dihapus' }}</p>
+                            <p class="font-semibold text-gray-800">{{ optional($h->assetUser)->nama ?? 'Pengguna Dihapus' }}</p>
                             @if(is_null($h->tanggal_selesai))
                                 <span class="flex-shrink-0 text-xs bg-green-100 text-green-800 font-semibold px-2 py-1 rounded-full">Saat Ini</span>
                             @endif
@@ -92,6 +115,16 @@
                 @endforelse
             </ul>
         </div>
+
+       @if($asset->image_path)
+            <div class="bg-white p-6 rounded-xl border">
+                <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b-2 border-gray-800 pb-2">Gambar Aset</h3>
+                <div class="mt-4 flex justify-center items-center">
+                    {{-- Menggunakan Storage::url() untuk path yang benar --}}
+                    <img src="{{ Storage::url($asset->image_path) }}" alt="Gambar Aset: {{ $asset->nama_barang }}" class="max-w-full md:max-w-lg max-h-96 rounded-md border bg-gray-50">
+                </div>
+            </div>
+        @endif
+        
     </div>
 @endsection
-
