@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Sub-Kategori untuk ' . $category->name)
 @section('content')
-{{-- PERBAIKAN: Tambahkan x-data di sini untuk menginisialisasi Alpine.js --}}
+
 <div x-data="{ showImportModal: false }" class="bg-white rounded-xl shadow-lg p-6 md:p-8">
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-200 pb-6 mb-6">
         <div>
@@ -10,9 +10,9 @@
             </h1>
             <p class="text-sm text-gray-500 mt-1">Kelola sub-kategori untuk kategori ini.</p>
         </div>
-        {{-- Tombol Aksi --}}
+
         <div class="flex items-center gap-3 mt-4 md:mt-0">
-            {{-- Tombol ini sekarang akan berfungsi --}}
+            
             <button @click="showImportModal = true" class="inline-flex items-center gap-2 bg-white text-gray-700 font-semibold px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                 Import
@@ -59,7 +59,7 @@
             <td class="px-6 py-4">
                 @if(!empty($subCategory->spec_fields))
                     @foreach($subCategory->spec_fields as $field)
-                        {{-- PERBAIKAN: Tampilkan $field['name'] bukan $field --}}
+                        
                         <span class="inline-block bg-gray-200 rounded-full px-3 py-1 text-xs font-semibold text-gray-700 mr-2 mb-2">
                             {{ $field['name'] ?? 'N/A' }}
                         </span>
@@ -90,7 +90,7 @@
         </table>
     </div>
 
-    {{-- Modal ini sekarang akan berfungsi --}}
+    
     <div x-show="showImportModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
         <div @click.away="showImportModal = false" class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
             <h3 class="text-lg font-bold text-gray-900 mb-4">Import Sub-Kategori untuk {{ $category->name }}</h3>

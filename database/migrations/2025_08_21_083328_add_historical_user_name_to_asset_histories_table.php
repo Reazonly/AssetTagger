@@ -9,7 +9,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('asset_histories', function (Blueprint $table) {
-            // Kolom baru untuk menyimpan nama pengguna pada saat itu
             $table->string('historical_user_name')->after('asset_user_id');
         });
     }

@@ -9,7 +9,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('assets', function (Blueprint $table) {
-            // Menambahkan kolom setelah 'keterangan'
             $table->string('image_path')->nullable()->after('keterangan');
         });
     }

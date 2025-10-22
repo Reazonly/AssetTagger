@@ -12,7 +12,6 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('code', 10)->unique();
-            // Kolom ini menentukan apakah kategori ini butuh 'Merk' (true) atau 'Tipe' (false)
             $table->boolean('requires_merk')->default(false);
             $table->timestamps();
         });

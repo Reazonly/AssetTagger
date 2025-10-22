@@ -9,8 +9,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('sub_categories', function (Blueprint $table) {
-            // Tambah kolom baru untuk menentukan input yang diperlukan
-            // Opsi: 'none', 'merk', 'tipe', 'merk_dan_tipe'
             $table->string('input_type')->default('none')->after('name');
         });
     }

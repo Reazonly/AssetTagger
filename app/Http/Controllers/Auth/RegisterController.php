@@ -30,17 +30,14 @@ class RegisterController extends Controller
                         ->withInput();
         }
 
-        // Buat pengguna baru
+        
         User::create([
             'nama_pengguna' => $request->nama_pengguna,
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
 
-        // HAPUS FUNGSI LOGIN OTOMATIS
-        // Auth::login($user); 
-
-        // Arahkan ke halaman login dengan pesan sukses
+       
         return redirect()->route('login')->with('success', 'Registrasi berhasil! Silakan masuk dengan akun baru Anda.');
     }
 }

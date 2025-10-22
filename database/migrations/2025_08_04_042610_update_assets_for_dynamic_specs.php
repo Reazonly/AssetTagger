@@ -13,7 +13,6 @@ return new class extends Migration
             $table->string('sub_category')->nullable()->after('category_id');
             $table->json('specifications')->nullable()->after('sub_category');
 
-            // 2. Hapus kolom spesifikasi yang lama dan tidak fleksibel lagi
             $table->dropColumn([
                 'processor',
                 'memory_ram',

@@ -21,8 +21,7 @@ class Category extends Model
     }
 
     /**
-     * Pastikan nama method ini adalah 'subCategories'
-     * sama persis seperti yang dipanggil di controller.
+     * 
      */
     public function subCategories()
     {

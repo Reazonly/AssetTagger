@@ -15,20 +15,15 @@ class AssetUser extends Model
      *
      * @var array
      */
-    // PERBAIKAN DI SINI: Izinkan semua field untuk diisi.
     protected $guarded = [];
 
-    /**
-     * Mendefinisikan bahwa satu Pengguna Aset bisa memiliki banyak Aset.
-     */
+    
     public function assets()
     {
         return $this->hasMany(Asset::class);
     }
 
-    /**
-     * Mendefinisikan bahwa satu Pengguna Aset dimiliki oleh satu Perusahaan.
-     */
+    
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);

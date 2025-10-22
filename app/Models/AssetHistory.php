@@ -16,7 +16,7 @@ class AssetHistory extends Model
     }
 
     /**
-     * Relasi ke pengguna aset (bukan pengguna login)
+     *
      */
     public function assetUser()
     {

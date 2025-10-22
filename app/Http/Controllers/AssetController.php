@@ -192,7 +192,7 @@ class AssetController extends Controller
 
     public function update(Request $request, Asset $asset)
     {
-        // ... (Logika update tidak berubah, karena kode aset tidak diubah saat update) ...
+        
         $validatedData = $request->validate([
             'company_id' => 'required|exists:companies,id',
             'asset_user_id' => 'nullable|exists:asset_users,id',

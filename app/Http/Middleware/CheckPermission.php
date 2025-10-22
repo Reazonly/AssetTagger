@@ -12,7 +12,6 @@ class CheckPermission
     public function handle(Request $request, Closure $next, string $permission): Response
     {
         if (!Auth::check() || !$request->user()->hasPermissionTo($permission)) {
-            // Redirect atau beri respon 'unauthorized'
             return redirect()->route('dashboard')->with('error', 'Anda tidak memiliki izin untuk mengakses halaman ini.');
         }
         return $next($request);

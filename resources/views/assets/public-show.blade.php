@@ -120,7 +120,6 @@
             <div class="bg-white p-6 rounded-xl border">
                 <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b-2 border-gray-800 pb-2">Gambar Aset</h3>
                 <div class="mt-4 flex justify-center items-center">
-                    {{-- Menggunakan Storage::url() untuk path yang benar --}}
                     <img src="{{ Storage::url($asset->image_path) }}" alt="Gambar Aset: {{ $asset->nama_barang }}" class="max-w-full md:max-w-lg max-h-96 rounded-md border bg-gray-50">
                 </div>
             </div>

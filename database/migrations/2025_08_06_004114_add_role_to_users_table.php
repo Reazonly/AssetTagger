@@ -10,10 +10,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            // Menambahkan kolom 'role' setelah kolom 'password'
-            // Tipe enum membatasi nilai hanya pada yang kita tentukan.
-            // Default role adalah 'viewer'.
-            // PERUBAHAN: Menambahkan 'editor' ke dalam daftar.
             $table->enum('role', ['admin', 'viewer', 'user', 'editor'])->default('viewer')->after('password');
         });
     }

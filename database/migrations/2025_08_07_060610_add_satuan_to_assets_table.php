@@ -12,7 +12,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('assets', function (Blueprint $table) {
-            // Menambahkan kembali kolom 'satuan' setelah kolom 'jumlah'
             $table->string('satuan')->default('Unit')->after('jumlah');
         });
     }
@@ -23,7 +22,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('assets', function (Blueprint $table) {
-            // Perintah untuk menghapus kolom jika migrasi di-rollback
             $table->dropColumn('satuan');
         });
     }

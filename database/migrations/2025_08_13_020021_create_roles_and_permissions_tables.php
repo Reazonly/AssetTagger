@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Tabel untuk menyimpan Roles
+        
         Schema::create('roles', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique(); // e.g., 'admin', 'editor'
@@ -16,7 +16,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Tabel untuk menyimpan Permissions
+        
         Schema::create('permissions', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique(); // e.g., 'create-asset', 'delete-user'
@@ -24,14 +24,14 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Tabel pivot untuk menghubungkan User dengan Role (Many-to-Many)
+        
         Schema::create('role_user', function (Blueprint $table) {
             $table->primary(['user_id', 'role_id']);
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('role_id')->constrained('roles')->onDelete('cascade');
         });
 
-        // Tabel pivot untuk menghubungkan Role dengan Permission (Many-to-Many)
+        
         Schema::create('permission_role', function (Blueprint $table) {
             $table->primary(['permission_id', 'role_id']);
             $table->foreignId('permission_id')->constrained('permissions')->onDelete('cascade');

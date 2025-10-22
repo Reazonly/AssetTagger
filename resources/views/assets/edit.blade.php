@@ -145,7 +145,7 @@
 
 
 
-                {{-- Bagian Gambar Aset --}}
+                
                 <div class="bg-white p-8 rounded-lg shadow-md border">
                     <h3 class="text-xl font-semibold border-b-2 border-black pb-3 mb-6 text-gray-700">Gambar Aset</h3>
 

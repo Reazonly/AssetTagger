@@ -233,13 +233,9 @@
             searchQuery: '',
             
             init() {
-                // Ambil ID semua aset yang ada di halaman ini
                 const availableAssetIds = this.allAssets.map(asset => asset.id);
-                // Ambil aset yang dipilih dari localStorage
                 let storedSelectedAssets = JSON.parse(localStorage.getItem('selectedAssets')) || [];
-                // Saring 'selectedAssets', hanya pertahankan ID yang ada di halaman ini
                 this.selectedAssets = storedSelectedAssets.filter(id => availableAssetIds.includes(id));
-                // Simpan kembali daftar yang sudah bersih ke localStorage
                 this.saveSelected();
 
                 this.filteredAssets = this.allAssets;

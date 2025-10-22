@@ -9,14 +9,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('assets', function (Blueprint $table) {
-            $table->softDeletes(); // Ini akan menambahkan kolom 'deleted_at'
+            $table->softDeletes(); 
         });
     }
 
     public function down(): void
     {
         Schema::table('assets', function (Blueprint $table) {
-            $table->dropSoftDeletes(); // Ini akan menghapus kolom 'deleted_at'
+            $table->dropSoftDeletes(); 
         });
     }
 };

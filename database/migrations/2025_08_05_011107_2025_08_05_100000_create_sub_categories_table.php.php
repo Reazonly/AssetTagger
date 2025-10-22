@@ -14,8 +14,6 @@ return new class extends Migration
         Schema::create('sub_categories', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            // Menambahkan relasi ke tabel categories.
-            // Jika sebuah kategori dihapus, semua sub-kategorinya juga akan terhapus.
             $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
             $table->timestamps();
         });

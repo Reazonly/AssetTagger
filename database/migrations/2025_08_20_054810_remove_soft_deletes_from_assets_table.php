@@ -12,7 +12,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('assets', function (Blueprint $table) {
-            // Perintah untuk menghapus kolom deleted_at
             $table->dropSoftDeletes();
         });
     }
@@ -23,7 +22,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('assets', function (Blueprint $table) {
-            // Perintah untuk mengembalikan kolom deleted_at jika migrasi di-rollback
             $table->softDeletes();
         });
     }
