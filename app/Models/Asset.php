@@ -30,7 +30,7 @@ class Asset extends Model
         'tanggal_pembelian' => 'date',
     ];
 
-    // ... (sisa method relasi biarkan seperti semula)
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);

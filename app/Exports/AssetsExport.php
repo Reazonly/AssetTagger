@@ -20,13 +20,10 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
     public function __construct(Builder $query)
     {
         $this->query = $query;
-        // Mengambil semua key spesifikasi yang unik dari data yang akan diekspor
         $this->specKeys = $this->getUniqueSpecKeys();
     }
 
     /**
-     * Fungsi untuk mengumpulkan semua nama kolom spesifikasi yang ada
-     * agar bisa ditambahkan sebagai header secara dinamis.
      */
     private function getUniqueSpecKeys()
     {
@@ -38,7 +35,6 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             }
         }
         
-        // Menghapus key yang tidak diinginkan jika ada
         $unwantedKeys = ['perusahaan_pemilik', 'perusahaan_pengguna'];
         $uniqueKeys = array_unique($keys);
         
@@ -47,30 +43,24 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
 
     public function query()
     {
-        // Memastikan relasi di-load untuk menghindari query N+1
         return $this->query->with(['category', 'subCategory', 'company', 'assetUser.company']);
     }
 
     /**
-     * Mendefinisikan judul kolom (header).
-     * Urutan ini sudah disesuaikan agar bisa diimpor kembali.
      */
     public function headings(): array
     {
         $baseHeadings = [
-            'Kode Aset', // --- DITAMBAHKAN ---
+            'Kode Aset',
             'Nama Barang', 'Kategori', 'Sub Kategori', 'Perusahaan Pemilik',
             'Merk', 'Tipe', 'Serial Number', 'Pengguna Aset', 'Jabatan Pengguna',
             'Departemen Pengguna', 'Perusahaan Pengguna', 'Kondisi', 'Lokasi', 'Jumlah',
             'Satuan', 
-            // Kolom tanggal disesuaikan untuk format impor
             'Tanggal Pembelian', 'Bulan Pembelian', 'Tahun Pembelian',
             'Harga Total (Rp)', 'Nomor PO', 'Nomor BAST',
             'Kode Aktiva', 'Sumber Dana', 'Item Termasuk', 'Peruntukan', 'Keterangan',
-            // Riwayat Pengguna dihapus dari ekspor karena tidak digunakan saat impor
         ];
 
-        // Menggabungkan header dasar dengan header spesifikasi dinamis
         return array_merge($baseHeadings, $this->specKeys);
     }
 
@@ -81,14 +71,13 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
      */
     public function map($asset): array
     {
-        // Mengambil dan memformat data tanggal
         $tanggal = $asset->tanggal_pembelian ? Carbon::parse($asset->tanggal_pembelian)->locale('id') : null;
         $tgl = $tanggal ? $tanggal->day : null;
-        $bulan = $tanggal ? $tanggal->isoFormat('MMMM') : null; // e.g., "Agustus"
+        $bulan = $tanggal ? $tanggal->isoFormat('MMMM') : null; 
         $tahun = $tanggal ? $tanggal->year : null;
 
         $baseData = [
-            $asset->code_asset, // --- DITAMBAHKAN ---
+            $asset->code_asset, 
             $asset->nama_barang,
             optional($asset->category)->name,
             optional($asset->subCategory)->name,
@@ -109,7 +98,7 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $tahun,
             $asset->harga_total,
             $asset->po_number,
-            $asset->nomor, // Ini adalah Nomor BAST
+            $asset->nomor, 
             $asset->code_aktiva,
             $asset->sumber_dana,
             $asset->include_items,
@@ -117,7 +106,7 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $asset->keterangan,
         ];
 
-        // Mengisi data untuk kolom spesifikasi dinamis
+       
         $specData = [];
         foreach ($this->specKeys as $key) {
             $specData[] = $asset->specifications[$key] ?? '';
@@ -127,7 +116,6 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
     }
 
     /**
-     * Menerapkan style ke file Excel (misalnya, membuat header tebal).
      */
     public function styles(Worksheet $sheet)
     {
@@ -135,13 +123,11 @@ class AssetsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
         $lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($columnCount);
 
         return [
-            // Style untuk baris pertama (header)
             1 => [
                 'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
                 'fill' => ['fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => '28A745']],
                 'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER],
             ],
-            // Style untuk semua sel
             'A:' . $lastColumn => [
                 'alignment' => [
                     'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,

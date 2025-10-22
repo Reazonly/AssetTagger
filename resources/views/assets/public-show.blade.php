@@ -7,7 +7,7 @@
     </div>
 
     <div class="space-y-8">
-        {{-- Informasi Umum --}}
+       
         <div class="bg-white p-6 rounded-xl border">
             <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b-2 border-gray-800 pb-2">Informasi Umum</h3>
             @php
@@ -34,7 +34,7 @@
             </dl>
         </div>
 
-        {{-- Informasi Pengguna --}}
+        
         <div class="bg-white p-6 rounded-xl border">
             <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b-2 border-gray-800 pb-2">Informasi Pengguna</h3>
             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 text-sm mt-4">
@@ -45,7 +45,7 @@
             </dl>
         </div>
 
-        {{-- Spesifikasi --}}
+       
         @if($asset->specifications && count($asset->specifications) > 0)
             <div class="bg-white p-6 rounded-xl border">
                 <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b-2 border-gray-800 pb-2">Spesifikasi & Deskripsi</h3>
@@ -60,7 +60,7 @@
             </div>
         @endif
         
-        {{-- BAGIAN BARU: INFORMASI PEMBELIAN --}}
+        
         <div class="bg-white p-6 rounded-xl border">
             <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b-2 border-gray-800 pb-2">Informasi Pembelian</h3>
              @php
@@ -84,9 +84,9 @@
                 @endforeach
             </dl>
         </div>
-        {{-- AKHIR BAGIAN BARU --}}
+       
 
-        {{-- Histori Pengguna --}}
+        
         <div class="bg-white p-6 rounded-xl border">
             <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b-2 border-gray-800 pb-2">Histori Pengguna</h3>
             <ul class="space-y-4 text-sm max-h-96 overflow-y-auto pt-4">
