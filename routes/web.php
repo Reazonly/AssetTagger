@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\RegisterController;
+// use App\Http\Controllers\Auth\RegisterController; // RegisterController tidak digunakan
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CategoryController;
@@ -17,14 +17,12 @@ use App\Http\Controllers\ReportController;
 // Authentication Routes
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('login', [LoginController::class, 'login']);
-// Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');
-// Route::post('register', [RegisterController::class, 'register']);
 Route::post('logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
 // Public Routes
 Route::get('assets/{asset}/public', [AssetController::class, 'publicShow'])->name('assets.public.show');
 Route::get('assets/{asset}/pdf', [AssetController::class, 'downloadPDF'])->name('assets.pdf');
-Route::get('/assets/get-units/{category}', [AssetController::class, 'getUnits'])->name('assets.getUnits');
+// Route::get('/assets/get-units/{category}', [AssetController::class, 'getUnits'])->name('assets.getUnits'); // Route ini sepertinya tidak ada di controller
 
 // Main application routes (protected by auth middleware)
 Route::middleware('auth')->group(function () {
@@ -34,30 +32,32 @@ Route::middleware('auth')->group(function () {
     // Profil (bisa diakses semua pengguna yang login)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::prefix('reports')->group(function () {
-        Route::get('inventory', [ReportController::class, 'inventoryReport'])->name('reports.inventory');
-        Route::get('tracking', [ReportController::class, 'trackingReport'])->name('reports.tracking');
+
+    // Reports
+    Route::prefix('reports')->name('reports.')->group(function () { // Menambahkan name() untuk prefix
+        Route::get('inventory', [ReportController::class, 'inventoryReport'])->name('inventory');
+        Route::get('tracking', [ReportController::class, 'trackingReport'])->name('tracking');
 
         // Export Routes
-        Route::get('inventory/export/excel', [ReportController::class, 'exportInventoryExcel'])->name('reports.inventory.excel');
-        Route::get('inventory/export/pdf', [ReportController::class, 'exportInventoryPDF'])->name('reports.inventory.pdf');
-        Route::get('tracking/export/excel', [ReportController::class, 'exportTrackingExcel'])->name('reports.tracking.excel');
-        Route::get('tracking/export/pdf', [ReportController::class, 'exportTrackingPDF'])->name('reports.tracking.pdf');
+        Route::get('inventory/export/excel', [ReportController::class, 'exportInventoryExcel'])->name('inventory.excel');
+        Route::get('inventory/export/pdf', [ReportController::class, 'exportInventoryPDF'])->name('inventory.pdf');
+        Route::get('tracking/export/excel', [ReportController::class, 'exportTrackingExcel'])->name('tracking.excel');
+        Route::get('tracking/export/pdf', [ReportController::class, 'exportTrackingPDF'])->name('tracking.pdf');
     });
 
-
+    // Assets
     Route::prefix('assets')->name('assets.')->group(function() {
         // Rute GET (statis)
         Route::get('/', [AssetController::class, 'index'])->name('index')->middleware('permission:view-asset');
         Route::get('/create', [AssetController::class, 'create'])->name('create')->middleware('permission:create-asset');
-        Route::get('/print', [AssetController::class, 'print'])->name('print')->middleware('permission:view-asset');
-        Route::get('/export', [AssetController::class, 'export'])->name('export')->middleware('permission:view-asset');
+        Route::get('/print', [AssetController::class, 'print'])->name('print')->middleware('permission:print-asset'); // Sesuaikan permission jika perlu
+        Route::get('/export', [AssetController::class, 'export'])->name('export')->middleware('permission:export-asset'); // Sesuaikan permission jika perlu
 
         // Rute POST
         Route::post('/', [AssetController::class, 'store'])->name('store')->middleware('permission:create-asset');
         Route::post('/import', [AssetController::class, 'import'])->name('import')->middleware('permission:import-asset');
 
-        // Rute GET (dinamis dengan parameter {asset})
+        // Rute GET (dinamis dengan parameter {asset}) - Pastikan model binding 'asset' benar
         Route::get('/{asset}', [AssetController::class, 'show'])->name('show')->middleware('permission:view-asset');
         Route::get('/{asset}/edit', [AssetController::class, 'edit'])->name('edit')->middleware('permission:edit-asset');
 
@@ -70,8 +70,14 @@ Route::middleware('auth')->group(function () {
     // Grup untuk semua yang terkait manajemen pengguna & role
     Route::prefix('users')->name('users.')->middleware('permission:view-user')->group(function() {
         Route::get('/', [UserController::class, 'index'])->name('index');
-        Route::post('/{user}/assign-roles', [UserController::class, 'assignRoles'])->name('assign-roles')->middleware('permission:assign-role');
-        Route::post('/{user}/assign-companies', [UserController::class, 'assignCompanies'])->name('assign-companies')->middleware('permission:assign-role'); 
+        
+        // --- HAPUS ROUTE LAMA ---
+        // Route::post('/{user}/assign-roles', [UserController::class, 'assignRoles'])->name('assign-roles')->middleware('permission:assign-role');
+        // Route::post('/{user}/assign-companies', [UserController::class, 'assignCompanies'])->name('assign-companies')->middleware('permission:assign-role'); 
+
+        // --- TAMBAHKAN ROUTE BARU YANG DIGABUNG ---
+        Route::post('/{user}/update-access', [UserController::class, 'updateAccess'])->name('update-access')->middleware('permission:assign-role');
+        // --- AKHIR PERUBAHAN ROUTE ---
 
         // Hanya Super Admin yang bisa membuat, menghapus, dan reset password
         Route::middleware('superadmin')->group(function () {
@@ -88,6 +94,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('companies', CompanyController::class)->except(['show']);
         Route::resource('asset-users', AssetUserController::class)->except(['show']);
 
+        // Sub-Kategori routes (sudah benar)
         Route::get('sub-categories', [SubCategoryController::class, 'index'])->name('sub-categories.index');
         Route::get('sub-categories/{category}', [SubCategoryController::class, 'show'])->name('sub-categories.show');
         Route::get('sub-categories/{category}/create', [SubCategoryController::class, 'create'])->name('sub-categories.create');
@@ -96,9 +103,10 @@ Route::middleware('auth')->group(function () {
         Route::put('sub-categories/{subCategory}', [SubCategoryController::class, 'update'])->name('sub-categories.update');
         Route::delete('sub-categories/{subCategory}', [SubCategoryController::class, 'destroy'])->name('sub-categories.destroy');
    
-        Route::post('categories/import', [CategoryController::class, 'import'])->name('categories.import'); // <-- TAMBAHKAN INI
+        // Import routes (sudah benar)
+        Route::post('categories/import', [CategoryController::class, 'import'])->name('categories.import');
         Route::post('asset-users/import', [AssetUserController::class, 'import'])->name('asset-users.import'); 
-        Route::post('sub-categories/{category}/import', [SubCategoryController::class, 'import'])->name('sub-categories.import'); // Diubah
+        Route::post('sub-categories/{category}/import', [SubCategoryController::class, 'import'])->name('sub-categories.import');
     });
     
     // --- RUTE BARU UNTUK MANAJEMEN ROLES & PERMISSIONS ---
@@ -111,4 +119,3 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{role}', [RoleController::class, 'destroy'])->name('destroy');
     });
 });
-    
