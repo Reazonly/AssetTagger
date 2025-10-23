@@ -51,7 +51,11 @@ class UserController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
         
-        $user->roles()->sync($validated['roles']);
+        $user->roles()->sync($validated['roles']); 
+        
+        if (!empty($validated['companies'])) {
+            $user->companies()->sync($validated['companies']);
+        }
 
         return redirect()->route('users.index')->with('success', 'Pengguna login baru berhasil ditambahkan.');
     }

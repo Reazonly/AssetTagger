@@ -20,6 +20,18 @@ class User extends Authenticatable
         return $this->belongsToMany(Role::class, 'role_user');
     }
 
+    // ... (fungsi hasRole dan hasPermissionTo) ...
+    
+    // --- TAMBAHKAN FUNGSI INI ---
+    /**
+     * Relasi many-to-many ke Company (untuk hak akses data).
+     */
+    public function companies(): BelongsToMany
+    {
+        return $this->belongsToMany(Company::class, 'company_user');
+    }
+    // --- AKHIR PENAMBAHAN ---
+
     /**
      * Helper untuk mengecek apakah user memiliki role tertentu.
      * @param string $roleName
@@ -41,4 +53,4 @@ class User extends Authenticatable
             $query->where('name', $permissionName);
         })->exists();
     }
-}   
+}

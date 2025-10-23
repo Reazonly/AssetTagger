@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Tabel pivot untuk relasi Many-to-Many antara User dan Company
         Schema::create('company_user', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
+            $table->primary(['company_id', 'user_id']);
+            $table->foreignId('company_id')->constrained('companies')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
         });
     }
 
