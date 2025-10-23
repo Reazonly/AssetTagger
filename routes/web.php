@@ -12,6 +12,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AssetUserController;
 use App\Http\Controllers\SubCategoryController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\ReportController;
 
 // Authentication Routes
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -33,6 +34,16 @@ Route::middleware('auth')->group(function () {
     // Profil (bisa diakses semua pengguna yang login)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::prefix('reports')->group(function () {
+        Route::get('inventory', [ReportController::class, 'inventoryReport'])->name('reports.inventory');
+        Route::get('tracking', [ReportController::class, 'trackingReport'])->name('reports.tracking');
+
+        // Export Routes
+        Route::get('inventory/export/excel', [ReportController::class, 'exportInventoryExcel'])->name('reports.inventory.excel');
+        Route::get('inventory/export/pdf', [ReportController::class, 'exportInventoryPDF'])->name('reports.inventory.pdf');
+        Route::get('tracking/export/excel', [ReportController::class, 'exportTrackingExcel'])->name('reports.tracking.excel');
+        Route::get('tracking/export/pdf', [ReportController::class, 'exportTrackingPDF'])->name('reports.tracking.pdf');
+    });
 
 
     Route::prefix('assets')->name('assets.')->group(function() {
