@@ -28,7 +28,9 @@ class DashboardController extends Controller
             // 3. Jika BUKAN super-admin, terapkan filter
             if (!$user->hasRole('super-admin')) {
                 // Dapatkan ID perusahaan yang boleh diakses user
-                $allowedCompanyIds = $user->companies()->pluck('id');
+                // --- PERBAIKAN DI BARIS BERIKUT ---
+                $allowedCompanyIds = $user->companies()->pluck('companies.id'); // <-- Perbaikan pluck di sini
+                // --- AKHIR PERBAIKAN ---
                 
                 // Terapkan filter ke query dasar
                 $assetQuery->whereIn('company_id', $allowedCompanyIds);
@@ -86,9 +88,12 @@ class DashboardController extends Controller
             ));
 
         } catch (\Exception $e) {
+            // Tampilkan pesan error jika ada masalah
+            Log::error("Dashboard Error: " . $e->getMessage()); // Log error untuk debugging
             return view('Dashboard.index', [
-                'dashboardError' => 'Gagal memuat data dashboard: ' . $e->getMessage()
+                'dashboardError' => 'Gagal memuat data dashboard: ' . $e->getMessage() 
             ]);
         }
     }
 }
+

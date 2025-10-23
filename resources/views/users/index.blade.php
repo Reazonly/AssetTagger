@@ -4,9 +4,12 @@
 @section('content')
 <div x-data="{
     showRoleModal: false,
+    showCompanyModal: false, // <-- Data baru untuk modal company
     selectedUser: null,
     selectedRoles: [],
-    actionUrl: ''
+    selectedCompanies: [], // <-- Data baru untuk company
+    actionUrl: '',
+    companyActionUrl: '' // <-- Data baru untuk action company
 }" class="bg-white rounded-xl shadow-lg p-6 md:p-8">
 
     {{-- Header --}}
@@ -45,6 +48,7 @@
                     <th class="px-6 py-3">Nama Pengguna</th>
                     <th class="px-6 py-3">Email</th>
                     <th class="px-6 py-3">Role</th>
+                    <th class="px-6 py-3">Akses Perusahaan</th> {{-- Kolom Baru --}}
                     <th class="px-6 py-3">Aksi</th>
                 </tr>
             </thead>
@@ -58,20 +62,53 @@
                                 <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 mr-1 mb-1 inline-block">{{ $role->display_name }}</span>
                             @endforeach
                         </td>
+                        {{-- Data Kolom Baru --}}
+                        <td class="px-6 py-4">
+                            @if($user->hasRole('super-admin'))
+                                <span class="italic text-gray-500">Semua Perusahaan</span>
+                            @else
+                                @forelse ($user->companies as $company)
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 mr-1 mb-1 inline-block">{{ $company->code }}</span>
+                                @empty
+                                    <span class="italic text-gray-500">Tidak ada</span>
+                                @endforelse
+                            @endif
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @if ($user->id !== 1 && auth()->user()->can('assign-role'))
-                                <button @click="showRoleModal = true; selectedUser = {{ $user->id }}; selectedRoles = {{ $user->roles->pluck('id') }}; actionUrl = '{{ route('users.assign-roles', $user->id) }}'" class="font-medium text-blue-600 hover:text-blue-800">Ubah Role</button>
+                                {{-- Tombol Ubah Role --}}
+                                <button
+                                    @click="showRoleModal = true;
+                                            selectedUser = {{ $user->id }};
+                                            selectedRoles = {{ $user->roles->pluck('id') }};
+                                            actionUrl = '{{ route('users.assign-roles', $user->id) }}'"
+                                    class="font-medium text-blue-600 hover:text-blue-800 mr-3">
+                                    Ubah Role
+                                </button>
+
+                                {{-- Tombol Ubah Perusahaan --}}
+                                @if (!$user->hasRole('super-admin')) {{-- Super admin tidak perlu diubah --}}
+                                <button
+                                    @click="showCompanyModal = true;
+                                            selectedUser = {{ $user->id }};
+                                            selectedCompanies = {{ $user->companies->pluck('id') }};
+                                            companyActionUrl = '{{ route('users.assign-companies', $user->id) }}'"
+                                    class="font-medium text-purple-600 hover:text-purple-800">
+                                    Ubah Perusahaan
+                                </button>
+                                @endif
                             @endif
+
                             @can('manage-roles')
                                 @if ($user->id !== 1)
-                                <form action="{{ route('users.resetPassword', $user->id) }}" method="POST" class="inline" onsubmit="return confirm('Reset password untuk pengguna ini?')">
+                                <form action="{{ route('users.resetPassword', $user->id) }}" method="POST" class="inline ml-3" onsubmit="return confirm('Reset password untuk pengguna ini?')">
                                     @csrf
-                                    <button type="submit" class="font-medium text-yellow-600 hover:text-yellow-800 ml-4">Reset Pass</button>
+                                    <button type="submit" class="font-medium text-yellow-600 hover:text-yellow-800">Reset Pass</button>
                                 </form>
-                                <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="inline" onsubmit="return confirm('Hapus pengguna ini?')">
+                                <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="inline ml-3" onsubmit="return confirm('Hapus pengguna ini?')">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="font-medium text-red-600 hover:text-red-800 ml-4">Hapus</button>
+                                    <button type="submit" class="font-medium text-red-600 hover:text-red-800">Hapus</button>
                                 </form>
                                 @endif
                             @endcan
@@ -79,7 +116,8 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" class="text-center py-10 text-gray-500">
+                        {{-- Sesuaikan colspan --}}
+                        <td colspan="5" class="text-center py-10 text-gray-500">
                             <h3 class="mt-2 text-sm font-medium text-gray-900">Pengguna tidak ditemukan.</h3>
                         </td>
                     </tr>
@@ -91,13 +129,21 @@
 
 
     {{-- Modal Ubah Role --}}
-    <div x-show="showRoleModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-        <div @click.away="showRoleModal = false" class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+    <div x-show="showRoleModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300">
+        <div @click.away="showRoleModal = false"
+             x-show="showRoleModal"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-90"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-90"
+             class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
             <form :action="actionUrl" method="POST" class="p-6">
                 @csrf
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Ubah Role untuk Pengguna</h3>
-                <div class="space-y-3">
-                    <p class="text-sm text-gray-600">Pilih satu atau lebih peran untuk pengguna ini.</p>
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Ubah Role Pengguna</h3>
+                <div class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                    <p class="text-sm text-gray-600">Pilih role untuk pengguna ini.</p>
                     @foreach ($roles as $role)
                         <label class="flex items-center p-3 rounded-md border hover:bg-gray-50 transition-colors cursor-pointer">
                             <input type="checkbox" name="roles[]" value="{{ $role->id }}" x-model="selectedRoles" class="h-4 w-4 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300">
@@ -105,12 +151,45 @@
                         </label>
                     @endforeach
                 </div>
-                <div class="mt-6 flex justify-end gap-3">
+                <div class="mt-6 flex justify-end gap-3 border-t pt-4">
                     <button type="button" @click="showRoleModal = false" class="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Batal</button>
                     <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700">Simpan Perubahan</button>
                 </div>
             </form>
         </div>
     </div>
+
+    {{-- Modal Ubah Hak Akses Perusahaan --}}
+    <div x-show="showCompanyModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300">
+        <div @click.away="showCompanyModal = false"
+             x-show="showCompanyModal"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-90"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-90"
+             class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            <form :action="companyActionUrl" method="POST" class="p-6">
+                @csrf
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Ubah Hak Akses Perusahaan</h3>
+                <div class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                    <p class="text-sm text-gray-600">Pilih perusahaan yang datanya bisa diakses pengguna ini.</p>
+                    {{-- Pastikan $companies dikirim dari controller --}}
+                    @foreach ($companies as $company)
+                        <label class="flex items-center p-3 rounded-md border hover:bg-gray-50 transition-colors cursor-pointer">
+                            <input type="checkbox" name="companies[]" value="{{ $company->id }}" x-model="selectedCompanies" class="h-4 w-4 rounded text-purple-600 focus:ring-purple-500 border-gray-300">
+                            <span class="ml-3 text-sm font-medium text-gray-800">{{ $company->name }} ({{ $company->code }})</span>
+                        </label>
+                    @endforeach
+                </div>
+                <div class="mt-6 flex justify-end gap-3 border-t pt-4">
+                    <button type="button" @click="showCompanyModal = false" class="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Batal</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-purple-600 rounded-md hover:bg-purple-700">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 </div>
 @endsection

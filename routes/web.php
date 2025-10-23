@@ -71,7 +71,8 @@ Route::middleware('auth')->group(function () {
     Route::prefix('users')->name('users.')->middleware('permission:view-user')->group(function() {
         Route::get('/', [UserController::class, 'index'])->name('index');
         Route::post('/{user}/assign-roles', [UserController::class, 'assignRoles'])->name('assign-roles')->middleware('permission:assign-role');
-        
+        Route::post('/{user}/assign-companies', [UserController::class, 'assignCompanies'])->name('assign-companies')->middleware('permission:assign-role'); 
+
         // Hanya Super Admin yang bisa membuat, menghapus, dan reset password
         Route::middleware('superadmin')->group(function () {
             Route::get('/create', [UserController::class, 'create'])->name('create');
