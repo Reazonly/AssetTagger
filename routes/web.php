@@ -70,17 +70,17 @@ Route::middleware('auth')->group(function () {
     // Grup untuk semua yang terkait manajemen pengguna & role
     Route::prefix('users')->name('users.')->middleware('permission:view-user')->group(function() {
         Route::get('/', [UserController::class, 'index'])->name('index');
-        
+
         // --- HAPUS ROUTE LAMA ---
         // Route::post('/{user}/assign-roles', [UserController::class, 'assignRoles'])->name('assign-roles')->middleware('permission:assign-role');
-        // Route::post('/{user}/assign-companies', [UserController::class, 'assignCompanies'])->name('assign-companies')->middleware('permission:assign-role'); 
+        // Route::post('/{user}/assign-companies', [UserController::class, 'assignCompanies'])->name('assign-companies')->middleware('permission:assign-role');
 
         // --- TAMBAHKAN ROUTE BARU YANG DIGABUNG ---
         Route::post('/{user}/update-access', [UserController::class, 'updateAccess'])->name('update-access')->middleware('permission:assign-role');
         // --- AKHIR PERUBAHAN ROUTE ---
 
         // Hanya Super Admin yang bisa membuat, menghapus, dan reset password
-        Route::middleware('superadmin')->group(function () {
+        Route::middleware('superadmin')->group(function () { // Biarkan middleware superadmin di sini untuk aksi spesifik super admin
             Route::get('/create', [UserController::class, 'create'])->name('create');
             Route::post('/', [UserController::class, 'store'])->name('store');
             Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
@@ -94,7 +94,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('companies', CompanyController::class)->except(['show']);
         Route::resource('asset-users', AssetUserController::class)->except(['show']);
 
-        // Sub-Kategori routes (sudah benar)
+        // Sub-Kategori routes
         Route::get('sub-categories', [SubCategoryController::class, 'index'])->name('sub-categories.index');
         Route::get('sub-categories/{category}', [SubCategoryController::class, 'show'])->name('sub-categories.show');
         Route::get('sub-categories/{category}/create', [SubCategoryController::class, 'create'])->name('sub-categories.create');
@@ -102,20 +102,25 @@ Route::middleware('auth')->group(function () {
         Route::get('sub-categories/{subCategory}/edit', [SubCategoryController::class, 'edit'])->name('sub-categories.edit');
         Route::put('sub-categories/{subCategory}', [SubCategoryController::class, 'update'])->name('sub-categories.update');
         Route::delete('sub-categories/{subCategory}', [SubCategoryController::class, 'destroy'])->name('sub-categories.destroy');
-   
-        // Import routes (sudah benar)
+
+        // Import routes
         Route::post('categories/import', [CategoryController::class, 'import'])->name('categories.import');
-        Route::post('asset-users/import', [AssetUserController::class, 'import'])->name('asset-users.import'); 
+        Route::post('asset-users/import', [AssetUserController::class, 'import'])->name('asset-users.import');
         Route::post('sub-categories/{category}/import', [SubCategoryController::class, 'import'])->name('sub-categories.import');
     });
-    
-    // --- RUTE BARU UNTUK MANAJEMEN ROLES & PERMISSIONS ---
-    Route::prefix('roles-management')->name('roles.')->middleware('superadmin')->group(function() {
-        Route::get('/', [RoleController::class, 'index'])->name('index');
-        Route::get('/create', [RoleController::class, 'create'])->name('create');
-        Route::post('/', [RoleController::class, 'store'])->name('store');
-        Route::get('/{role}/edit', [RoleController::class, 'edit'])->name('edit');
-        Route::put('/{role}', [RoleController::class, 'update'])->name('update');
-        Route::delete('/{role}', [RoleController::class, 'destroy'])->name('destroy');
+
+    // --- RUTE MANAJEMEN ROLES & PERMISSIONS ---
+    // --- GANTI MIDDLEWARE DI SINI ---
+    Route::prefix('roles-management')->name('roles.')
+        ->middleware('permission:manage-roles') // Ganti dari 'superadmin' ke 'permission:manage-roles'
+        ->group(function() {
+            Route::get('/', [RoleController::class, 'index'])->name('index');
+            Route::get('/create', [RoleController::class, 'create'])->name('create');
+            Route::post('/', [RoleController::class, 'store'])->name('store');
+            Route::get('/{role}/edit', [RoleController::class, 'edit'])->name('edit');
+            Route::put('/{role}', [RoleController::class, 'update'])->name('update');
+            Route::delete('/{role}', [RoleController::class, 'destroy'])->name('destroy');
     });
+    // --- AKHIR PERUBAHAN MIDDLEWARE ---
 });
+
