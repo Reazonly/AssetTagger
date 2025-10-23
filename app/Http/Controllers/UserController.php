@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use App\Models\Company;
 use Illuminate\Support\Str;
 
 class UserController extends Controller
@@ -32,7 +33,8 @@ class UserController extends Controller
     public function create()
     {
         $roles = Role::orderBy('display_name')->get();
-        return view('users.create', compact('roles'));
+        $companies = Company::orderBy('name')->get(); // <-- TAMBAHKAN INI
+        return view('users.create', compact('roles', 'companies')); // <-- PERBARUI INI
     }
 
     public function store(Request $request)
@@ -52,7 +54,7 @@ class UserController extends Controller
         ]);
         
         $user->roles()->sync($validated['roles']); 
-        
+
         if (!empty($validated['companies'])) {
             $user->companies()->sync($validated['companies']);
         }
