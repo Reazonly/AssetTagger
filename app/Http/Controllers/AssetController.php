@@ -49,7 +49,13 @@ class AssetController extends Controller
 
     public function index(Request $request)
     {
+      $user = auth()->user();
         $query = Asset::query()->with(['assetUser', 'category', 'company', 'subCategory']);
+
+        if (!$user->hasRole('super-admin')) {
+            $allowedCompanyIds = $user->companies()->pluck('id');
+            $query->whereIn('company_id', $allowedCompanyIds);
+        }
 
         if ($request->filled('search')) {
             $searchTerm = $request->input('search');
@@ -306,7 +312,13 @@ class AssetController extends Controller
         $categoryId = $request->query('category_id_export');
         $search = $request->query('search');
 
+        $query = Asset::query();$user = auth()->user();
         $query = Asset::query();
+
+        if (!$user->hasRole('super-admin')) {
+            $allowedCompanyIds = $user->companies()->pluck('id');
+            $query->whereIn('company_id', $allowedCompanyIds);
+        }
 
         if (!empty($selectedIds) && is_array($selectedIds)) {
             $query->whereIn('id', $selectedIds);
