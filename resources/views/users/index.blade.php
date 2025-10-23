@@ -94,7 +94,7 @@
                                             selectedCompanies = {{ $user->companies->pluck('id') }};
                                             companyActionUrl = '{{ route('users.assign-companies', $user->id) }}'"
                                     class="font-medium text-purple-600 hover:text-purple-800">
-                                    Ubah Perusahaan
+                                    Edit
                                 </button>
                                 @endif
                             @endif
