@@ -31,7 +31,7 @@ class AssetController extends Controller
         return $request->input('asset_user_id');
     }
 
-    // Method generateAssetCode() yang lama sudah dihapus karena tidak lagi digunakan.
+    
     
     private function collectSpecificationsFromRequest(Request $request): array
     {
@@ -49,7 +49,6 @@ class AssetController extends Controller
 
     public function index(Request $request)
     {
-        // ... (Logika index tidak berubah) ...
         $query = Asset::query()->with(['assetUser', 'category', 'company', 'subCategory']);
 
         if ($request->filled('search')) {
@@ -91,7 +90,6 @@ class AssetController extends Controller
 
     public function create()
     {
-        // ... (Logika create tidak berubah) ...
         $categories = Category::with('subCategories')->orderBy('name')->get();
         $assetUsers = AssetUser::with('company')->orderBy('nama')->get();
         return view('assets.create', [
@@ -171,14 +169,12 @@ class AssetController extends Controller
 
     public function show(Asset $asset)
     {
-        // ... (Logika show tidak berubah) ...
         $asset->load(['assetUser.company', 'category', 'company', 'subCategory', 'history.assetUser.company']);
         return view('assets.show', compact('asset'));
     }
 
     public function edit(Asset $asset)
     {
-        // ... (Logika edit tidak berubah) ...
         $asset->load(['assetUser', 'category', 'company', 'subCategory']);
         $categories = Category::with('subCategories')->orderBy('name')->get();
         $assetUsers = AssetUser::with('company')->orderBy('nama')->get();
@@ -267,7 +263,6 @@ class AssetController extends Controller
 
     public function destroy(Asset $asset)
     {
-        // ... (Logika destroy tidak berubah) ...
         if ($asset->image_path) {
             Storage::disk('public')->delete($asset->image_path);
         }
@@ -284,14 +279,12 @@ class AssetController extends Controller
 
     public function publicShow(Asset $asset)
     {
-        // ... (Logika publicShow tidak berubah) ...
         $asset->load(['assetUser.company', 'category', 'company', 'subCategory', 'history.assetUser.company']);
         return view('assets.public-show', compact('asset'));
     }
 
     public function import(Request $request)
     {
-        // ... (Logika import tidak berubah) ...
         $request->validate(['file' => 'required|mimes:xls,xlsx,csv']);
         Excel::import(new AssetsImport, $request->file('file'));
         return redirect()->route('assets.index')->with('success', 'Data aset berhasil diimpor.');
@@ -299,7 +292,6 @@ class AssetController extends Controller
 
     public function print(Request $request)
     {
-        // ... (Logika print tidak berubah) ...
         $assetIds = $request->query('ids');
         if ($assetIds && is_array($assetIds) && count($assetIds) > 0) {
             $assets = Asset::with('assetUser')->whereIn('id', $assetIds)->get();
@@ -310,7 +302,6 @@ class AssetController extends Controller
 
     public function export(Request $request)
     {
-        // ... (Logika export tidak berubah) ...
         $selectedIds = $request->query('ids'); 
         $categoryId = $request->query('category_id_export');
         $search = $request->query('search');
@@ -346,7 +337,6 @@ class AssetController extends Controller
 
     public function downloadPDF(Asset $asset)
     {
-        // ... (Logika downloadPDF tidak berubah) ...
         $asset->load(['assetUser', 'category', 'company', 'subCategory', 'history.assetUser']);
         $pdf = Pdf::loadView('assets.pdf', ['asset' => $asset]);
         $safeFileName = str_replace('/', '-', $asset->code_asset);

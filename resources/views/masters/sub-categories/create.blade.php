@@ -24,13 +24,13 @@
                     </div>
                 </div>
 
-               {{-- Field Spesifikasi Kustom --}}
+               
 <div class="mt-6" x-data="{ specFields: [{ name: '', type: 'text' }] }">
     <label class="block text-sm font-medium text-gray-700 mb-2">Field Spesifikasi Kustom (Opsional)</label>
     <template x-for="(field, index) in specFields" :key="index">
         <div class="flex items-center gap-2 mb-2">
             
-            {{-- PERBAIKAN: Atribut 'name' dan 'x-model' diubah --}}
+            
             <input type="text" :name="`spec_fields[${index}][name]`" x-model="field.name" placeholder="Nama Field (Contoh: Ukuran Layar)" class="mt-1 block w-full border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">
             
             <select :name="`spec_fields[${index}][type]`" x-model="field.type" class="border-2 border-gray-400 rounded-md shadow-sm py-2 px-3">

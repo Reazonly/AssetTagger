@@ -230,30 +230,28 @@
         </div>
     </form>
 
-{{-- ======================================================= --}}
-{{-- ============== BLOK SCRIPT DIPERBARUI =============== --}}
-{{-- ======================================================= --}}
+
 <script>
 function assetEditForm() {
     return {
-        // Data mentah dari Controller
+        
         categoriesData: @json($categories->keyBy('id')),
         assetUsersData: @json($users->keyBy('id')),
         
-        // Data asli dari database. Pastikan ini selalu object
+       
         assetSpecs: @json($asset->specifications ?? new \stdClass()),
         
-        // Data dari form jika ada error validasi. Pastikan ini juga selalu object.
+        
         oldSpecValues: @json(old('spec') ?? new \stdClass()),
 
-        // State untuk komponen
+       
         selectedAssetUserId: {{ old('asset_user_id', $asset->asset_user_id) ?? 'null' }},
         allSpecFields: [],
-        specValues: {}, // Ini akan menampung nilai yang sebenarnya ditampilkan di input
+        specValues: {},
 
         get currentAssetUser() { return this.assetUsersData[this.selectedAssetUserId] || {} },
         
-        // Helper function untuk menormalisasi key
+        
         normalizeKey(str) {
             if (!str) return '';
             return str.toLowerCase().replace(/[\s()]/g, '_').replace(/_+/g, '_').replace(/_$/, '');
@@ -272,7 +270,7 @@ function assetEditForm() {
 
             let finalFields = new Map();
             
-            // 1. Tambahkan field yang terdefinisi di sub-kategori
+            
             let definedFields = (subCategory && subCategory.spec_fields) ? subCategory.spec_fields.filter(f => f.name && f.name.trim() !== '') : [];
             definedFields.forEach(field => {
                 const key = this.normalizeKey(field.name);
@@ -283,7 +281,7 @@ function assetEditForm() {
                 });
             });
 
-            // 2. Tambahkan field dari data yang sudah tersimpan (hasil impor/data lama)
+            
             for (const name in this.assetSpecs) {
                 const key = this.normalizeKey(name);
                 if (key === 'deskripsi') continue;
@@ -300,7 +298,7 @@ function assetEditForm() {
             this.allSpecFields = Array.from(finalFields.values());
             console.log("Final Gabungan Fields (allSpecFields):", JSON.parse(JSON.stringify(this.allSpecFields)));
             
-            // 3. Buat Peta Nilai dari Database dengan Kunci yang Dinormalisasi
+            
             const dbValueMap = {};
             for (const originalName in this.assetSpecs) {
                 const normalizedKey = this.normalizeKey(originalName);
@@ -308,18 +306,18 @@ function assetEditForm() {
             }
              console.log("Peta Nilai DB (dbValueMap):", dbValueMap);
 
-            // 4. Isi nilai `specValues` dengan prioritas yang benar
+            
             console.log(" Mengisi Nilai Input (specValues)... ");
             this.allSpecFields.forEach(field => {
-                const key = field.key; // e.g., 'ram_gb'
+                const key = field.key; 
                 let assignedValue = '';
                 let source = 'Default (Kosong)';
 
-                // Prioritas 1: Ambil dari old() input jika ada
+                
                 if (this.oldSpecValues && this.oldSpecValues.hasOwnProperty(key)) {
                     assignedValue = this.oldSpecValues[key];
                     source = 'Old Input';
-                // Prioritas 2: Ambil dari peta nilai database yang sudah dibuat
+                
                 } else if (dbValueMap.hasOwnProperty(key)) {
                     assignedValue = dbValueMap[key];
                     source = 'Database';

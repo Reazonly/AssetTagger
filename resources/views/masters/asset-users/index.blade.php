@@ -5,15 +5,15 @@
 @section('content')
 <div x-data="{ showImportModal: false }" class="bg-white rounded-xl shadow-lg p-6 md:p-8">
 
-    {{-- Header --}}
+    
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-200 pb-6 mb-6">
         <div>
             <h1 class="text-3xl font-bold text-gray-900">Pengguna Aset</h1>
             <p class="text-sm text-gray-500 mt-1">Kelola semua pengguna aset di perusahaan.</p>
         </div>
-        {{-- Tombol Aksi --}}
+        
         <div class="flex items-center gap-3 mt-4 md:mt-0">
-            {{-- TOMBOL IMPORT BARU --}}
+            
             <button @click="showImportModal = true" class="inline-flex items-center gap-2 bg-white text-gray-700 font-semibold px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                 Import
@@ -87,7 +87,7 @@
     <div x-show="showImportModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
         <div @click.away="showImportModal = false" class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
             <h3 class="text-lg font-bold text-gray-900 mb-4">Import Data Pengguna Aset</h3>
-            {{-- Pastikan action route-nya sesuai --}}
+            
             <form action="{{ route('master-data.asset-users.import') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <p class="text-sm text-gray-600 mb-4">
