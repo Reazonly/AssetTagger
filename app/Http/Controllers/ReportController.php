@@ -1,5 +1,6 @@
 <?php 
 namespace App\Http\Controllers; 
+
 use App\Models\Asset;
 use App\Models\Category;
 use App\Models\SubCategory;
@@ -7,12 +8,12 @@ use App\Models\AssetUser;
 use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Facades\Excel;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\DomPDF\Facade\Pdf; // Pastikan menggunakan Facade yang benar
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-
 
 use App\Exports\InventorySummaryExport;
 use App\Exports\TrackingReportExport;
@@ -51,7 +52,7 @@ class ReportController extends Controller
                 $allowedCompanyIds = $user->companies()->pluck('companies.id');
                 if ($allowedCompanyIds->isEmpty()) {
                     // Jika user tidak punya akses ke company manapun, jangan tampilkan apa-apa
-                     $query->whereRaw('1 = 0');
+                    $query->whereRaw('1 = 0');
                 } else {
                     $query->whereIn('assets.company_id', $allowedCompanyIds);
                 }
@@ -81,7 +82,7 @@ class ReportController extends Controller
         if ($request->filled('kondisi')) {
             $query->where('assets.kondisi', $request->kondisi);
         }
-         // Filter Spesifikasi
+        // Filter Spesifikasi
         if ($request->filled('spec_key') && $request->filled('spec_value')) {
             $key = $request->input('spec_key');
             $value = $request->input('spec_value');
@@ -108,8 +109,8 @@ class ReportController extends Controller
         if (!$user->hasRole('super-admin')) {
              try {
                 $allowedCompanyIds = $user->companies()->pluck('companies.id');
-                 if ($allowedCompanyIds->isEmpty()) {
-                     $query->whereRaw('1 = 0');
+                if ($allowedCompanyIds->isEmpty()) {
+                    $query->whereRaw('1 = 0');
                 } else {
                     $query->whereIn('company_id', $allowedCompanyIds);
                 }
@@ -147,8 +148,8 @@ class ReportController extends Controller
                   ->orWhere('nama_barang', 'like', '%' . $search . '%')
                   ->orWhere('serial_number', 'like', '%' . $search . '%')
                   ->orWhereHas('assetUser', function($uq) use ($search){
-                        $uq->where('nama', 'like', '%' . $search . '%');
-                  });
+                       $uq->where('nama', 'like', '%' . $search . '%');
+                   });
             });
         }
 
@@ -191,7 +192,7 @@ class ReportController extends Controller
          if (!$user->hasRole('super-admin')) {
              // Pastikan $allowedCompanyIds tidak kosong sebelum whereIn
              if($allowedCompanyIds->isNotEmpty()){
-                $assetsQueryForSpecs->whereIn('company_id', $allowedCompanyIds);
+                 $assetsQueryForSpecs->whereIn('company_id', $allowedCompanyIds);
              } else {
                  // Jika tidak punya akses company, jangan ambil spec apa pun
                  $assetsQueryForSpecs->whereRaw('1 = 0');
@@ -229,8 +230,8 @@ class ReportController extends Controller
         if ($summaryResults->isNotEmpty()) {
             $allAssetIds = $summaryResults->pluck('asset_ids')
                                 ->flatMap(function ($ids) {
-                                    // Pastikan $ids tidak null atau kosong sebelum explode
-                                    return $ids ? explode(',', $ids) : [];
+                                     // Pastikan $ids tidak null atau kosong sebelum explode
+                                     return $ids ? explode(',', $ids) : [];
                                 })
                                 ->map(fn($id) => (int)$id) // Konversi ke integer
                                 ->unique()
@@ -253,25 +254,25 @@ class ReportController extends Controller
         // Proses hasil summary dan tambahkan detail aset
          $inventorySummary = $summaryResults->map(function ($item) use ($assetDetails) {
               // Ambil ID aset untuk item summary ini
-             $detailAssetIds = $item->asset_ids ? explode(',', $item->asset_ids) : [];
+              $detailAssetIds = $item->asset_ids ? explode(',', $item->asset_ids) : [];
 
-             // Ambil objek aset detail dari collection $assetDetails
-             $details = collect($detailAssetIds)
-                 ->map(function ($id) use ($assetDetails) {
-                     // Pastikan ID valid sebelum mengambil dari collection
-                     return $id ? $assetDetails->get((int)$id) : null;
-                 })
-                 ->filter(); // Hapus null jika ada ID yang tidak valid atau tidak ditemukan
+              // Ambil objek aset detail dari collection $assetDetails
+              $details = collect($detailAssetIds)
+                  ->map(function ($id) use ($assetDetails) {
+                       // Pastikan ID valid sebelum mengambil dari collection
+                       return $id ? $assetDetails->get((int)$id) : null;
+                   })
+                   ->filter(); // Hapus null jika ada ID yang tidak valid atau tidak ditemukan
 
-             return [
-                 'category_name' => $item->category_name,
-                 'sub_category_display_name' => $item->sub_category_display_name,
-                 'company_name' => $item->company_name ?? 'N/A',
-                 'kondisi' => $item->kondisi,
-                 'count' => (int)$item->total_assets, // Cast ke integer
-                 'total_harga' => (float)$item->total_value, // Cast ke float
-                 'details' => $details, // <-- Simpan collection objek Asset di sini
-             ];
+               return [
+                   'category_name' => $item->category_name,
+                   'sub_category_display_name' => $item->sub_category_display_name,
+                   'company_name' => $item->company_name ?? 'N/A',
+                   'kondisi' => $item->kondisi,
+                   'count' => (int)$item->total_assets, // Cast ke integer
+                   'total_harga' => (float)$item->total_value, // Cast ke float
+                   'details' => $details, // <-- Simpan collection objek Asset di sini
+               ];
          })->sortBy('company_name')->sortBy('sub_category_display_name')->sortBy('category_name');
 
 
@@ -297,22 +298,22 @@ class ReportController extends Controller
          $allowedCompanyIds = collect(); // Inisialisasi
          if (!$user->hasRole('super-admin')) {
              try {
-                $allowedCompanyIds = $user->companies()->pluck('companies.id');
-                if($allowedCompanyIds->isEmpty()){
-                     // Jika tidak punya akses company, batasi filter & query lokasi
-                     $companies = collect();
-                     $assetUsers = collect();
-                     $locations->whereRaw('1 = 0');
-                } else {
-                     $companies = Company::whereIn('id', $allowedCompanyIds)->orderBy('name')->get();
-                     $assetUsers = AssetUser::whereIn('company_id', $allowedCompanyIds)->orderBy('nama')->get();
-                     $locations->whereIn('company_id', $allowedCompanyIds);
-                }
+                 $allowedCompanyIds = $user->companies()->pluck('companies.id');
+                 if($allowedCompanyIds->isEmpty()){
+                      // Jika tidak punya akses company, batasi filter & query lokasi
+                      $companies = collect();
+                      $assetUsers = collect();
+                      $locations->whereRaw('1 = 0');
+                 } else {
+                      $companies = Company::whereIn('id', $allowedCompanyIds)->orderBy('name')->get();
+                      $assetUsers = AssetUser::whereIn('company_id', $allowedCompanyIds)->orderBy('nama')->get();
+                      $locations->whereIn('company_id', $allowedCompanyIds);
+                 }
              } catch (\Exception $e) {
-                 Log::error("Error getting filter data for user {$user->id} (tracking): " . $e->getMessage());
-                 $companies = collect();
-                 $assetUsers = collect();
-                 $locations->whereRaw('1 = 0');
+                  Log::error("Error getting filter data for user {$user->id} (tracking): " . $e->getMessage());
+                  $companies = collect();
+                  $assetUsers = collect();
+                  $locations->whereRaw('1 = 0');
              }
          } else {
              $companies = Company::orderBy('name')->get();
@@ -337,53 +338,117 @@ class ReportController extends Controller
     }
 
     // =========================================================================
-    // EXPORT METHODS (Perlu sedikit penyesuaian untuk Inventory Export)
+    // EXPORT METHODS 
     // =========================================================================
 
-   public function exportInventoryExcel(Request $request)
-{
-    // 1. Ambil ID Aset dari Query String
-    $ids = explode(',', $request->input('ids'));
+    public function exportInventoryExcel(Request $request)
+    {
+        // 1. Ambil ID Aset dari Query String
+        $ids = explode(',', $request->input('ids'));
 
-    if (empty(array_filter($ids))) {
-        return redirect()->route('reports.inventory')->with('error', 'Silakan pilih setidaknya satu aset untuk diexport.');
+        if (empty(array_filter($ids))) {
+            return redirect()->route('reports.inventory')->with('error', 'Silakan pilih setidaknya satu aset untuk diexport.');
+        }
+
+        // 2. Ambil DATA DETAIL ASET secara lengkap (dengan Eager Loading)
+        $assetsCollection = Asset::whereIn('id', $ids)
+            // Eager Loading Wajib untuk mengisi kolom Kategori, Perusahaan, dan Pengguna
+            ->with(['subCategory.category', 'company', 'assetUser']) 
+            ->get(); // Ambil sebagai Collection (sesuai konstruktor Export Class)
+        
+        if ($assetsCollection->isEmpty()) {
+             return redirect()->route('reports.inventory')->with('error', 'Tidak ada data aset yang ditemukan.');
+        }
+
+        // 3. Kirim Collection Data Detail ke Export Class
+        return Excel::download(new InventorySummaryExport($assetsCollection), 'laporan_detail_aset_' . date('Ymd_His') . '.xlsx');
     }
-
-    // 2. Ambil DATA DETAIL ASET secara lengkap (dengan Eager Loading)
-    $assetsCollection = Asset::whereIn('id', $ids)
-        // Eager Loading Wajib untuk mengisi kolom Kategori, Perusahaan, dan Pengguna
-        ->with(['subCategory.category', 'company', 'assetUser']) 
-        ->get(); // Ambil sebagai Collection (sesuai konstruktor Export Class)
-    
-    if ($assetsCollection->isEmpty()) {
-         return redirect()->route('reports.inventory')->with('error', 'Tidak ada data aset yang ditemukan.');
-    }
-
-    // 3. Kirim Collection Data Detail ke Export Class
-    return Excel::download(new InventorySummaryExport($assetsCollection), 'laporan_detail_aset_' . date('Ymd_His') . '.xlsx');
-}
 
     public function exportInventoryPDF(Request $request)
     {
-        // Export PDF juga biasanya berisi data summary
-        $inventorySummary = $this->getInventorySummaryQuery($request)->get(); // Gunakan query summary
-        if ($inventorySummary->isEmpty()) {
-             return redirect()->route('reports.inventory')->with('error', 'Tidak ada data inventaris yang sesuai untuk dicetak.');
+        // --- 1. LOGIKA PENGAMBILAN ASET BERDASARKAN PEMILIHAN ATAU FILTER ---
+        if ($request->has('asset_ids')) {
+            // Logika 1: CETAK TERPILIH (Hanya aset yang dicentang)
+            $ids = explode(',', $request->input('asset_ids'));
+            $ids = array_filter($ids); // Bersihkan ID kosong
+
+            if (empty($ids)) {
+                 return redirect()->route('reports.inventory')->with('error', 'Tidak ada aset yang dipilih untuk dicetak.');
+            }
+            
+            $assets = Asset::whereIn('id', $ids)
+                            ->with(['subCategory.category', 'assetUser.company', 'company'])
+                            ->get();
+        } else {
+            // Logika 2: CETAK FILTERED (Fallback: Ambil ID dari hasil filter halaman web)
+            
+            // Dapatkan hasil summary query (yang sudah terfilter)
+            $inventorySummaryQuery = $this->getInventorySummaryQuery($request);
+            $summaryResults = $inventorySummaryQuery->get();
+            
+            // Ekstrak semua ID aset dari hasil summary
+            $allAssetIds = $summaryResults->pluck('asset_ids')
+                                        ->flatMap(fn($ids) => $ids ? explode(',', $ids) : [])
+                                        ->unique()
+                                        ->filter()
+                                        ->values()
+                                        ->toArray();
+                                        
+            // Ambil DATA DETAIL ASET secara lengkap berdasarkan ID yang sudah difilter
+            if (empty($allAssetIds)) {
+                $assets = collect();
+            } else {
+                $assets = Asset::whereIn('id', $allAssetIds)
+                                ->with(['subCategory.category', 'assetUser.company', 'company'])
+                                ->get();
+            }
         }
-        // Pastikan view PDF Anda (pdf-inventory.blade.php) bisa menampilkan data summary ini
-        $pdf = Pdf::loadView('reports.pdf-inventory', [
-            'inventorySummary' => $inventorySummary,
-            'filters' => $request->all(),
-        ]);
-        return $pdf->download('laporan_inventaris_' . date('Ymd_His') . '.pdf');
+        
+        // Cek jika collection aset kosong
+        if ($assets->isEmpty()) {
+            return redirect()->route('reports.inventory')->with('error', 'Tidak ada data aset yang sesuai untuk dicetak.');
+        }
+
+        // --- 2. LOGIKA PENGHITUNGAN UNTUK PDF ---
+
+        $totalHarga = $assets->sum('harga_total');
+        $assetCount = $assets->count();
+
+        // Panggil helper function untuk mendapatkan spec keys yang unik
+        $specKeys = $this->getUniqueSpecKeys($assets); 
+        
+        // --- 3. EKSEKUSI DAN RETURN PDF ---
+        $pdf = Pdf::loadView('reports.pdf-inventory', compact('assets', 'specKeys', 'totalHarga', 'assetCount'));
+
+        return $pdf->stream('laporan_detail_aset_' . now()->format('Ymd_His') . '.pdf');
     }
+
+    /**
+     * Helper Function untuk mendapatkan kunci spesifikasi unik dari koleksi aset.
+     */
+    private function getUniqueSpecKeys(Collection $assets): array
+    {
+        $keys = [];
+        foreach ($assets as $asset) {
+            // Cek apakah specifications adalah string JSON, jika ya, decode.
+            $specifications = is_string($asset->specifications) ? json_decode($asset->specifications, true) : $asset->specifications;
+            
+            if (is_array($specifications)) {
+                $keys = array_merge($keys, array_keys($specifications));
+            }
+        }
+        $unwantedKeys = ['perusahaan_pemilik', 'perusahaan_pengguna'];
+        $uniqueKeys = array_unique($keys);
+        return array_values(array_diff($uniqueKeys, $unwantedKeys));
+    }
+
 
     public function exportTrackingExcel(Request $request)
     {
         $currentAllocations = $this->getTrackingQuery($request)->get();
          if ($currentAllocations->isEmpty()) {
-             return redirect()->route('reports.tracking')->with('error', 'Tidak ada data alokasi yang sesuai untuk diexport.');
-        }
+              return redirect()->route('reports.tracking')->with('error', 'Tidak ada data alokasi yang sesuai untuk diexport.');
+         }
         return Excel::download(new TrackingReportExport($currentAllocations), 'laporan_alokasi_' . date('Ymd_His') . '.xlsx');
     }
 
@@ -391,8 +456,8 @@ class ReportController extends Controller
     {
         $currentAllocations = $this->getTrackingQuery($request)->get();
          if ($currentAllocations->isEmpty()) {
-             return redirect()->route('reports.tracking')->with('error', 'Tidak ada data alokasi yang sesuai untuk dicetak.');
-        }
+              return redirect()->route('reports.tracking')->with('error', 'Tidak ada data alokasi yang sesuai untuk dicetak.');
+         }
         $pdf = Pdf::loadView('reports.pdf-tracking', [
             'currentAllocations' => $currentAllocations,
             'filters' => $request->all(),
@@ -400,4 +465,3 @@ class ReportController extends Controller
         return $pdf->download('laporan_alokasi_' . date('Ymd_His') . '.pdf');
     }
 }
-

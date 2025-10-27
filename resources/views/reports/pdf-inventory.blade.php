@@ -3,56 +3,142 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Laporan Inventarisasi Aset</title>
+    <title>Laporan Detail Aset</title>
     <style>
-        body { font-family: sans-serif; font-size: 9pt; }
-        h1 { font-size: 16pt; margin-bottom: 5px; }
-        h2 { font-size: 12pt; margin-top: 5px; margin-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th, td { border: 1px solid #000; padding: 6px; text-align: left; }
-        th { background-color: #f0f0f0; text-align: center; }
-        .footer-total td { background-color: #ddd; font-weight: bold; }
+        /* KRITIS: Memaksa PDF menggunakan orientasi Landscape (A4) */
+        @page {
+            size: A4 landscape; /* ORIENTASI KE LANDSCAPE */
+            margin: 0.5cm; /* Margin yang kecil */
+        }
+
+        /* Gaya Dasar */
+        body { font-family: sans-serif; font-size: 6.5pt; } /* Ukuran font lebih kecil */
+        h1 { font-size: 14pt; margin-bottom: 5px; }
+        h2 { font-size: 10pt; margin-top: 0; margin-bottom: 15px; }
+        
+        /* Gaya Tabel Utama */
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-bottom: 10px; 
+            table-layout: auto; /* Dibuat AUTO agar lebih fleksibel dalam pembagian lebar */
+        }
+        th, td { 
+            border: 1px solid #000; 
+            padding: 3px; /* Padding lebih kecil */
+            text-align: left; 
+            vertical-align: top;
+            word-wrap: break-word; 
+        }
+        th { 
+            background-color: #28A745; 
+            color: #fff;
+            text-align: center; 
+            font-weight: bold;
+        }
+        
+        /* Gaya Khusus */
+        .header-section { 
+            margin-bottom: 15px; 
+            padding-bottom: 5px;
+        }
+        .footer-total td { 
+            background-color: #FFF3CD; 
+            font-weight: bold; 
+            padding: 5px;
+        }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
+        .text-left { text-align: left; }
+
     </style>
 </head>
 <body>
-    <h1>Laporan Inventarisasi Aset</h1>
-    <h2>Per Tanggal: {{ \Carbon\Carbon::now()->format('d F Y H:i:s') }}</h2>
+    <div class="header-section">
+        <h1>Laporan Detail Aset</h1>
+        <h2>Per Tanggal: {{ \Carbon\Carbon::now()->format('d F Y H:i:s') }}</h2>
+    </div>
 
-    <table>
+    <table class="data-table">
         <thead>
             <tr>
-                <th style="width: 5%;">No.</th>
-                <th style="width: 25%;">Kategori Aset</th>
-                <th style="width: 25%;">Sub-Kategori Aset</th> {{-- KOLOM BARU --}}
-                <th style="width: 10%;">Kondisi</th>
-                <th style="width: 15%;">Jumlah Aset</th>
-                <th style="width: 20%;">Total Nilai (Rp)</th>
-            </tr>
+                <th>No.</th>
+                <th>Kode Aset</th>
+                <th>Nama Barang</th>
+                <th>SN</th>
+                <th>Kategori</th>
+                <th>Sub-Kategori</th>
+                <th>Pengguna Saat Ini</th>
+                <th>Perusahaan Pengguna</th> 
+                <th>Jabatan</th> 
+                <th>Departemen</th> 
+                <th>Perusahaan Pemilik</th>
+                <th>Lokasi</th> 
+                <th>Kondisi</th>
+                <th>Harga Total (Rp)</th>
+                <th>Tgl Perolehan</th>
+                <th>No PO</th>
+                <th>Kode Aktiva</th>
+                <th>Sumber Dana</th>
+                <th>Keterangan</th>
+                
+                </tr>
         </thead>
         <tbody>
-            @php $no = 1; $grandTotalValue = 0; $grandTotalAssets = 0; @endphp
-            @foreach($inventorySummary as $item)
-                @php 
-                    $grandTotalValue += $item->total_value;
-                    $grandTotalAssets += $item->total_assets;
+            @php $no = 1; @endphp
+            @forelse($assets as $asset)
+                @php
+                    // Mapping Data Aset
+                    $kategoriName = optional(optional($asset->subCategory)->category)->name ?? 'N/A';
+                    $subCategoryName = optional($asset->subCategory)->name ?? 'N/A';
+                    $assetUser = optional($asset->assetUser);
+                    $assetUserName = $assetUser->nama ?? 'Stok';
+                    $userCompanyName = optional(optional($assetUser)->company)->name ?? ($assetUser ? '-' : 'N/A');
+                    $userJabatan = $assetUser->jabatan ?? ($assetUser ? '-' : 'N/A');
+                    $userDepartemen = $assetUser->departemen ?? ($assetUser ? '-' : 'N/A');
+                    $companyName = optional($asset->company)->name ?? 'N/A';
+                    $location = $asset->lokasi ?? $asset->location ?? 'N/A'; 
+                    $tanggalPembelian = $asset->tanggal_pembelian ? \Carbon\Carbon::parse($asset->tanggal_pembelian)->format('d-m-Y') : '-';
                 @endphp
                 <tr>
                     <td class="text-center">{{ $no++ }}</td>
-                    <td>{{ $item->category_name }}</td>
-                    <td>{{ $item->sub_category_display_name }}</td> {{-- PERUBAHAN DI SINI --}}
-                    <td class="text-center">{{ $item->kondisi }}</td>
-                    <td class="text-center">{{ number_format($item->total_assets, 0, ',', '.') }}</td>
-                    <td class="text-right">Rp{{ number_format($item->total_value, 2, ',', '.') }}</td>
+                    <td>{{ $asset->code_asset ?? '-' }}</td>
+                    <td>{{ $asset->nama_barang ?? '-' }}</td>
+                    <td>{{ $asset->serial_number ?? '-' }}</td>
+                    <td>{{ $kategoriName }}</td>
+                    <td>{{ $subCategoryName }}</td>
+                    <td>{{ $assetUserName }}</td>
+                    <td>{{ $userCompanyName }}</td>
+                    <td>{{ $userJabatan }}</td>
+                    <td>{{ $userDepartemen }}</td>
+                    <td>{{ $companyName }}</td>
+                    <td>{{ $location }}</td>
+                    <td>{{ $asset->kondisi ?? '-' }}</td>
+                    <td class="text-right">Rp{{ number_format($asset->harga_total ?? 0, 0, ',', '.') }}</td>
+                    <td class="text-center">{{ $tanggalPembelian }}</td>
+                    <td>{{ $asset->po_number ?? '-' }}</td>
+                    <td>{{ $asset->code_aktiva ?? '-' }}</td>
+                    <td>{{ $asset->sumber_dana ?? '-' }}</td>
+                    <td>{{ $asset->keterangan ?? '-' }}</td>
+                    
+                    </tr>
+            @empty
+                <tr>
+                    <td colspan="19" class="text-center">
+                        Tidak ada data aset yang ditemukan.
+                    </td>
                 </tr>
-            @endforeach
+            @endforelse
         </tbody>
         <tfoot>
             <tr class="footer-total">
-                <td colspan="4" class="text-right">TOTAL KESELURUHAN:</td>
-                <td class="text-center">{{ number_format($grandTotalAssets, 0, ',', '.') }}</td>
-                <td class="text-right">Rp{{ number_format($grandTotalValue, 2, ',', '.') }}</td>
+                <td colspan="12" class="text-left">TOTAL KESELURUHAN</td>
+                
+                <td class="text-center">Jumlah Aset: {{ number_format($assetCount, 0, ',', '.') }}</td>
+                
+                <td class="text-right">Rp{{ number_format($totalHarga, 0, ',', '.') }}</td>
+                
+                <td colspan="5" style="background-color: #FFF3CD;"></td>
             </tr>
         </tfoot>
     </table>

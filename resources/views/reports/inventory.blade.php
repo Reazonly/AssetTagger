@@ -54,6 +54,8 @@
                 masterCheckbox.checked = allChecked;
             }
         },
+
+        
         
         // Fungsi untuk mengarahkan ke halaman ekspor dengan ID yang terpilih
         exportSelected() {
@@ -66,52 +68,65 @@
             // Asumsi Anda menggunakan route yang sama untuk Excel export, hanya menambahkan parameter 'ids'
             const url = '{{ route('reports.inventory.excel') }}' + '?ids=' + ids;
             window.location.href = url;
+        },
+
+
+        printSelected() {
+            if (this.selectedAssetIds.length === 0) {
+                alert('Pilih minimal satu aset untuk mencetak.');
+                return;
+            }
+            const ids = this.selectedAssetIds.join(',');
+            const url = '{{ route('reports.inventory.pdf') }}' + '?asset_ids=' + ids;
+            window.open(url, '_blank');
         }
+
+        
+
+
+        
     }">
     
     {{-- HEADER DAN TOMBOL AKSI LAPORAN --}}
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-200 pb-6 mb-6">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">Laporan Inventarisasi Aset (Rekapitulasi)</h1>
-            <p class="text-sm text-gray-500 mt-1">Klik pada baris rekap untuk melihat detail aset.</p>
-        </div>
-        
-        {{-- Tombol Aksi Laporan (Export PDF/Excel) --}}
-        <div class="flex items-center gap-3 mt-4 md:mt-0">
-            
-            {{-- TOMBOL BARU: EKSPOR TERPILIH --}}
-            <button @click="exportSelected()" :disabled="selectedAssetIds.length === 0" 
-                    class="inline-flex items-center gap-2 bg-emerald-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-emerald-700 transition duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 h-10 disabled:bg-gray-400 disabled:cursor-not-allowed">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                Ekspor Terpilih (<span x-text="selectedAssetIds.length">0</span>)
-            </button>
-            {{-- END TOMBOL BARU --}}
-            
-            <div class="relative" x-data="{ open: false }">
-                <button @click="open = !open" class="inline-flex items-center gap-2 bg-sky-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-sky-700 transition duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 h-10">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                    Aksi Laporan
-                </button>
-                <div x-show="open" @click.outside="open = false" 
-                     x-transition:enter="transition ease-out duration-100"
-                     x-transition:enter-start="transform opacity-0 scale-95"
-                     x-transition:enter-end="transform opacity-100 scale-100"
-                     x-transition:leave="transition ease-in duration-75"
-                     x-transition:leave-start="transform opacity-100 scale-100"
-                     x-transition:leave-end="transform opacity-0 scale-95"
-                     class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu">
-                    <div class="py-1" role="none">
-                        <a href="{{ route('reports.inventory.pdf') }}?{{ request()->getQueryString() }}" target="_blank" class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
-                            Cetak (PDF) Filtered
-                        </a>
-                        <a href="{{ route('reports.inventory.excel') }}?{{ request()->getQueryString() }}" class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
-                            Ekspor Excel Filtered
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
+   <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-200 pb-6 mb-6">
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900">Laporan Inventarisasi Aset (Rekapitulasi)</h1>
+        <p class="text-sm text-gray-500 mt-1">Klik pada baris rekap untuk melihat detail aset.</p>
     </div>
+    
+    {{-- Tombol Aksi Laporan --}}
+<div class="flex items-center gap-3 mt-4 md:mt-0">
+    
+    {{-- TOMBOL 1: EKSPOR TERPILIH (Excel) --}}
+    {{-- Menggunakan fungsi exportSelected() (Asumsi fungsi ini mengurus ekspor Excel) --}}
+    <button @click="exportSelected()" :disabled="selectedAssetIds.length === 0" 
+        class="inline-flex items-center gap-2 bg-emerald-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-emerald-700 transition duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 h-10 disabled:bg-gray-400 disabled:cursor-not-allowed">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+        Ekspor Terpilih (<span x-text="selectedAssetIds.length">0</span>)
+    </button>
+    
+    {{-- TOMBOL 2: CETAK TERPILIH (PDF) --}}
+    {{-- Memanggil fungsi JavaScript untuk mengirim ID aset yang dipilih ke Controller PDF --}}
+    <button 
+    @click="printSelected()" 
+    :disabled="selectedAssetIds.length === 0"
+    class="inline-flex items-center gap-2 bg-sky-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-sky-700 transition duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 h-10 disabled:bg-gray-400 disabled:cursor-not-allowed"
+    title="Cetak QR Code aset yang dipilih">
+
+    <!-- Ikon Printer (Heroicons Outline) -->
+    <svg xmlns="http://www.w3.org/2000/svg" 
+         fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" 
+         class="h-5 w-5">
+        <path stroke-linecap="round" stroke-linejoin="round" 
+              d="M6 9V2h12v7m-1.5 8h-9M6 9H5a2 2 0 00-2 2v5h4v6h10v-6h4v-5a2 2 0 00-2-2h-1M6 9h12" />
+    </svg>
+
+    Cetak Terpilih (<span x-text="selectedAssetIds.length">0</span>)
+</button>
+
+    
+</div>
+</div>
     
     {{-- FORM FILTER DENGAN ALPINE.JS DINAMIS --}}
 <form method="GET" action="{{ route('reports.inventory') }}" class="mb-6"
@@ -152,21 +167,21 @@
             }
             return [];
         },
+
+            
+
+        
         
         // Fungsi reset nilai spesifikasi saat kunci (key) spesifikasi berubah
         resetSpecValues() {
             this.selectedSpecValue = ''; 
         }
+
+        
     }"
     x-init="filterSubCategories()">
     
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-
-
-        <p class="col-span-1 md:col-span-2 lg:col-span-4 text-sm text-gray-600 mb-2">
-        **Filter bisa digunakan untuk export**
-    </p>
-        
         {{-- Filter 1: Kategori --}}
         <select name="category_id" x-model="selectedCategory" @change="filterSubCategories" class="w-full border-2 border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:border-sky-500 focus:ring-sky-500 text-sm h-10">
             <option value="">Filter Kategori</option>

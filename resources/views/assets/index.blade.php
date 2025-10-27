@@ -257,18 +257,19 @@
             <form action="{{ route('assets.import') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <p class="text-sm text-gray-600 mb-4">
-                    Unggah file Excel (*.xlsx atau *.csv) untuk menambahkan data aset secara massal.
-                    Pastikan format kolom sudah sesuai.
-                </p>
+                        Unggah file Excel. Pastikan kolom header sesuai template export berikut : <strong>Nama Barang, Kategori, Sub Kategori, Perusahaan Pemilik, Merk/Tipe, Serial Number, Pengguna Aset, Jabatan Pengguna, Departemen Pengguna, Perusahaan Pengguna, Kondisi, Lokasi, Jumlah, Satuan, Tanggal Pembelian, Bulan Pembelian, Tahun Pembelian, Harga Total(Rp), Nomor PO, Nomor BAST(WAJIB), Kode Aktiva, Sumber Dana, Item Termasuk, Peruntukan, Keterangan, Deskripsi.
+                    </strong><div class="text-sm text-gray-600 mb-4"><strong> diluar dari template export akan masuk ke dalam detail spesifikasi.</strong></div>
+                    </p>
+
                 
                 {{-- Input File --}}
                 <label for="import_file" class="block text-sm font-medium text-gray-700 mb-2">Pilih File Import</label>
-                <input type="file" name="file" id="import_file" required 
-                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"/>
+                <input type="file" name="file" required class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"/>
+
 
                 <div class="mt-6 flex justify-end gap-3">
                     <button type="button" @click="showImportModal = false" class="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Batal</button>
-                    <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition">Import Data</button>
+                    <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-md hover:bg-emerald-700">Import</button>
                 </div>
             </form>
             
