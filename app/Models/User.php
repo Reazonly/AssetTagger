@@ -2,15 +2,34 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+// ... (use statements lainnya)
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Spatie\Permission\Traits\HasRoles;
+
+
 class User extends Authenticatable
 {
    
-    use HasFactory;
+    use HasFactory; // Pastikan HasFactory ada
     protected $guarded = ['id'];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed', // Gunakan cast 'hashed' jika di Laravel 10+
+    ];
 
     /**
      * Relasi many-to-many ke model Role.
@@ -20,17 +39,14 @@ class User extends Authenticatable
         return $this->belongsToMany(Role::class, 'role_user');
     }
 
-    // ... (fungsi hasRole dan hasPermissionTo) ...
-    
-    // --- TAMBAHKAN FUNGSI INI ---
     /**
      * Relasi many-to-many ke Company (untuk hak akses data).
      */
     public function companies(): BelongsToMany
     {
-        return $this->belongsToMany(Company::class, 'company_user');
+        // Pastikan nama tabel pivot dan foreign key benar
+        return $this->belongsToMany(Company::class, 'company_user', 'user_id', 'company_id'); 
     }
-    // --- AKHIR PENAMBAHAN ---
 
     /**
      * Helper untuk mengecek apakah user memiliki role tertentu.
@@ -39,16 +55,23 @@ class User extends Authenticatable
      */
     public function hasRole(string $roleName): bool
     {
+        // Eager load roles jika belum atau gunakan cache jika perlu optimasi
         return $this->roles()->where('name', $roleName)->exists();
     }
 
     /**
-     * Helper untuk mengecek apakah user memiliki permission tertentu melalui rolenya.
+    
+     * MODIFIKASI: Tambahkan bypass untuk Super Admin.
      * @param string $permissionName
      * @return bool
      */
     public function hasPermissionTo(string $permissionName): bool
     {
+        
+        if ($this->hasRole('super-admin')) {
+            return true; 
+        }
+        
         return $this->roles()->whereHas('permissions', function ($query) use ($permissionName) {
             $query->where('name', $permissionName);
         })->exists();
