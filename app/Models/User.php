@@ -2,15 +2,18 @@
 
 namespace App\Models;
 
-// ... (use statements lainnya)
+// --- TAMBAHKAN USE STATEMENT INI ---
+use Illuminate\Database\Eloquent\Factories\HasFactory; 
+// --- AKHIR PENAMBAHAN ---
+
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-
+// Hapus use Spatie\Permission\Traits\HasRoles; // Anda tidak menggunakan package Spatie
 
 class User extends Authenticatable
 {
    
-    use HasFactory; // Pastikan HasFactory ada
+    use HasFactory; // Baris ini sekarang akan berfungsi
     protected $guarded = ['id'];
 
     /**
@@ -60,20 +63,25 @@ class User extends Authenticatable
     }
 
     /**
-    
+     * Helper untuk mengecek apakah user memiliki permission tertentu melalui rolenya.
      * MODIFIKASI: Tambahkan bypass untuk Super Admin.
      * @param string $permissionName
      * @return bool
      */
     public function hasPermissionTo(string $permissionName): bool
     {
-        
+        // --- TAMBAHKAN PENGECEKAN INI ---
+        // Jika user adalah super-admin, langsung berikan akses
         if ($this->hasRole('super-admin')) {
             return true; 
         }
-        
+        // --- AKHIR PENAMBAHAN ---
+
+        // Jika bukan super-admin, cek permission melalui role seperti biasa
+        // Pastikan relasi 'permissions' ada di model Role
         return $this->roles()->whereHas('permissions', function ($query) use ($permissionName) {
             $query->where('name', $permissionName);
         })->exists();
     }
 }
+
