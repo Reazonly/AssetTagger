@@ -2,7 +2,72 @@
 @section('title', 'Laporan Inventarisasi Aset')
 
 @section('content')
-<div class="bg-white rounded-xl shadow-lg p-6 md:p-8" x-data="{ expandedRows: [] }">
+{{-- Tambahkan x-data untuk mengelola ID aset yang terpilih (GLOBAL) --}}
+<div class="bg-white rounded-xl shadow-lg p-6 md:p-8" 
+    x-data="{ 
+        expandedRows: [],
+        selectedAssetIds: [], // Array untuk menampung ID aset yang dipilih
+        
+        // FUNGSI BARU/DIUBAH: Mengelola checkbox 'Pilih Semua' di tabel detail
+        selectAll(masterCheckbox, rowCheckboxes) {
+            rowCheckboxes.forEach(checkbox => {
+                const id = checkbox.value;
+                const index = this.selectedAssetIds.indexOf(id);
+
+                if (masterCheckbox.checked) {
+                    // Jika master dicentang dan ID belum ada, tambahkan
+                    if (index === -1) {
+                        this.selectedAssetIds.push(id);
+                    }
+                    checkbox.checked = true; // Pastikan checkbox baris dicentang
+                } else {
+                    // Jika master TIDAK dicentang, hapus ID tersebut
+                    if (index > -1) {
+                        this.selectedAssetIds.splice(index, 1);
+                    }
+                    checkbox.checked = false; // Pastikan checkbox baris tidak dicentang
+                }
+            });
+        },
+        
+        // Fungsi untuk menangani checkbox per baris
+        toggleAsset(id, isChecked, masterId) {
+            const index = this.selectedAssetIds.indexOf(id);
+            if (isChecked) {
+                if (index === -1) {
+                    this.selectedAssetIds.push(id);
+                }
+            } else {
+                if (index > -1) {
+                    this.selectedAssetIds.splice(index, 1);
+                }
+            }
+            
+            // Logika untuk men-sync master checkbox di grup yang sama
+            const masterCheckbox = document.getElementById(masterId);
+            // Hanya query checkbox di dalam ID tabel detail yang spesifik
+            const detailTableId = masterId.replace('master-', 'detail-table-');
+            const rowCheckboxes = document.querySelectorAll(`#${detailTableId} .row-checkbox`);
+            
+            if (masterCheckbox && rowCheckboxes.length > 0) {
+                const allChecked = Array.from(rowCheckboxes).every(cb => this.selectedAssetIds.includes(cb.value));
+                masterCheckbox.checked = allChecked;
+            }
+        },
+        
+        // Fungsi untuk mengarahkan ke halaman ekspor dengan ID yang terpilih
+        exportSelected() {
+            if (this.selectedAssetIds.length === 0) {
+                alert('Pilih setidaknya satu aset untuk diekspor.');
+                return;
+            }
+            // Mengirim ID melalui query string ke route ekspor
+            const ids = this.selectedAssetIds.join(',');
+            // Asumsi Anda menggunakan route yang sama untuk Excel export, hanya menambahkan parameter 'ids'
+            const url = '{{ route('reports.inventory.excel') }}' + '?ids=' + ids;
+            window.location.href = url;
+        }
+    }">
     
     {{-- HEADER DAN TOMBOL AKSI LAPORAN --}}
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-200 pb-6 mb-6">
@@ -13,6 +78,15 @@
         
         {{-- Tombol Aksi Laporan (Export PDF/Excel) --}}
         <div class="flex items-center gap-3 mt-4 md:mt-0">
+            
+            {{-- TOMBOL BARU: EKSPOR TERPILIH --}}
+            <button @click="exportSelected()" :disabled="selectedAssetIds.length === 0" 
+                    class="inline-flex items-center gap-2 bg-emerald-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-emerald-700 transition duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 h-10 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                Ekspor Terpilih (<span x-text="selectedAssetIds.length">0</span>)
+            </button>
+            {{-- END TOMBOL BARU --}}
+            
             <div class="relative" x-data="{ open: false }">
                 <button @click="open = !open" class="inline-flex items-center gap-2 bg-sky-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-sky-700 transition duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 h-10">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
@@ -28,10 +102,10 @@
                      class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu">
                     <div class="py-1" role="none">
                         <a href="{{ route('reports.inventory.pdf') }}?{{ request()->getQueryString() }}" target="_blank" class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
-                            Cetak (PDF)
+                            Cetak (PDF) Filtered
                         </a>
                         <a href="{{ route('reports.inventory.excel') }}?{{ request()->getQueryString() }}" class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
-                            Ekspor Excel
+                            Ekspor Excel Filtered
                         </a>
                     </div>
                 </div>
@@ -39,8 +113,7 @@
         </div>
     </div>
     
-    {{-- FORM FILTER DENGAN ALPINE.JS DINAMIS (Menggunakan layout lama) --}}
-    {{-- BLOK FILTER LENGKAP DENGAN LOGIKA SPESIFIKASI DINAMIS --}}
+    {{-- FORM FILTER DENGAN ALPINE.JS DINAMIS --}}
 <form method="GET" action="{{ route('reports.inventory') }}" class="mb-6"
     x-data="{ 
         selectedCategory: '{{ request('category_id') ?? '' }}',
@@ -51,8 +124,8 @@
         
         // --- VARIABEL DAN DATA SPESIFIKASI KRUSIAL ---
         allUniqueSpecValues: {{ json_encode($allUniqueSpecValues) }}, 
-        selectedSpecKey: '{{ request('spec_key') ?? '' }}', // Nilai ini sudah dipertahankan dari request
-        selectedSpecValue: '{{ request('spec_value') ?? '' }}', // Nilai ini sudah dipertahankan dari request
+        selectedSpecKey: '{{ request('spec_key') ?? '' }}', 
+        selectedSpecValue: '{{ request('spec_value') ?? '' }}', 
         // ---------------------------------------------
         
         // Filter sub-kategori berdasarkan kategori
@@ -64,12 +137,9 @@
             // Logika reset hanya untuk Sub-Kategori jika nilai lama tidak lagi valid
             if (this.selectedSubCategory && !this.filteredSubCategories[this.selectedSubCategory]) {
                 this.selectedSubCategory = '';
-                // Hapus baris reset spesifikasi di sini agar tidak menimpa nilai request
                 this.selectedSpecKey = '';
                 this.selectedSpecValue = '';
             }
-            
-            // JIKA SUB-KATEGORI DIPILIH DAN PAGE RELOAD (Filter), KITA TIDAK BOLEH MERESET KEY DAN VALUE
         },
         
         // Fungsi untuk mengembalikan daftar Nilai Spesifikasi unik
@@ -85,12 +155,17 @@
         
         // Fungsi reset nilai spesifikasi saat kunci (key) spesifikasi berubah
         resetSpecValues() {
-            this.selectedSpecValue = ''; // Hanya reset Nilai Spesifikasi jika Kunci Spesifikasi berubah
+            this.selectedSpecValue = ''; 
         }
     }"
     x-init="filterSubCategories()">
     
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+
+
+        <p class="col-span-1 md:col-span-2 lg:col-span-4 text-sm text-gray-600 mb-2">
+        **Filter bisa digunakan untuk export**
+    </p>
         
         {{-- Filter 1: Kategori --}}
         <select name="category_id" x-model="selectedCategory" @change="filterSubCategories" class="w-full border-2 border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:border-sky-500 focus:ring-sky-500 text-sm h-10">
@@ -230,9 +305,23 @@
 
                             <div class="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
                                 {{-- Tabel Detail --}}
-                                <table class="min-w-full text-xs divide-y divide-gray-200">
+                                <table class="min-w-full text-xs divide-y divide-gray-200" id="detail-table-{{ $rowId }}">
                                     <thead class="bg-gray-200">
                                         <tr class="divide-x divide-gray-200"> 
+                                            {{-- CHECKBOX PILIH SEMUA BARU + Perbaikan x-init --}}
+                                            <th class="px-2 py-2 w-8 text-center">
+                                                <input type="checkbox" id="master-{{ $rowId }}" 
+                                                       @click="selectAll($event.target, document.querySelectorAll('#detail-table-{{ $rowId }} .row-checkbox'))"
+                                                       x-init="
+                                                            const currentDetailCheckboxes = Array.from(document.querySelectorAll('#detail-table-{{ $rowId }} .row-checkbox'));
+                                                            const currentDetailIds = currentDetailCheckboxes.map(cb => cb.value);
+                                                            // Cek apakah semua ID detail ini sudah ada di array global saat init
+                                                            const allSelected = currentDetailIds.length > 0 && currentDetailIds.every(id => selectedAssetIds.includes(id));
+                                                            $el.checked = allSelected;
+                                                       "
+                                                       class="rounded text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                            </th>
+                                            {{-- END CHECKBOX PILIH SEMUA --}}
                                             <th class="px-4 py-2 text-left font-semibold">Nama Barang</th>
                                             <th class="px-4 py-2 text-left font-semibold">Pengguna Saat Ini</th>
                                             <th class="px-4 py-2 text-left font-semibold">Perusahaan Pemilik Aset</th>
@@ -243,6 +332,14 @@
                                     <tbody class="divide-y divide-gray-200">
                                         @foreach($summary['details'] as $detail)
                                         <tr class="divide-x divide-gray-200">
+                                            {{-- CHECKBOX PER BARIS BARU --}}
+                                            <td class="px-2 py-2 text-center">
+                                                <input type="checkbox" name="selected_assets[]" value="{{ $detail->id }}" 
+                                                       @change="toggleAsset('{{ $detail->id }}', $event.target.checked, 'master-{{ $rowId }}')"
+                                                       :checked="selectedAssetIds.includes('{{ $detail->id }}')"
+                                                       class="row-checkbox rounded text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                            </td>
+                                            {{-- END CHECKBOX PER BARIS --}}
                                             <td class="px-4 py-2">{{ $detail->nama_barang }} ({{ $detail->code_asset }})</td>
                                             <td class="px-4 py-2">
                                                 @if($detail->assetUser)

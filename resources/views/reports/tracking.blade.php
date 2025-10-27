@@ -66,6 +66,10 @@
     <form method="GET" action="{{ route('reports.tracking') }}" class="mb-6">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
             
+            <p class="col-span-1 md:col-span-2 lg:col-span-4 text-sm text-gray-600 mb-2">
+        **Filter bisa digunakan untuk export**
+    </p>
+
             {{-- Filter 1: Kategori --}}
             <select name="category_id" x-model="selectedCategory" @change="filterSubCategories" class="w-full border-2 border-gray-300 rounded-lg shadow-sm py-2 px-3 focus:border-sky-500 focus:ring-sky-500 text-sm h-10">
                 <option value="">Filter Kategori</option>

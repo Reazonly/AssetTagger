@@ -340,16 +340,28 @@ class ReportController extends Controller
     // EXPORT METHODS (Perlu sedikit penyesuaian untuk Inventory Export)
     // =========================================================================
 
-    public function exportInventoryExcel(Request $request)
-    {
-        // Export Excel biasanya berisi data summary, bukan detail
-        $inventorySummary = $this->getInventorySummaryQuery($request)->get(); // Gunakan query summary
-        if ($inventorySummary->isEmpty()) {
-             return redirect()->route('reports.inventory')->with('error', 'Tidak ada data inventaris yang sesuai untuk diexport.');
-        }
-        // Pastikan class Export Anda mengharapkan data summary ini
-        return Excel::download(new InventorySummaryExport($inventorySummary), 'laporan_inventaris_' . date('Ymd_His') . '.xlsx');
+   public function exportInventoryExcel(Request $request)
+{
+    // 1. Ambil ID Aset dari Query String
+    $ids = explode(',', $request->input('ids'));
+
+    if (empty(array_filter($ids))) {
+        return redirect()->route('reports.inventory')->with('error', 'Silakan pilih setidaknya satu aset untuk diexport.');
     }
+
+    // 2. Ambil DATA DETAIL ASET secara lengkap (dengan Eager Loading)
+    $assetsCollection = Asset::whereIn('id', $ids)
+        // Eager Loading Wajib untuk mengisi kolom Kategori, Perusahaan, dan Pengguna
+        ->with(['subCategory.category', 'company', 'assetUser']) 
+        ->get(); // Ambil sebagai Collection (sesuai konstruktor Export Class)
+    
+    if ($assetsCollection->isEmpty()) {
+         return redirect()->route('reports.inventory')->with('error', 'Tidak ada data aset yang ditemukan.');
+    }
+
+    // 3. Kirim Collection Data Detail ke Export Class
+    return Excel::download(new InventorySummaryExport($assetsCollection), 'laporan_detail_aset_' . date('Ymd_His') . '.xlsx');
+}
 
     public function exportInventoryPDF(Request $request)
     {
