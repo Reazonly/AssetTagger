@@ -25,29 +25,29 @@ class PermissionSeeder extends Seeder
             ['name' => 'export-asset', 'display_name' => 'Ekspor Aset'],
             ['name' => 'print-asset', 'display_name' => 'Cetak Label Aset'],
 
-            // User & Role Management
+            // User Management
             ['name' => 'view-user', 'display_name' => 'Lihat Pengguna'],
-            ['name' => 'assign-role', 'display_name' => 'Tetapkan Role & Akses Perusahaan'], // Ubah display name agar lebih jelas
-            ['name' => 'manage-roles', 'display_name' => 'Kelola Roles & Permissions'],
+            ['name' => 'assign-role', 'display_name' => 'Tetapkan Role Pengguna'],
+             ['name' => 'manage-roles', 'display_name' => 'Kelola Roles & Permissions'], // Nama untuk grup role management
 
             // Master Data
-            ['name' => 'manage-master-data', 'display_name' => 'Kelola Master Data'],
+            ['name' => 'manage-master-data', 'display_name' => 'Kelola Master Data'], // Nama untuk grup master data
 
-            // --- TAMBAHKAN PERMISSION LAPORAN ---
+            // --- PERMISSION LAPORAN ---
             ['name' => 'reports-view-inventory', 'display_name' => 'Lihat Lap. Inventaris'],
             ['name' => 'reports-export-inventory', 'display_name' => 'Ekspor Lap. Inventaris'],
             ['name' => 'reports-view-tracking', 'display_name' => 'Lihat Lap. Pelacakan'],
             ['name' => 'reports-export-tracking', 'display_name' => 'Ekspor Lap. Pelacakan'],
-            // --- AKHIR PENAMBAHAN ---
-
+            // --- AKHIR PERMISSION LAPORAN ---
         ];
 
         foreach ($permissions as $permission) {
-            // Gunakan updateOrCreate untuk menghindari duplikasi dan memudahkan update display_name
+            // Gunakan updateOrCreate untuk menghindari error duplikasi jika seeder dijalankan lagi
             Permission::updateOrCreate(
-                ['name' => $permission['name']], // Kolom unik untuk mencari
-                $permission // Data lengkap untuk create atau update
+                ['name' => $permission['name']], // Kunci untuk mencari
+                $permission                     // Data untuk update atau create
             );
         }
     }
 }
+
