@@ -36,33 +36,34 @@ Route::middleware('auth')->group(function () {
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     
     // --- GRUP LAPORAN DENGAN PERMISSION ---
+    // Di sinilah pembatasan untuk laporan didefinisikan
     Route::prefix('reports')->name('reports.')->group(function () {
         // Halaman Laporan Inventaris (Memerlukan permission 'reports-view-inventory')
         Route::get('inventory', [ReportController::class, 'inventoryReport'])
              ->name('inventory')
-             ->middleware('permission:reports-view-inventory'); // <-- TAMBAHKAN MIDDLEWARE
+             ->middleware('permission:reports-view-inventory'); // <-- Pembatasan lihat inventaris
 
         // Halaman Laporan Pelacakan (Memerlukan permission 'reports-view-tracking')
         Route::get('tracking', [ReportController::class, 'trackingReport'])
              ->name('tracking')
-             ->middleware('permission:reports-view-tracking'); // <-- TAMBAHKAN MIDDLEWARE
+             ->middleware('permission:reports-view-tracking'); // <-- Pembatasan lihat pelacakan
 
         // Export Routes (Gunakan permission export yang sesuai)
         Route::get('inventory/export/excel', [ReportController::class, 'exportInventoryExcel'])
              ->name('inventory.excel')
-             ->middleware('permission:reports-export-inventory'); // <-- TAMBAHKAN MIDDLEWARE
+             ->middleware('permission:reports-export-inventory'); // <-- Pembatasan ekspor inventaris
 
         Route::get('inventory/export/pdf', [ReportController::class, 'exportInventoryPDF'])
              ->name('inventory.pdf')
-             ->middleware('permission:reports-export-inventory'); // <-- TAMBAHKAN MIDDLEWARE
+             ->middleware('permission:reports-export-inventory'); // <-- Pembatasan ekspor inventaris
 
         Route::get('tracking/export/excel', [ReportController::class, 'exportTrackingExcel'])
              ->name('tracking.excel')
-             ->middleware('permission:reports-export-tracking'); // <-- TAMBAHKAN MIDDLEWARE
+             ->middleware('permission:reports-export-tracking'); // <-- Pembatasan ekspor pelacakan
 
         Route::get('tracking/export/pdf', [ReportController::class, 'exportTrackingPDF'])
              ->name('tracking.pdf')
-             ->middleware('permission:reports-export-tracking'); // <-- TAMBAHKAN MIDDLEWARE
+             ->middleware('permission:reports-export-tracking'); // <-- Pembatasan ekspor pelacakan
     });
     // --- AKHIR GRUP LAPORAN ---
 
@@ -110,7 +111,8 @@ Route::middleware('auth')->group(function () {
     Route::prefix('master-data')->name('master-data.')->middleware('permission:manage-master-data')->group(function () {
         Route::resource('categories', CategoryController::class)->except(['show']);
         Route::resource('companies', CompanyController::class)->except(['show']);
-        // Route::resource('asset-users', AssetUserController::class)->except(['show']); // Uncomment jika UserMasterController dihapus
+        // Pastikan baris ini TIDAK dikomentari jika Anda ingin route asset-users aktif
+        Route::resource('asset-users', AssetUserController::class)->except(['show']); 
 
         // Sub Kategori
         Route::get('sub-categories', [SubCategoryController::class, 'index'])->name('sub-categories.index');
@@ -123,13 +125,13 @@ Route::middleware('auth')->group(function () {
         
         // Import untuk Master Data
         Route::post('categories/import', [CategoryController::class, 'import'])->name('categories.import'); 
-        // Route::post('asset-users/import', [AssetUserController::class, 'import'])->name('asset-users.import'); // Uncomment jika UserMasterController dihapus
+        Route::post('asset-users/import', [AssetUserController::class, 'import'])->name('asset-users.import'); // Pastikan ini aktif jika perlu
         Route::post('sub-categories/{category}/import', [SubCategoryController::class, 'import'])->name('sub-categories.import');
     });
     
     // --- RUTE MANAJEMEN ROLES & PERMISSIONS ---
     // Gunakan permission 'manage-roles' BUKAN 'superadmin'
-    Route::prefix('roles-management')->name('roles.')->middleware('permission:manage-roles')->group(function() { // <-- UBAH MIDDLEWARE DI SINI
+    Route::prefix('roles-management')->name('roles.')->middleware('permission:manage-roles')->group(function() { // <-- PASTIKAN MIDDLEWARE INI BENAR
         Route::get('/', [RoleController::class, 'index'])->name('index');
         Route::get('/create', [RoleController::class, 'create'])->name('create');
         Route::post('/', [RoleController::class, 'store'])->name('store');
