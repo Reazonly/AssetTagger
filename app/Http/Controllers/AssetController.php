@@ -49,53 +49,86 @@ class AssetController extends Controller
     }
 
     public function index(Request $request)
-    {
-        $user = Auth::user(); // Gunakan Auth facade
-        $query = Asset::query()->with(['assetUser', 'category', 'company', 'subCategory']);
+{
+    $user = Auth::user(); 
+    $query = Asset::query()->with(['assetUser', 'category', 'company', 'subCategory']);
 
-        // --- FILTER PERUSAHAAN ---
-        if (!$user->hasRole('super-admin')) {
-            $allowedCompanyIds = $user->companies()->pluck('companies.id'); // <-- Perbaikan pluck
-            $query->whereIn('company_id', $allowedCompanyIds);
-        }
-        // --- AKHIR FILTER ---
-
-        if ($request->filled('search')) {
-            $searchTerm = $request->input('search');
-            $keywords = explode(' ', $searchTerm);
-
-            $query->where(function ($q) use ($keywords) {
-                foreach ($keywords as $keyword) {
-                    if (empty($keyword)) continue;
-                    
-                    $q->where(function ($subQuery) use ($keyword) {
-                        $subQuery->where('code_asset', 'like', '%' . $keyword . '%')
-                                 ->orWhere('nama_barang', 'like', '%' . $keyword . '%')
-                                 ->orWhere('serial_number', 'like', '%' . $keyword . '%')
-                                 ->orWhereHas('assetUser', function ($userQuery) use ($keyword) {
-                                     $userQuery->where('nama', 'like', '%' . $keyword . '%');
-                                 })
-                                 ->orWhereHas('category', function ($catQuery) use ($keyword) {
-                                     $catQuery->where('name', 'like', '%' . $keyword . '%');
-                                 })
-                                 ->orWhereHas('subCategory', function ($subCatQuery) use ($keyword) {
-                                     $subCatQuery->where('name', 'like', '%' . $keyword . '%');
-                                 });
-                    });
-                }
-            });
-        }
-
-        if ($request->filled('category_id')) {
-            $query->where('category_id', $request->input('category_id'));
-        }
-        
-        $assets = $query->orderBy('code_asset', 'desc')->paginate(15);
-        $assets->withQueryString();
-
-        $categories = Category::orderBy('name')->get();
-        return view('assets.index', compact('assets', 'categories'));
+    // --- FILTER PERUSAHAAN (Jika pengguna bukan super-admin) ---
+    if (!$user->hasRole('super-admin')) {
+        $allowedCompanyIds = $user->companies()->pluck('companies.id');
+        $query->whereIn('company_id', $allowedCompanyIds);
     }
+    // --- AKHIR FILTER PERUSAHAAN ---
+
+    // --- IMPLEMENTASI FILTER LENGKAP DARI FORM VIEW ---
+    if ($request->filled('category_id')) {
+        $query->where('category_id', $request->input('category_id'));
+    }
+    if ($request->filled('sub_category_id')) {
+        $query->where('sub_category_id', $request->input('sub_category_id'));
+    }
+    if ($request->filled('company_id')) {
+        $query->where('company_id', $request->input('company_id'));
+    }
+    if ($request->filled('location')) {
+        $query->where('lokasi', $request->input('location'));
+    }
+    if ($request->filled('asset_user_id')) {
+        $query->where('asset_user_id', $request->input('asset_user_id'));
+    }
+    if ($request->filled('kondisi')) {
+        $query->where('kondisi', $request->input('kondisi'));
+    }
+    
+    // Pencarian Cepat (sudah ada)
+    if ($request->filled('search')) {
+        $searchTerm = $request->input('search');
+        $keywords = explode(' ', $searchTerm);
+
+        $query->where(function ($q) use ($keywords) {
+            foreach ($keywords as $keyword) {
+                if (empty($keyword)) continue;
+                
+                $q->where(function ($subQuery) use ($keyword) {
+                    $subQuery->where('code_asset', 'like', '%' . $keyword . '%')
+                             ->orWhere('nama_barang', 'like', '%' . $keyword . '%')
+                             ->orWhere('serial_number', 'like', '%' . $keyword . '%')
+                             ->orWhereHas('assetUser', function ($userQuery) use ($keyword) {
+                                 $userQuery->where('nama', 'like', '%' . $keyword . '%');
+                             })
+                             ->orWhereHas('category', function ($catQuery) use ($keyword) {
+                                 $catQuery->where('name', 'like', '%' . $keyword . '%');
+                             })
+                             ->orWhereHas('subCategory', function ($subCatQuery) use ($keyword) {
+                                 $subCatQuery->where('name', 'like', '%' . $keyword . '%');
+                             });
+                });
+            }
+        });
+    }
+    // --- AKHIR IMPLEMENTASI FILTER ---
+
+    $assets = $query->orderBy('created_at', 'desc')->paginate(15);
+    $assets->withQueryString();
+
+    // --- VARIABEL BARU UNTUK FILTER (PENTING!) ---
+    $categories = Category::orderBy('name')->get();
+    $subCategories = SubCategory::orderBy('name')->get(); // <-- INI YANG HILANG
+    $companies = Company::orderBy('name')->get();
+    $assetUsers = AssetUser::orderBy('nama')->get();
+    
+    // Ambil semua lokasi unik dari kolom lokasi
+    $locations = Asset::select('lokasi')->distinct()->whereNotNull('lokasi')->pluck('lokasi');
+
+    return view('assets.index', compact(
+        'assets', 
+        'categories', 
+        'subCategories', // <-- TAMBAHKAN INI
+        'companies', 
+        'assetUsers', 
+        'locations' // <-- TAMBAHKAN INI
+    ));
+}
 
     public function create()
     {

@@ -20,10 +20,11 @@
             <tr>
                 <th style="width: 5%;">No.</th>
                 <th style="width: 15%;">Kode Aset</th>
-                <th style="width: 20%;">Nama Aset</th>
+                <th style="width: 15%;">Nama Aset</th>
                 <th style="width: 10%;">Kategori</th>
                 <th style="width: 15%;">Pengguna Saat Ini</th>
                 <th style="width: 15%;">Jabatan & Perusahaan</th>
+                <th style="width: 15%;">Lokasi Fisik</th> {{-- Kolom Baru --}}
                 <th style="width: 10%;">Kondisi</th>
             </tr>
         </thead>
@@ -39,6 +40,7 @@
                         {{ optional($asset->assetUser)->jabatan ?? 'N/A' }}<br>
                         ({{ optional(optional($asset->assetUser)->company)->name ?? 'N/A' }})
                     </td>
+                    <td>{{ $asset->lokasi ?? 'N/A' }}</td> {{-- Data Baru --}}
                     <td style="text-align: center;">{{ $asset->kondisi }}</td>
                 </tr>
             @endforeach

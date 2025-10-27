@@ -1,3 +1,11 @@
+<style>
+    /* CSS untuk menyembunyikan scrollbar di Webkit (Chrome, Safari, modern Edge) */
+    /* Kelas ini akan diterapkan pada elemen <nav> */
+    .hide-scrollbar-webkit::-webkit-scrollbar {
+        display: none;
+    }
+</style>
+
 <aside x-show="isSidebarOpen"
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="-translate-x-full"
@@ -7,11 +15,14 @@
         x-transition:leave-end="-translate-x-full"
         class="w-64 bg-gradient-to-b from-sky-800 to-sky-900 text-white flex-shrink-0 flex flex-col z-40 md:relative absolute h-full border-r border-gray-300">
     
+
     <div class="flex items-center justify-center h-20 bg-white border-b border-gray-200 shadow-lg">
         <img src="{{ asset('images/jhonlin_logo.png') }}" alt="Jhonlin Group Logo" class="h-16">
     </div>
 
-    <nav class="mt-6 flex-grow px-4" 
+    {{-- PERBAIKAN TOTAL: Scroll dan State Persistence --}}
+    <nav class="mt-6 flex-grow px-4 overflow-y-auto hide-scrollbar-webkit" 
+         style="-ms-overflow-style: none; scrollbar-width: none;" 
          x-data="{ 
             activeMenu: '{{ 
                 request()->routeIs('dashboard') ? 'dashboard' : 
@@ -19,9 +30,33 @@
                 (request()->routeIs('users.*') || request()->routeIs('roles.*') ? 'admin-area' : 
                 (request()->routeIs('master-data.*') ? 'master-data' : ''))) 
             }}',
-            isAdminAreaOpen: {{ (request()->routeIs('users.*') || request()->routeIs('roles.*')) ? 'true' : 'false' }},
-            isMasterDataOpen: {{ request()->routeIs('master-data.*') ? 'true' : 'false' }}
-         }">
+            // LOGIKA PERSISTENSI STATE EXPANDED
+            isAdminAreaOpen: (() => {
+                // Jika berada di halaman User/Role, wajibkan terbuka
+                if ({{ (request()->routeIs('users.*') || request()->routeIs('roles.*')) ? 'true' : 'false' }}) return true;
+                // Selain itu, gunakan status yang disimpan di Local Storage
+                return localStorage.getItem('isAdminAreaOpen') === 'true'; 
+            })(),
+            isMasterDataOpen: (() => {
+                // Jika berada di halaman Master Data, wajibkan terbuka
+                if ({{ request()->routeIs('master-data.*') ? 'true' : 'false' }}) return true;
+                // Selain itu, gunakan status yang disimpan di Local Storage
+                return localStorage.getItem('isMasterDataOpen') === 'true';
+            })(),
+
+            // LOGIKA PERSISTENSI SCROLL
+            init() {
+            let savedScrollPos = localStorage.getItem('sidebarScrollPos');
+            if (savedScrollPos) {
+                // Tambahkan setTimeout 0ms untuk memastikan $el siap sepenuhnya
+                setTimeout(() => {
+                    this.$el.scrollTop = parseInt(savedScrollPos);
+                }, 0); 
+            }
+        }
+     }"
+     @scroll="localStorage.setItem('sidebarScrollPos', $el.scrollTop)"
+     >
 
         @can('view-dashboard')
         <a href="{{ route('dashboard') }}" 
@@ -70,7 +105,8 @@
                 
                 @if(auth()->user()->can('view-user') || auth()->user()->can('manage-roles'))
                 <div class="mt-2">
-                    <button @click="isAdminAreaOpen = !isAdminAreaOpen; activeMenu = 'admin-area'"
+                    {{-- PERBAIKAN: Tambahkan penyimpanan state ke Local Storage --}}
+                    <button @click="isAdminAreaOpen = !isAdminAreaOpen; activeMenu = 'admin-area'; localStorage.setItem('isAdminAreaOpen', isAdminAreaOpen)"
                             class="w-full flex justify-between items-center px-4 py-3 rounded-lg duration-200 transform hover:translate-x-1 transition-all"
                             :class="activeMenu === 'admin-area' ? 'bg-sky-900 border-l-4 border-sky-400' : 'text-sky-100 hover:bg-sky-700 border-l-4 border-transparent'">
                         <div class="flex items-center">
@@ -93,7 +129,8 @@
 
                 @can('manage-master-data')
                 <div class="mt-2">
-                    <button @click="isMasterDataOpen = !isMasterDataOpen; activeMenu = 'master-data'"
+                    {{-- PERBAIKAN: Tambahkan penyimpanan state ke Local Storage --}}
+                    <button @click="isMasterDataOpen = !isMasterDataOpen; activeMenu = 'master-data'; localStorage.setItem('isMasterDataOpen', isMasterDataOpen)"
                             class="w-full flex justify-between items-center px-4 py-3 rounded-lg duration-200 transform hover:translate-x-1 transition-all"
                             :class="activeMenu === 'master-data' ? 'bg-sky-900 border-l-4 border-sky-400' : 'text-sky-100 hover:bg-sky-700 border-l-4 border-transparent'">
                         <div class="flex items-center">
@@ -144,4 +181,7 @@
         </form>
     </div>
     @endauth
+
+<
+
 </aside>
