@@ -3,7 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\Auth\LoginController;
-// use App\Http\Controllers\Auth\RegisterController; // RegisterController tidak digunakan
+// Hapus atau comment use RegisterController jika tidak dipakai
+// use App\Http\Controllers\Auth\RegisterController; 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CategoryController;
@@ -22,7 +23,8 @@ Route::post('logout', [LoginController::class, 'logout'])->name('logout')->middl
 // Public Routes
 Route::get('assets/{asset}/public', [AssetController::class, 'publicShow'])->name('assets.public.show');
 Route::get('assets/{asset}/pdf', [AssetController::class, 'downloadPDF'])->name('assets.pdf');
-// Route::get('/assets/get-units/{category}', [AssetController::class, 'getUnits'])->name('assets.getUnits'); // Route ini sepertinya tidak ada di controller
+// Route::get('/assets/get-units/{category}', [AssetController::class, 'getUnits'])->name('assets.getUnits'); // Comment / Hapus jika tidak dipakai
+
 
 // Main application routes (protected by auth middleware)
 Route::middleware('auth')->group(function () {
@@ -32,32 +34,51 @@ Route::middleware('auth')->group(function () {
     // Profil (bisa diakses semua pengguna yang login)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    
+    // --- GRUP LAPORAN DENGAN PERMISSION ---
+    Route::prefix('reports')->name('reports.')->group(function () {
+        // Halaman Laporan Inventaris (Memerlukan permission 'reports-view-inventory')
+        Route::get('inventory', [ReportController::class, 'inventoryReport'])
+             ->name('inventory')
+             ->middleware('permission:reports-view-inventory'); // <-- TAMBAHKAN MIDDLEWARE
 
-    // Reports
-    Route::prefix('reports')->name('reports.')->group(function () { // Menambahkan name() untuk prefix
-        Route::get('inventory', [ReportController::class, 'inventoryReport'])->name('inventory');
-        Route::get('tracking', [ReportController::class, 'trackingReport'])->name('tracking');
+        // Halaman Laporan Pelacakan (Memerlukan permission 'reports-view-tracking')
+        Route::get('tracking', [ReportController::class, 'trackingReport'])
+             ->name('tracking')
+             ->middleware('permission:reports-view-tracking'); // <-- TAMBAHKAN MIDDLEWARE
 
-        // Export Routes
-        Route::get('inventory/export/excel', [ReportController::class, 'exportInventoryExcel'])->name('inventory.excel');
-        Route::get('inventory/export/pdf', [ReportController::class, 'exportInventoryPDF'])->name('inventory.pdf');
-        Route::get('tracking/export/excel', [ReportController::class, 'exportTrackingExcel'])->name('tracking.excel');
-        Route::get('tracking/export/pdf', [ReportController::class, 'exportTrackingPDF'])->name('tracking.pdf');
+        // Export Routes (Gunakan permission export yang sesuai)
+        Route::get('inventory/export/excel', [ReportController::class, 'exportInventoryExcel'])
+             ->name('inventory.excel')
+             ->middleware('permission:reports-export-inventory'); // <-- TAMBAHKAN MIDDLEWARE
+
+        Route::get('inventory/export/pdf', [ReportController::class, 'exportInventoryPDF'])
+             ->name('inventory.pdf')
+             ->middleware('permission:reports-export-inventory'); // <-- TAMBAHKAN MIDDLEWARE
+
+        Route::get('tracking/export/excel', [ReportController::class, 'exportTrackingExcel'])
+             ->name('tracking.excel')
+             ->middleware('permission:reports-export-tracking'); // <-- TAMBAHKAN MIDDLEWARE
+
+        Route::get('tracking/export/pdf', [ReportController::class, 'exportTrackingPDF'])
+             ->name('tracking.pdf')
+             ->middleware('permission:reports-export-tracking'); // <-- TAMBAHKAN MIDDLEWARE
     });
+    // --- AKHIR GRUP LAPORAN ---
 
-    // Assets
+
     Route::prefix('assets')->name('assets.')->group(function() {
         // Rute GET (statis)
         Route::get('/', [AssetController::class, 'index'])->name('index')->middleware('permission:view-asset');
         Route::get('/create', [AssetController::class, 'create'])->name('create')->middleware('permission:create-asset');
         Route::get('/print', [AssetController::class, 'print'])->name('print')->middleware('permission:print-asset'); // Sesuaikan permission jika perlu
-        Route::get('/export', [AssetController::class, 'export'])->name('export')->middleware('permission:export-asset'); // Sesuaikan permission jika perlu
+        Route::get('/export', [AssetController::class, 'export'])->name('export')->middleware('permission:export-asset'); // Sesuaikan permission
 
         // Rute POST
         Route::post('/', [AssetController::class, 'store'])->name('store')->middleware('permission:create-asset');
         Route::post('/import', [AssetController::class, 'import'])->name('import')->middleware('permission:import-asset');
 
-        // Rute GET (dinamis dengan parameter {asset}) - Pastikan model binding 'asset' benar
+        // Rute GET (dinamis dengan parameter {asset})
         Route::get('/{asset}', [AssetController::class, 'show'])->name('show')->middleware('permission:view-asset');
         Route::get('/{asset}/edit', [AssetController::class, 'edit'])->name('edit')->middleware('permission:edit-asset');
 
@@ -66,21 +87,18 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{asset}', [AssetController::class, 'destroy'])->name('destroy')->middleware('permission:delete-asset');
     });
 
-    // --- RUTE ADMIN AREA DENGAN PERMISSION ---
+    // --- RUTE ADMIN AREA ---
     // Grup untuk semua yang terkait manajemen pengguna & role
     Route::prefix('users')->name('users.')->middleware('permission:view-user')->group(function() {
         Route::get('/', [UserController::class, 'index'])->name('index');
-
-        // --- HAPUS ROUTE LAMA ---
-        // Route::post('/{user}/assign-roles', [UserController::class, 'assignRoles'])->name('assign-roles')->middleware('permission:assign-role');
-        // Route::post('/{user}/assign-companies', [UserController::class, 'assignCompanies'])->name('assign-companies')->middleware('permission:assign-role');
-
-        // --- TAMBAHKAN ROUTE BARU YANG DIGABUNG ---
-        Route::post('/{user}/update-access', [UserController::class, 'updateAccess'])->name('update-access')->middleware('permission:assign-role');
-        // --- AKHIR PERUBAHAN ROUTE ---
+        
+        // Route untuk update Role & Company Access
+        Route::post('/{user}/update-access', [UserController::class, 'updateAccess'])
+              ->name('update-access')
+              ->middleware('permission:assign-role'); // Gunakan permission yang sesuai
 
         // Hanya Super Admin yang bisa membuat, menghapus, dan reset password
-        Route::middleware('superadmin')->group(function () { // Biarkan middleware superadmin di sini untuk aksi spesifik super admin
+        Route::middleware('superadmin')->group(function () {
             Route::get('/create', [UserController::class, 'create'])->name('create');
             Route::post('/', [UserController::class, 'store'])->name('store');
             Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
@@ -92,9 +110,9 @@ Route::middleware('auth')->group(function () {
     Route::prefix('master-data')->name('master-data.')->middleware('permission:manage-master-data')->group(function () {
         Route::resource('categories', CategoryController::class)->except(['show']);
         Route::resource('companies', CompanyController::class)->except(['show']);
-        Route::resource('asset-users', AssetUserController::class)->except(['show']);
+        // Route::resource('asset-users', AssetUserController::class)->except(['show']); // Uncomment jika UserMasterController dihapus
 
-        // Sub-Kategori routes
+        // Sub Kategori
         Route::get('sub-categories', [SubCategoryController::class, 'index'])->name('sub-categories.index');
         Route::get('sub-categories/{category}', [SubCategoryController::class, 'show'])->name('sub-categories.show');
         Route::get('sub-categories/{category}/create', [SubCategoryController::class, 'create'])->name('sub-categories.create');
@@ -102,25 +120,22 @@ Route::middleware('auth')->group(function () {
         Route::get('sub-categories/{subCategory}/edit', [SubCategoryController::class, 'edit'])->name('sub-categories.edit');
         Route::put('sub-categories/{subCategory}', [SubCategoryController::class, 'update'])->name('sub-categories.update');
         Route::delete('sub-categories/{subCategory}', [SubCategoryController::class, 'destroy'])->name('sub-categories.destroy');
-
-        // Import routes
-        Route::post('categories/import', [CategoryController::class, 'import'])->name('categories.import');
-        Route::post('asset-users/import', [AssetUserController::class, 'import'])->name('asset-users.import');
+        
+        // Import untuk Master Data
+        Route::post('categories/import', [CategoryController::class, 'import'])->name('categories.import'); 
+        // Route::post('asset-users/import', [AssetUserController::class, 'import'])->name('asset-users.import'); // Uncomment jika UserMasterController dihapus
         Route::post('sub-categories/{category}/import', [SubCategoryController::class, 'import'])->name('sub-categories.import');
     });
-
+    
     // --- RUTE MANAJEMEN ROLES & PERMISSIONS ---
-    // --- GANTI MIDDLEWARE DI SINI ---
-    Route::prefix('roles-management')->name('roles.')
-        ->middleware('permission:manage-roles') // Ganti dari 'superadmin' ke 'permission:manage-roles'
-        ->group(function() {
-            Route::get('/', [RoleController::class, 'index'])->name('index');
-            Route::get('/create', [RoleController::class, 'create'])->name('create');
-            Route::post('/', [RoleController::class, 'store'])->name('store');
-            Route::get('/{role}/edit', [RoleController::class, 'edit'])->name('edit');
-            Route::put('/{role}', [RoleController::class, 'update'])->name('update');
-            Route::delete('/{role}', [RoleController::class, 'destroy'])->name('destroy');
+    // Gunakan permission 'manage-roles' BUKAN 'superadmin'
+    Route::prefix('roles-management')->name('roles.')->middleware('permission:manage-roles')->group(function() { // <-- UBAH MIDDLEWARE DI SINI
+        Route::get('/', [RoleController::class, 'index'])->name('index');
+        Route::get('/create', [RoleController::class, 'create'])->name('create');
+        Route::post('/', [RoleController::class, 'store'])->name('store');
+        Route::get('/{role}/edit', [RoleController::class, 'edit'])->name('edit');
+        Route::put('/{role}', [RoleController::class, 'update'])->name('update');
+        Route::delete('/{role}', [RoleController::class, 'destroy'])->name('destroy');
     });
-    // --- AKHIR PERUBAHAN MIDDLEWARE ---
 });
 
