@@ -90,6 +90,21 @@ class ReportController extends Controller
             $query->whereRaw("JSON_UNQUOTE(JSON_EXTRACT({$jsonColumn}, '$.\"{$key}\"')) = ?", [$value]);
         }
 
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function (Builder $q) use ($search) {
+                $q->where('assets.code_asset', 'like', '%' . $search . '%')
+                  ->orWhere('assets.nama_barang', 'like', '%' . $search . '%')
+                  ->orWhere('assets.serial_number', 'like', '%' . $search . '%')
+                  // Tambahkan pencarian di kolom Specifications (JSON)
+                  // Ini penting agar pencarian "ROG" di kolom spesifikasi bisa ditemukan.
+                  ->orWhere('assets.specifications', 'like', '%' . $search . '%') 
+                  // Cari berdasarkan kategori dan sub-kategori
+                  ->orWhere('categories.name', 'like', '%' . $search . '%')
+                  ->orWhere('sub_categories.name', 'like', '%' . $search . '%');
+            });
+        }
+
         return $query;
     }
 
@@ -141,12 +156,15 @@ class ReportController extends Controller
         if ($request->filled('location')) {
             $query->where('lokasi', $request->location);
         }
-        if ($request->filled('search')) {
+       if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function (Builder $q) use ($search) {
                 $q->where('code_asset', 'like', '%' . $search . '%')
                   ->orWhere('nama_barang', 'like', '%' . $search . '%')
                   ->orWhere('serial_number', 'like', '%' . $search . '%')
+                  // Tambahkan pencarian di kolom Specifications (JSON)
+                  ->orWhere('specifications', 'like', '%' . $search . '%') 
+                  // Cari berdasarkan Nama Pengguna
                   ->orWhereHas('assetUser', function($uq) use ($search){
                        $uq->where('nama', 'like', '%' . $search . '%');
                    });
